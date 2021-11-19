@@ -1,0 +1,27 @@
+name: Publish to GitHub Packages
+on:
+  push:
+    branches: [ main ]
+#env:
+#  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SONATYPE_SIGNING_KEY }}
+#  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Publish package
+        run: echo "uncomment code below"
+#        run: ./gradlew publishAllPublicationsToGithubPackagesRepository
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
