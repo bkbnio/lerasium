@@ -1,6 +1,7 @@
 rootProject.name = "stoik"
 
-include("stoik-exposed")
+include("stoik-exposed-core")
+include("stoik-exposed-processor")
 include("stoik-ktor")
 include("stoik-playground")
 
