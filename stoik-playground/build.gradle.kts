@@ -7,10 +7,8 @@ dependencies {
   ksp(projects.stoikExposedProcessor)
   implementation(projects.stoikExposedCore)
 
-  val exposedVersion = "0.36.2"
-  implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-  implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-  implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+  ksp(projects.stoikKtorProcessor)
+  implementation(projects.stoikKtorCore)
 }
 
 kotlin {
@@ -20,4 +18,9 @@ kotlin {
   sourceSets.test {
     kotlin.srcDir("build/generated/ksp/test/kotlin")
   }
+}
+
+application {
+  @Suppress("DEPRECATION")
+  mainClassName = "io.bkbn.stoik.playground.MainKt"
 }

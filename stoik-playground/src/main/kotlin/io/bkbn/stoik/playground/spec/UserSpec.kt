@@ -1,8 +1,9 @@
-package io.bkbn.stoik.playground.models
+package io.bkbn.stoik.playground.spec
 
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Sensitive
 import io.bkbn.stoik.exposed.Table
+import io.bkbn.stoik.ktor.core.Api
 
 sealed interface UserSpec {
   val firstName: String
@@ -23,6 +24,5 @@ interface UserTableSpec : UserSpec {
   override val password: String
 }
 
-@Suppress("EmptyClassBlock")
-interface UserApiSpec : UserSpec {
-}
+@Api("User")
+interface UserApiSpec : UserSpec
