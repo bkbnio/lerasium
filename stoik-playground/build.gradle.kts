@@ -1,6 +1,6 @@
 plugins {
-  id("kotlin-application-conventions")
-  id("com.google.devtools.ksp") version "1.6.0-1.0.1" // todo move to buildSrc... processor plugin?
+  id("com.google.devtools.ksp") version "1.6.0-1.0.1"
+  application
 }
 
 dependencies {

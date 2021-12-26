@@ -1,5 +1,5 @@
 plugins {
-  id("kotlin-library-conventions")
+  id("io.bkbn.sourdough.library")
 }
 
 dependencies {
