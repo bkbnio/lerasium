@@ -1,5 +1,5 @@
 plugins {
-  id("com.google.devtools.ksp") version "1.6.0-1.0.1"
+  id("com.google.devtools.ksp") version "1.6.0-1.0.2"
   application
 }
 

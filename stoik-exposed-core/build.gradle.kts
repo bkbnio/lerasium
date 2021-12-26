@@ -3,8 +3,10 @@ plugins {
 }
 
 dependencies {
-  val exposedVersion = "0.36.2"
-  api("org.jetbrains.exposed:exposed-core:$exposedVersion")
-  api("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-  api("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+  // IMPLEMENTATION
+
+  // Exposed
+  api(group = "org.jetbrains.exposed", name = "exposed-core", version = "0.36.2")
+  api(group = "org.jetbrains.exposed", name = "exposed-dao", version = "0.36.2")
+  api(group = "org.jetbrains.exposed", name = "exposed-jdbc", version = "0.36.2")
 }

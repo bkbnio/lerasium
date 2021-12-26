@@ -3,7 +3,14 @@ plugins {
 }
 
 dependencies {
+  // IMPLEMENTATION
+
+  // Stoik
   implementation(projects.stoikKtorCore)
-  implementation("com.google.devtools.ksp:symbol-processing-api:1.6.0-1.0.1")
-  implementation("com.squareup:kotlinpoet:1.10.2")
+
+  // Symbol Processing
+  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.0-1.0.2")
+
+  // CodeGen
+  implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
 }

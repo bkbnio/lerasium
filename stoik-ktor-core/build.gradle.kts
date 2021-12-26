@@ -3,10 +3,10 @@ plugins {
 }
 
 dependencies {
-  val ktorVersion = "1.6.5"
-  val logbackVersion = "1.2.7"
-  api("io.ktor:ktor-server-core:$ktorVersion")
-  api("io.ktor:ktor-server-netty:$ktorVersion")
-  api("ch.qos.logback:logback-classic:$logbackVersion")
-  api("io.ktor:ktor-serialization:$ktorVersion")
+  // IMPLEMENTATION
+
+  // Ktor
+  api(group = "io.ktor", name = "ktor-server-core", version = "1.6.7")
+  api(group = "io.ktor", name = "ktor-server-netty", version = "1.6.7")
+  api(group = "io.ktor", name = "ktor-serialization", version = "1.6.7")
 }
