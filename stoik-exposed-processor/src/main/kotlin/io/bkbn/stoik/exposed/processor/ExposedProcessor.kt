@@ -1,7 +1,6 @@
 package io.bkbn.stoik.exposed.processor
 
 import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -19,10 +18,13 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
+import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
-import java.io.OutputStream
 
+@OptIn(KotlinPoetKspPreview::class)
 class ExposedProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,
@@ -45,15 +47,10 @@ class ExposedProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val file: OutputStream = codeGenerator.createNewFile(
-        dependencies = Dependencies(false),
-        packageName = "io.bkbn.stoik.generated",
-        fileName = "Tables"
-      )
-      val fb = FileSpec.builder("io.bkbn.stoik.generated", "Hi")
+      val fb = FileSpec.builder("io.bkbn.stoik.generated", "Tables")
       it.accept(Visitor(fb), Unit)
       val fs = fb.build()
-      file.write(fs.toString().toByteArray())
+      fs.writeTo(codeGenerator, false)
     }
 
     return symbols.filterNot { it.validate() }.toList()
@@ -77,6 +74,7 @@ class ExposedProcessor(
       val tableObjectName = tableName.snakeToUpperCamelCase().plus("Table")
 
       fileBuilder.addType(TypeSpec.objectBuilder(tableObjectName).apply {
+        addOriginatingKSFile(classDeclaration.containingFile ?: error("Could not identify originating file :("))
         superclass(ClassName("org.jetbrains.exposed.dao.id", "UUIDTable"))
         addSuperclassConstructorParameter("%S", tableName)
 

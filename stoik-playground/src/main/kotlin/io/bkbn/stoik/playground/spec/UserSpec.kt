@@ -3,6 +3,7 @@ package io.bkbn.stoik.playground.spec
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Sensitive
 import io.bkbn.stoik.exposed.Table
+import io.bkbn.stoik.exposed.Unique
 import io.bkbn.stoik.ktor.core.Api
 
 sealed interface UserSpec {
@@ -19,6 +20,9 @@ interface UserTableSpec : UserSpec {
 
   @Column("last_name")
   override val lastName: String
+
+  @Unique
+  override val email: String
 
   @Sensitive
   override val password: String
