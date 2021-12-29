@@ -49,7 +49,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-//      result.generatedFiles shouldHaveSize 1
+      result.generatedFiles shouldHaveSize 1
     }
   }
 })
