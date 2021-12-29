@@ -93,7 +93,4 @@ class ExposedProcessor(
       }.build())
     }
   }
-
-  // org.jetbrains.exposed.sql.Column
-  // val firstName: Column<String> = varchar("first_name", 128)
 }
