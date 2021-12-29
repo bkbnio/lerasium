@@ -8,6 +8,7 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSVisitorVoid
@@ -72,25 +73,30 @@ class ExposedProcessor(
 
       val tableName = nameArgument.value as String
       val tableObjectName = tableName.snakeToUpperCamelCase().plus("Table")
+      val containingFile = classDeclaration.containingFile ?: error("Could not identify originating file :(")
+      val properties: Sequence<KSPropertyDeclaration> = classDeclaration.getAllProperties()
+        .filter { it.validate() }
 
-      fileBuilder.addType(TypeSpec.objectBuilder(tableObjectName).apply {
-        addOriginatingKSFile(classDeclaration.containingFile ?: error("Could not identify originating file :("))
-        superclass(ClassName("org.jetbrains.exposed.dao.id", "UUIDTable"))
-        addSuperclassConstructorParameter("%S", tableName)
-
-        val properties: Sequence<KSPropertyDeclaration> = classDeclaration.getAllProperties()
-          .filter { it.validate() }
-
-        properties.forEach { property ->
-          // todo get column name from annotation
-          val fieldName = property.simpleName.asString()
-          val columnType = ClassName("org.jetbrains.exposed.sql", "Column").parameterizedBy(String::class.asTypeName())
-          addProperty(PropertySpec.builder(fieldName, columnType).apply {
-            initializer("varchar(%S, %L)", fieldName, DEFAULT_VARCHAR_SIZE)
-          }.build())
-        }
-
-      }.build())
+      fileBuilder.createTableObject(tableName, tableObjectName, containingFile, properties)
     }
   }
+
+  private fun FileSpec.Builder.createTableObject(
+    tableName: String,
+    tableObjectName: String,
+    containingFile: KSFile,
+    properties: Sequence<KSPropertyDeclaration>
+  ) = addType(TypeSpec.objectBuilder(tableObjectName).apply {
+    addOriginatingKSFile(containingFile)
+    superclass(ClassName("org.jetbrains.exposed.dao.id", "UUIDTable"))
+    addSuperclassConstructorParameter("%S", tableName)
+    properties.forEach { property ->
+      val fieldName = property.simpleName.asString()
+      // TODO Update parameterizedBy
+      val columnType = ClassName("org.jetbrains.exposed.sql", "Column").parameterizedBy(String::class.asTypeName())
+      addProperty(PropertySpec.builder(fieldName, columnType).apply {
+        initializer("varchar(%S, %L)", fieldName, DEFAULT_VARCHAR_SIZE)
+      }.build())
+    }
+  }.build())
 }
