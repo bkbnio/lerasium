@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Exposed support for `Int`, `Long`, `Boolean` and `Float`
 - Added ability to override varchar length
+### Changed
+- Fixed bug in Ktor processor file generation
 
 ## [0.1.1] - 12/29/2021
 ### Changed
