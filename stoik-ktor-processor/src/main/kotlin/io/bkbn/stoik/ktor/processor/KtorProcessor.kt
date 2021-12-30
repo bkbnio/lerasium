@@ -1,7 +1,6 @@
 package io.bkbn.stoik.ktor.processor
 
 import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -17,12 +16,12 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.buildCodeBlock
+import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
+import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.ktor.core.Api
 import io.bkbn.stoik.ktor.processor.util.RouteUtils.addControlFlow
-import io.bkbn.stoik.ktor.processor.util.StringHelpers.snakeToLowerCamelCase
-import io.bkbn.stoik.ktor.processor.util.StringHelpers.snakeToUpperCamelCase
 import io.ktor.routing.Route
-import java.io.OutputStream
 
 class KtorProcessor(
   private val codeGenerator: CodeGenerator,
@@ -34,6 +33,7 @@ class KtorProcessor(
     logger.info(options.toString())
   }
 
+  @OptIn(KotlinPoetKspPreview::class)
   override fun process(resolver: Resolver): List<KSAnnotated> {
     val symbols = resolver
       .getSymbolsWithAnnotation(Api::class.qualifiedName!!)
@@ -42,21 +42,17 @@ class KtorProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val file: OutputStream = codeGenerator.createNewFile(
-        dependencies = Dependencies(false),
-        packageName = "io.bkbn.stoik.generated",
-        fileName = "Apis"
-      )
-      val fb = FileSpec.builder("io.bkbn.stoik.generated", "Hi")
+      val fb = FileSpec.builder("io.bkbn.stoik.generated", "Apis")
       it.accept(Visitor(fb), Unit)
       val fs = fb.build()
-      file.write(fs.toString().toByteArray())
+      fs.writeTo(codeGenerator, false)
     }
 
     return symbols.filterNot { it.validate() }.toList()
   }
 
   inner class Visitor(private val fileBuilder: FileSpec.Builder) : KSVisitorVoid() {
+    @OptIn(KotlinPoetKspPreview::class)
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
       if (classDeclaration.classKind != ClassKind.INTERFACE) {
         logger.error("Only an interface can be decorated with @Table", classDeclaration)
@@ -80,6 +76,7 @@ class KtorProcessor(
       val respondText = MemberName("io.ktor.response", "respondText")
 
       fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
+        addOriginatingKSFile(classDeclaration.containingFile!!)
         addFunction(FunSpec.builder(controllerName).apply {
           receiver(Route::class)
           addCode(buildCodeBlock {

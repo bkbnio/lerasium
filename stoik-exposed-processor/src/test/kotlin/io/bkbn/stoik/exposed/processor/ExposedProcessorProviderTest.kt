@@ -42,17 +42,29 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.String
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object UserTable : UUIDTable("user") {
           public val name: Column<String> = varchar("name", 128)
         }
+
+        public class UserEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var name: String by UserTable.name
+
+          public companion object : UUIDEntityClass<UserEntity>(UserTable)
+        }
         """.trimIndent()
       )
     }
-    it("Can construct a Table with an integer type column") {
+    it("Can construct a table with an integer type column") {
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
@@ -82,12 +94,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.Int
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object CounterTable : UUIDTable("counter") {
           public val count: Column<Int> = integer("count")
+        }
+
+        public class CounterEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var count: Int by CounterTable.count
+
+          public companion object : UUIDEntityClass<CounterEntity>(CounterTable)
         }
         """.trimIndent()
       )
@@ -123,12 +147,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.Int
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object BigNameTable : UUIDTable("big_name") {
           public val superImportantField: Column<Int> = integer("super_important_field")
+        }
+
+        public class BigNameEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var superImportantField: Int by BigNameTable.superImportantField
+
+          public companion object : UUIDEntityClass<BigNameEntity>(BigNameTable)
         }
         """.trimIndent()
       )
@@ -163,12 +199,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.Boolean
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object FactsTable : UUIDTable("facts") {
           public val isFact: Column<Boolean> = bool("isFact")
+        }
+
+        public class FactsEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var isFact: Boolean by FactsTable.isFact
+
+          public companion object : UUIDEntityClass<FactsEntity>(FactsTable)
         }
         """.trimIndent()
       )
@@ -203,12 +251,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.Long
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object BigNumTable : UUIDTable("big_num") {
           public val size: Column<Long> = long("size")
+        }
+
+        public class BigNumEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var size: Long by BigNumTable.size
+
+          public companion object : UUIDEntityClass<BigNumEntity>(BigNumTable)
         }
         """.trimIndent()
       )
@@ -244,12 +304,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.Float
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object FloatyTable : UUIDTable("floaty") {
           public val pointyNum: Column<Float> = float("pointy_num")
+        }
+
+        public class FloatyEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var pointyNum: Float by FloatyTable.pointyNum
+
+          public companion object : UUIDEntityClass<FloatyEntity>(FloatyTable)
         }
         """.trimIndent()
       )
@@ -285,12 +357,24 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.String
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
         public object WordsTable : UUIDTable("words") {
           public val word: Column<String> = varchar("word", 256)
+        }
+
+        public class WordsEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id) {
+          public var word: String by WordsTable.word
+
+          public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
         }
         """.trimIndent()
       )
