@@ -97,9 +97,9 @@ class ExposedProcessor(
     superclass(ClassName("org.jetbrains.exposed.dao.id", "UUIDTable"))
     addSuperclassConstructorParameter("%S", tableName)
     properties.forEach { property ->
-      val columnAnnotation: Column = property.getAnnotationsByType(Column::class).first()
+      val columnAnnotation: Column? = property.getAnnotationsByType(Column::class).firstOrNull()
       val fieldName = property.simpleName.asString()
-      val columnName = columnAnnotation.name.ifBlank { property.simpleName.asString() }
+      val columnName = columnAnnotation?.name ?: fieldName
       val columnType = property.toColumnType()
       addProperty(PropertySpec.builder(fieldName, columnType).apply {
         setColumnInitializer(columnName, property)
@@ -116,6 +116,7 @@ class ExposedProcessor(
     when (property.type.toTypeName()) {
       String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, DEFAULT_VARCHAR_SIZE)
       Int::class.asTypeName() -> initializer("integer(%S)", columnName)
+      Long::class.asTypeName() -> initializer("long(%S)", columnName)
       Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
       else -> TODO()
     }
