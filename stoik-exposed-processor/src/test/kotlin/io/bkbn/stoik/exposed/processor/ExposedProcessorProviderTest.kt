@@ -254,6 +254,47 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a varchar with a custom size") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.VarChar
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("words")
+        interface WordsTableSpec {
+          @VarChar(size = 256)
+          val word: String
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.String
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object WordsTable : UUIDTable("words") {
+          public val word: Column<String> = varchar("word", 256)
+        }
+        """.trimIndent()
+      )
+    }
   }
 }) {
   companion object {

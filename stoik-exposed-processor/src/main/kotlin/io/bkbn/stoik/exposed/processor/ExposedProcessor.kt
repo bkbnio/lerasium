@@ -17,6 +17,7 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
@@ -28,6 +29,7 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
+import io.bkbn.stoik.exposed.VarChar
 import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
 
 @OptIn(KotlinPoetKspPreview::class)
@@ -114,12 +116,18 @@ class ExposedProcessor(
 
   private fun PropertySpec.Builder.setColumnInitializer(columnName: String, property: KSPropertyDeclaration) {
     when (property.type.toTypeName()) {
-      String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, DEFAULT_VARCHAR_SIZE)
+      String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, determineVarCharSize(property))
       Int::class.asTypeName() -> initializer("integer(%S)", columnName)
       Long::class.asTypeName() -> initializer("long(%S)", columnName)
       Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
       Float::class.asTypeName() -> initializer("float(%S)", columnName)
       else -> TODO()
     }
+  }
+
+  @OptIn(KspExperimental::class)
+  private fun determineVarCharSize(property: KSPropertyDeclaration): Int {
+    val varCharAnnotation = property.getAnnotationsByType(VarChar::class).firstOrNull()
+    return varCharAnnotation?.size ?: DEFAULT_VARCHAR_SIZE
   }
 }
