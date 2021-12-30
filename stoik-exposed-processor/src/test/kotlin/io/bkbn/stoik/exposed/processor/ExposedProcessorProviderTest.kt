@@ -12,35 +12,16 @@ import java.io.File
 
 class ExposedProcessorProviderTest : DescribeSpec({
   describe("Table Generator") {
-    it("Can construct a simple Table file for a simple interface") {
+    it("Can construct a simple Table with a single column") {
       // arrange
       val sourceFile = SourceFile.kotlin(
-        "Demo.kt", """
+        "Spec.kt", """
         import io.bkbn.stoik.exposed.Column
-        import io.bkbn.stoik.exposed.Sensitive
         import io.bkbn.stoik.exposed.Table
-        import io.bkbn.stoik.exposed.Unique
-
-        sealed interface UserSpec {
-          val firstName: String
-          val lastName: String
-          val email: String
-          val password: String
-        }
 
         @Table("user")
-        interface UserTableSpec : UserSpec {
-          @Column("first_name")
-          override val firstName: String
-
-          @Column("last_name")
-          override val lastName: String
-
-          @Unique
-          override val email: String
-
-          @Sensitive
-          override val password: String
+        interface UserTableSpec {
+          val name: String
         }
       """.trimIndent()
       )
@@ -66,13 +47,250 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.Column
 
         public object UserTable : UUIDTable("user") {
-          public val firstName: Column<String> = varchar("firstName", 128)
+          public val name: Column<String> = varchar("name", 128)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a Table with an integer type column") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
 
-          public val lastName: Column<String> = varchar("lastName", 128)
+        @Table("counter")
+        interface CounterTableSpec {
+          val count: Int
+        }
+      """.trimIndent()
+      )
 
-          public val email: Column<String> = varchar("email", 128)
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
 
-          public val password: Column<String> = varchar("password", 128)
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Int
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object CounterTable : UUIDTable("counter") {
+          public val count: Column<Int> = integer("count")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can override the column name") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("big_name")
+        interface BigNameTableSpec {
+          @Column("super_important_field")
+          val superImportantField: Int
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Int
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object BigNameTable : UUIDTable("big_name") {
+          public val superImportantField: Column<Int> = integer("super_important_field")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a boolean column type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("facts")
+        interface FactTableSpec {
+          val isFact: Boolean
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Boolean
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object FactsTable : UUIDTable("facts") {
+          public val isFact: Column<Boolean> = bool("isFact")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a long column type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("big_num")
+        interface BigNumTableSpec {
+          val size: Long
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Long
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object BigNumTable : UUIDTable("big_num") {
+          public val size: Column<Long> = long("size")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a float column type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("floaty")
+        interface FloatyTableSpec {
+          @Column("pointy_num")
+          val pointyNum: Float
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Float
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object FloatyTable : UUIDTable("floaty") {
+          public val pointyNum: Column<Float> = float("pointy_num")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a varchar with a custom size") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.VarChar
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("words")
+        interface WordsTableSpec {
+          @VarChar(size = 256)
+          val word: String
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.String
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object WordsTable : UUIDTable("words") {
+          public val word: Column<String> = varchar("word", 256)
         }
         """.trimIndent()
       )
