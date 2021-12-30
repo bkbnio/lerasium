@@ -1,5 +1,7 @@
 package io.bkbn.stoik.exposed.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -24,6 +26,7 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
+import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
 
@@ -83,6 +86,7 @@ class ExposedProcessor(
     }
   }
 
+  @OptIn(KspExperimental::class)
   private fun FileSpec.Builder.createTableObject(
     tableName: String,
     tableObjectName: String,
@@ -93,10 +97,12 @@ class ExposedProcessor(
     superclass(ClassName("org.jetbrains.exposed.dao.id", "UUIDTable"))
     addSuperclassConstructorParameter("%S", tableName)
     properties.forEach { property ->
+      val columnAnnotation: Column = property.getAnnotationsByType(Column::class).first()
       val fieldName = property.simpleName.asString()
+      val columnName = columnAnnotation.name.ifBlank { property.simpleName.asString() }
       val columnType = property.toColumnType()
       addProperty(PropertySpec.builder(fieldName, columnType).apply {
-        setColumnInitializer(fieldName, property)
+        setColumnInitializer(columnName, property)
       }.build())
     }
   }.build())
@@ -106,10 +112,10 @@ class ExposedProcessor(
     return columnBase.parameterizedBy(type.toTypeName())
   }
 
-  private fun PropertySpec.Builder.setColumnInitializer(fieldName: String, property: KSPropertyDeclaration) {
+  private fun PropertySpec.Builder.setColumnInitializer(columnName: String, property: KSPropertyDeclaration) {
     when (property.type.toTypeName()) {
-      String::class.asTypeName() -> initializer("varchar(%S, %L)", fieldName, DEFAULT_VARCHAR_SIZE)
-      Int::class.asTypeName() -> initializer("integer(%S)", fieldName)
+      String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, DEFAULT_VARCHAR_SIZE)
+      Int::class.asTypeName() -> initializer("integer(%S)", columnName)
       else -> TODO()
     }
   }

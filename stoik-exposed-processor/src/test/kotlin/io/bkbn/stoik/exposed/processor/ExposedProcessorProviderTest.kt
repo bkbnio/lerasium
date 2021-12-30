@@ -21,7 +21,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
         @Table("user")
         interface UserTableSpec {
-          @Column("first_name")
+          @Column
           val name: String
         }
       """.trimIndent()
@@ -90,6 +90,47 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
         public object CounterTable : UUIDTable("counter") {
           public val count: Column<Int> = integer("count")
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can override the column name") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("big_name")
+        interface BigNameTableSpec {
+          @Column("super_important_field")
+          val superImportantField: Int
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Int
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object BigNameTable : UUIDTable("big_name") {
+          public val superImportantField: Column<Int> = integer("super_important_field")
         }
         """.trimIndent()
       )
