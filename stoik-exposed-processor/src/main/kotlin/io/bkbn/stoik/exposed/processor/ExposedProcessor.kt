@@ -116,6 +116,7 @@ class ExposedProcessor(
     when (property.type.toTypeName()) {
       String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, DEFAULT_VARCHAR_SIZE)
       Int::class.asTypeName() -> initializer("integer(%S)", columnName)
+      Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
       else -> TODO()
     }
   }

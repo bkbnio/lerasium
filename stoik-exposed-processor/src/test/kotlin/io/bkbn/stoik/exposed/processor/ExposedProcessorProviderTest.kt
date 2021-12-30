@@ -135,6 +135,47 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a table with a boolean column type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("facts")
+        interface FactTableSpec {
+          @Column
+          val isFact: Boolean
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Boolean
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object FactsTable : UUIDTable("facts") {
+          public val isFact: Column<Boolean> = bool("isFact")
+        }
+        """.trimIndent()
+      )
+    }
   }
 }) {
   companion object {
