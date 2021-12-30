@@ -17,10 +17,12 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
@@ -92,11 +94,23 @@ class ExposedProcessor(
     addSuperclassConstructorParameter("%S", tableName)
     properties.forEach { property ->
       val fieldName = property.simpleName.asString()
-      // TODO Update parameterizedBy
-      val columnType = ClassName("org.jetbrains.exposed.sql", "Column").parameterizedBy(String::class.asTypeName())
+      val columnType = property.toColumnType()
       addProperty(PropertySpec.builder(fieldName, columnType).apply {
-        initializer("varchar(%S, %L)", fieldName, DEFAULT_VARCHAR_SIZE)
+        setColumnInitializer(fieldName, property)
       }.build())
     }
   }.build())
+
+  private fun KSPropertyDeclaration.toColumnType(): TypeName {
+    val columnBase = ClassName("org.jetbrains.exposed.sql", "Column")
+    return columnBase.parameterizedBy(type.toTypeName())
+  }
+
+  private fun PropertySpec.Builder.setColumnInitializer(fieldName: String, property: KSPropertyDeclaration) {
+    when (property.type.toTypeName()) {
+      String::class.asTypeName() -> initializer("varchar(%S, %L)", fieldName, DEFAULT_VARCHAR_SIZE)
+      Int::class.asTypeName() -> initializer("integer(%S)", fieldName)
+      else -> TODO()
+    }
+  }
 }

@@ -12,35 +12,17 @@ import java.io.File
 
 class ExposedProcessorProviderTest : DescribeSpec({
   describe("Table Generator") {
-    it("Can construct a simple Table file for a simple interface") {
+    it("Can construct a simple Table with a single column") {
       // arrange
       val sourceFile = SourceFile.kotlin(
-        "Demo.kt", """
+        "Spec.kt", """
         import io.bkbn.stoik.exposed.Column
-        import io.bkbn.stoik.exposed.Sensitive
         import io.bkbn.stoik.exposed.Table
-        import io.bkbn.stoik.exposed.Unique
-
-        sealed interface UserSpec {
-          val firstName: String
-          val lastName: String
-          val email: String
-          val password: String
-        }
 
         @Table("user")
-        interface UserTableSpec : UserSpec {
+        interface UserTableSpec {
           @Column("first_name")
-          override val firstName: String
-
-          @Column("last_name")
-          override val lastName: String
-
-          @Unique
-          override val email: String
-
-          @Sensitive
-          override val password: String
+          val name: String
         }
       """.trimIndent()
       )
@@ -66,13 +48,48 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.Column
 
         public object UserTable : UUIDTable("user") {
-          public val firstName: Column<String> = varchar("firstName", 128)
+          public val name: Column<String> = varchar("name", 128)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a Table with an integer type column") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
 
-          public val lastName: Column<String> = varchar("lastName", 128)
+        @Table("counter")
+        interface CounterTableSpec {
+          @Column
+          val count: Int
+        }
+      """.trimIndent()
+      )
 
-          public val email: Column<String> = varchar("email", 128)
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
 
-          public val password: Column<String> = varchar("password", 128)
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Int
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object CounterTable : UUIDTable("counter") {
+          public val count: Column<Int> = integer("count")
         }
         """.trimIndent()
       )
