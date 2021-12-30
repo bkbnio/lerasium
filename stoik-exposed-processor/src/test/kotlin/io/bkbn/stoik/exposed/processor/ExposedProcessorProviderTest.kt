@@ -213,6 +213,47 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a table with a float column type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.Column
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("floaty")
+        interface FloatyTableSpec {
+          @Column("pointy_num")
+          val pointyNum: Float
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated
+
+        import kotlin.Float
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+
+        public object FloatyTable : UUIDTable("floaty") {
+          public val pointyNum: Column<Float> = float("pointy_num")
+        }
+        """.trimIndent()
+      )
+    }
   }
 }) {
   companion object {

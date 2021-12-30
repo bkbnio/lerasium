@@ -118,6 +118,7 @@ class ExposedProcessor(
       Int::class.asTypeName() -> initializer("integer(%S)", columnName)
       Long::class.asTypeName() -> initializer("long(%S)", columnName)
       Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
+      Float::class.asTypeName() -> initializer("float(%S)", columnName)
       else -> TODO()
     }
   }
