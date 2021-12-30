@@ -13,4 +13,5 @@ dependencies {
 
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
+  implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
 }

@@ -17,7 +17,7 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
@@ -31,6 +31,10 @@ import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.VarChar
 import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
+import java.util.UUID
 
 @OptIn(KotlinPoetKspPreview::class)
 class ExposedProcessor(
@@ -41,6 +45,7 @@ class ExposedProcessor(
 
   companion object {
     private const val DEFAULT_VARCHAR_SIZE = 128
+    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated"
   }
 
   init {
@@ -80,11 +85,13 @@ class ExposedProcessor(
 
       val tableName = nameArgument.value as String
       val tableObjectName = tableName.snakeToUpperCamelCase().plus("Table")
+      val entityName = tableName.snakeToUpperCamelCase().plus("Entity")
       val containingFile = classDeclaration.containingFile ?: error("Could not identify originating file :(")
       val properties: Sequence<KSPropertyDeclaration> = classDeclaration.getAllProperties()
         .filter { it.validate() }
 
       fileBuilder.createTableObject(tableName, tableObjectName, containingFile, properties)
+      fileBuilder.createEntityClass(entityName, tableObjectName, containingFile, properties)
     }
   }
 
@@ -108,6 +115,43 @@ class ExposedProcessor(
       }.build())
     }
   }.build())
+
+  private fun FileSpec.Builder.createEntityClass(
+    entityName: String,
+    tableObjectName: String,
+    containingFile: KSFile,
+    properties: Sequence<KSPropertyDeclaration>,
+  ) = addType(TypeSpec.classBuilder(entityName).apply {
+    addOriginatingKSFile(containingFile)
+    superclass(UUIDEntity::class)
+    addSuperclassConstructorParameter("id")
+    addEntityConstructor()
+    addEntityCompanion(entityName, tableObjectName)
+    val tableObject = ClassName(BASE_PACKAGE_NAME, tableObjectName)
+    properties.forEach { property ->
+      val fieldName = property.simpleName.asString()
+      val fieldType = property.type.toTypeName()
+      addProperty(PropertySpec.builder(fieldName, fieldType).apply {
+        delegate("%T.$fieldName", tableObject)
+        mutable()
+      }.build())
+    }
+  }.build())
+
+  private fun TypeSpec.Builder.addEntityConstructor() {
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      addParameter("id", EntityID::class.asTypeName().parameterizedBy(UUID::class.asTypeName()))
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addEntityCompanion(entityName: String, tableObjectName: String) {
+    addType(TypeSpec.companionObjectBuilder().apply {
+      val entityClass = ClassName(BASE_PACKAGE_NAME, entityName)
+      val tableObject = ClassName(BASE_PACKAGE_NAME, tableObjectName)
+      superclass(UUIDEntityClass::class.asTypeName().parameterizedBy(entityClass))
+      addSuperclassConstructorParameter("%T", tableObject)
+    }.build())
+  }
 
   private fun KSPropertyDeclaration.toColumnType(): TypeName {
     val columnBase = ClassName("org.jetbrains.exposed.sql", "Column")
