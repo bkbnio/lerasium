@@ -1,4 +1,5 @@
 plugins {
+  kotlin("plugin.serialization") version "1.6.0"
   id("com.google.devtools.ksp") version "1.6.0-1.0.2"
   application
 }
@@ -6,6 +7,9 @@ plugins {
 dependencies {
   ksp(projects.stoikExposedProcessor)
   implementation(projects.stoikExposedCore)
+
+  ksp(projects.stoikDaoProcessor)
+  implementation(projects.stoikDaoCore)
 
   ksp(projects.stoikKtorProcessor)
   implementation(projects.stoikKtorCore)
