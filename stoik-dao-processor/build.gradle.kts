@@ -14,6 +14,9 @@ dependencies {
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
   implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
+
+  // Serialization
+  implementation(group = "org.jetbrains.kotlinx", "kotlinx-serialization-json", version = "1.3.2")
 }
 
 testing {

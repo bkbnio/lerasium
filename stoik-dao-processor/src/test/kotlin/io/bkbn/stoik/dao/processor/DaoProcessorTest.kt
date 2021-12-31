@@ -36,7 +36,18 @@ class DaoProcessorTest : DescribeSpec({
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode("""
         package io.bkbn.stoik.generated
 
-        public class UserDao
+        import kotlinx.serialization.Serializable
+
+        public open class UserDao
+
+        @Serializable
+        public class CreateUserRequest
+
+        @Serializable
+        public class UpdateUserRequest
+
+        @Serializable
+        public class UserResponse
       """.trimIndent())
     }
   }

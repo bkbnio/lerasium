@@ -14,12 +14,14 @@ import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.dao.core.Dao
+import kotlinx.serialization.Serializable
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class DaoProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,
@@ -47,7 +49,6 @@ class DaoProcessor(
     return symbols.filterNot { it.validate() }.toList()
   }
 
-  @OptIn(KspExperimental::class)
   inner class Visitor(private val fileBuilder: FileSpec.Builder) : KSVisitorVoid() {
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
       if (classDeclaration.classKind != ClassKind.INTERFACE) {
@@ -57,10 +58,30 @@ class DaoProcessor(
 
       val dao: Dao = classDeclaration.getAnnotationsByType(Dao::class).first()
 
-      val daoName = "${dao.name}Dao"
+      val entityName = dao.name
+      val daoName = "${entityName}Dao"
 
       fileBuilder.addType(TypeSpec.classBuilder(daoName).apply {
+        addModifiers(KModifier.OPEN)
+        // todo create
+        // todo read
+        // todo update
+        // todo delete
+      }.build())
 
+      fileBuilder.addType(TypeSpec.classBuilder("Create${entityName}Request").apply {
+        addAnnotation(Serializable::class)
+        // todo
+      }.build())
+
+      fileBuilder.addType(TypeSpec.classBuilder("Update${entityName}Request").apply {
+        addAnnotation(Serializable::class)
+        // todo
+      }.build())
+
+      fileBuilder.addType(TypeSpec.classBuilder("${entityName}Response").apply {
+        addAnnotation(Serializable::class)
+        // todo
       }.build())
     }
   }
