@@ -18,7 +18,10 @@ class DaoProcessorTest : DescribeSpec({
         import io.bkbn.stoik.dao.core.Dao
 
         @Dao("User")
-        interface UserDaoSpec
+        interface UserDaoSpec {
+            val name: String
+            val email: String
+        }
       """.trimIndent())
 
       val compilation = KotlinCompilation().apply {
@@ -36,12 +39,16 @@ class DaoProcessorTest : DescribeSpec({
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode("""
         package io.bkbn.stoik.generated
 
+        import kotlin.String
         import kotlinx.serialization.Serializable
 
         public open class UserDao
 
         @Serializable
-        public class CreateUserRequest
+        public data class CreateUserRequest(
+          public val name: String,
+          public val email: String
+        )
 
         @Serializable
         public class UpdateUserRequest

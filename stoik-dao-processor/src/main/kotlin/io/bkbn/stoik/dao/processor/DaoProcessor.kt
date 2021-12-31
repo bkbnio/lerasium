@@ -10,13 +10,18 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
+import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.dao.core.Dao
 import kotlinx.serialization.Serializable
@@ -61,6 +66,9 @@ class DaoProcessor(
       val entityName = dao.name
       val daoName = "${entityName}Dao"
 
+      val properties: Sequence<KSPropertyDeclaration> = classDeclaration.getAllProperties()
+        .filter { it.validate() }
+
       fileBuilder.addType(TypeSpec.classBuilder(daoName).apply {
         addModifiers(KModifier.OPEN)
         // todo create
@@ -71,7 +79,17 @@ class DaoProcessor(
 
       fileBuilder.addType(TypeSpec.classBuilder("Create${entityName}Request").apply {
         addAnnotation(Serializable::class)
-        // todo
+        addModifiers(KModifier.DATA)
+        primaryConstructor(FunSpec.constructorBuilder().apply {
+          properties.forEach { property ->
+            addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
+          }
+        }.build())
+        properties.forEach { property ->
+          addProperty(PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName()).apply {
+            initializer(property.simpleName.asString())
+          }.build())
+        }
       }.build())
 
       fileBuilder.addType(TypeSpec.classBuilder("Update${entityName}Request").apply {
