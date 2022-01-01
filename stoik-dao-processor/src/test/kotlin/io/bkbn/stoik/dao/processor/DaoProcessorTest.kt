@@ -14,7 +14,8 @@ class DaoProcessorTest : DescribeSpec({
   describe("Dao Generator") {
     it("Can construct a simple dao") {
       // arrange
-      val sourceFile = SourceFile.kotlin("Spec.kt", """
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
         import io.bkbn.stoik.dao.core.Dao
 
         @Dao("User")
@@ -22,7 +23,8 @@ class DaoProcessorTest : DescribeSpec({
             val name: String
             val email: String
         }
-      """.trimIndent())
+      """.trimIndent()
+      )
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
@@ -36,13 +38,32 @@ class DaoProcessorTest : DescribeSpec({
       // assert
       result shouldNotBe null
       result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode("""
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
         package io.bkbn.stoik.generated
 
+        import java.util.UUID
         import kotlin.String
+        import kotlin.Unit
         import kotlinx.serialization.Serializable
 
-        public open class UserDao
+        public open class UserDao {
+          public fun create(request: CreateUserRequest): UserResponse {
+            // TODO
+          }
+
+          public fun read(id: UUID): UserResponse {
+            // TODO
+          }
+
+          public fun update(id: UUID, request: UpdateUserRequest): UserResponse {
+            // TODO
+          }
+
+          public fun delete(id: UUID): Unit {
+            // TODO
+          }
+        }
 
         @Serializable
         public data class CreateUserRequest(
@@ -61,7 +82,8 @@ class DaoProcessorTest : DescribeSpec({
           public val name: String,
           public val email: String
         )
-      """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 }) {

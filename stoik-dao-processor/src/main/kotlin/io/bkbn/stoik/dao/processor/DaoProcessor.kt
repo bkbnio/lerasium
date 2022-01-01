@@ -8,12 +8,11 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -25,6 +24,7 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.dao.core.Dao
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class DaoProcessor(
@@ -71,10 +71,10 @@ class DaoProcessor(
 
       fileBuilder.addType(TypeSpec.classBuilder(daoName).apply {
         addModifiers(KModifier.OPEN)
-        // todo create
-        // todo read
-        // todo update
-        // todo delete
+        addCreateFunction(entityName)
+        addReadFunction(entityName)
+        addUpdateFunction(entityName)
+        addDeleteFunction()
       }.build())
 
       fileBuilder.addCreateRequestType(entityName, properties)
@@ -82,22 +82,44 @@ class DaoProcessor(
       fileBuilder.addResponseType(entityName, properties)
     }
 
+    private fun TypeSpec.Builder.addCreateFunction(
+      entityName: String
+    ) = addFunction(FunSpec.builder("create").apply {
+      addParameter("request", ClassName("io.bkbn.stoik.generated", "Create${entityName}Request"))
+      returns(ClassName("io.bkbn.stoik.generated", "${entityName}Response"))
+      addComment("TODO")
+    }.build())
+
+    private fun TypeSpec.Builder.addReadFunction(
+      entityName: String
+    ) = addFunction(FunSpec.builder("read").apply {
+      addParameter("id", UUID::class)
+      returns(ClassName("io.bkbn.stoik.generated", "${entityName}Response"))
+      addComment("TODO")
+    }.build())
+
+    private fun TypeSpec.Builder.addUpdateFunction(
+      entityName: String
+    ) = addFunction(FunSpec.builder("update").apply {
+      addParameter("id", UUID::class)
+      addParameter("request", ClassName("io.bkbn.stoik.generated", "Update${entityName}Request"))
+      returns(ClassName("io.bkbn.stoik.generated", "${entityName}Response"))
+      addComment("TODO")
+    }.build())
+
+    private fun TypeSpec.Builder.addDeleteFunction() = addFunction(FunSpec.builder("delete").apply {
+      addParameter("id", UUID::class)
+      returns(Unit::class)
+      addComment("TODO")
+    }.build())
+
     private fun FileSpec.Builder.addCreateRequestType(
       entityName: String,
       properties: Sequence<KSPropertyDeclaration>
     ) = addType(TypeSpec.classBuilder("Create${entityName}Request").apply {
       addAnnotation(Serializable::class)
       addModifiers(KModifier.DATA)
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        properties.forEach { property ->
-          addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
-        }
-      }.build())
-      properties.forEach { property ->
-        addProperty(PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName()).apply {
-          initializer(property.simpleName.asString())
-        }.build())
-      }
+      addBaseProperties(properties)
     }.build())
 
     private fun FileSpec.Builder.addUpdateRequestType(
@@ -134,6 +156,10 @@ class DaoProcessor(
     ) = addType(TypeSpec.classBuilder("${entityName}Response").apply {
       addAnnotation(Serializable::class)
       addModifiers(KModifier.DATA)
+      addBaseProperties(properties)
+    }.build())
+
+    private fun TypeSpec.Builder.addBaseProperties(properties: Sequence<KSPropertyDeclaration>) {
       primaryConstructor(FunSpec.constructorBuilder().apply {
         properties.forEach { property ->
           addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
@@ -144,6 +170,6 @@ class DaoProcessor(
           initializer(property.simpleName.asString())
         }.build())
       }
-    }.build())
+    }
   }
 }
