@@ -51,10 +51,16 @@ class DaoProcessorTest : DescribeSpec({
         )
 
         @Serializable
-        public class UpdateUserRequest
+        public data class UpdateUserRequest(
+          public val name: String?,
+          public val email: String?
+        )
 
         @Serializable
-        public class UserResponse
+        public data class UserResponse(
+          public val name: String,
+          public val email: String
+        )
       """.trimIndent())
     }
   }

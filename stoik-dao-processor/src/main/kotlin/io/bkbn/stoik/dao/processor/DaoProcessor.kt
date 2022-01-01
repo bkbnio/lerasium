@@ -77,30 +77,73 @@ class DaoProcessor(
         // todo delete
       }.build())
 
-      fileBuilder.addType(TypeSpec.classBuilder("Create${entityName}Request").apply {
-        addAnnotation(Serializable::class)
-        addModifiers(KModifier.DATA)
-        primaryConstructor(FunSpec.constructorBuilder().apply {
-          properties.forEach { property ->
-            addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
-          }
-        }.build())
+      fileBuilder.addCreateRequestType(entityName, properties)
+      fileBuilder.addUpdateRequestType(entityName, properties)
+      fileBuilder.addResponseType(entityName, properties)
+    }
+
+    private fun FileSpec.Builder.addCreateRequestType(
+      entityName: String,
+      properties: Sequence<KSPropertyDeclaration>
+    ) = addType(TypeSpec.classBuilder("Create${entityName}Request").apply {
+      addAnnotation(Serializable::class)
+      addModifiers(KModifier.DATA)
+      primaryConstructor(FunSpec.constructorBuilder().apply {
         properties.forEach { property ->
-          addProperty(PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName()).apply {
-            initializer(property.simpleName.asString())
-          }.build())
+          addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
         }
       }.build())
+      properties.forEach { property ->
+        addProperty(PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName()).apply {
+          initializer(property.simpleName.asString())
+        }.build())
+      }
+    }.build())
 
-      fileBuilder.addType(TypeSpec.classBuilder("Update${entityName}Request").apply {
-        addAnnotation(Serializable::class)
-        // todo
+    private fun FileSpec.Builder.addUpdateRequestType(
+      entityName: String,
+      properties: Sequence<KSPropertyDeclaration>
+    ) = addType(TypeSpec.classBuilder("Update${entityName}Request").apply {
+      addAnnotation(Serializable::class)
+      addModifiers(KModifier.DATA)
+      primaryConstructor(FunSpec.constructorBuilder().apply {
+        properties.forEach { property ->
+          addParameter(
+            ParameterSpec.builder(
+              property.simpleName.asString(),
+              property.type.toTypeName().copy(nullable = true)
+            ).build()
+          )
+        }
       }.build())
+      properties.forEach { property ->
+        addProperty(
+          PropertySpec.builder(
+            property.simpleName.asString(),
+            property.type.toTypeName().copy(nullable = true)
+          ).apply {
+            initializer(property.simpleName.asString())
+          }.build()
+        )
+      }
+    }.build())
 
-      fileBuilder.addType(TypeSpec.classBuilder("${entityName}Response").apply {
-        addAnnotation(Serializable::class)
-        // todo
+    private fun FileSpec.Builder.addResponseType(
+      entityName: String,
+      properties: Sequence<KSPropertyDeclaration>
+    ) = addType(TypeSpec.classBuilder("${entityName}Response").apply {
+      addAnnotation(Serializable::class)
+      addModifiers(KModifier.DATA)
+      primaryConstructor(FunSpec.constructorBuilder().apply {
+        properties.forEach { property ->
+          addParameter(ParameterSpec.builder(property.simpleName.asString(), property.type.toTypeName()).build())
+        }
       }.build())
-    }
+      properties.forEach { property ->
+        addProperty(PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName()).apply {
+          initializer(property.simpleName.asString())
+        }.build())
+      }
+    }.build())
   }
 }
