@@ -1,6 +1,7 @@
 plugins {
-  kotlin("plugin.serialization") version "1.6.0"
-  id("com.google.devtools.ksp") version "1.6.0-1.0.2"
+  kotlin("jvm")
+  kotlin("plugin.serialization") version "1.6.10"
+  id("com.google.devtools.ksp")
   application
 }
 
