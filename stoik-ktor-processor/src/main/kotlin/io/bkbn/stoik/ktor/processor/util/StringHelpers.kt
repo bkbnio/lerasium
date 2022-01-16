@@ -1,5 +1,7 @@
 package io.bkbn.stoik.ktor.processor.util
 
+import java.util.Locale
+
 object StringHelpers {
   private val camelRegex = "(?<=[a-zA-Z])[A-Z]".toRegex()
   private val snakeRegex = "_[a-zA-Z]".toRegex()
@@ -7,18 +9,19 @@ object StringHelpers {
   fun String.camelToSnakeCase(): String {
     return camelRegex.replace(this) {
       "_${it.value}"
-    }.toLowerCase()
+    }.lowercase(Locale.getDefault())
   }
 
   fun String.snakeToLowerCamelCase(): String {
     return snakeRegex.replace(this) {
-      it.value.replace("_","")
-        .toUpperCase()
+      it.value.replace("_", "")
+        .uppercase(Locale.getDefault())
     }
   }
 
   fun String.snakeToUpperCamelCase(): String {
-    return this.snakeToLowerCamelCase().capitalize()
+    return this.snakeToLowerCamelCase()
+      .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
   }
 
 }

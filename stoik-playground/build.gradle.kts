@@ -9,9 +9,6 @@ dependencies {
   ksp(projects.stoikExposedProcessor)
   implementation(projects.stoikExposedCore)
 
-  ksp(projects.stoikDaoProcessor)
-  implementation(projects.stoikDaoCore)
-
   ksp(projects.stoikKtorProcessor)
   implementation(projects.stoikKtorCore)
 

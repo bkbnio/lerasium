@@ -21,6 +21,7 @@ dependencies {
 
   // Stoik
   implementation(projects.stoikExposedCore)
+  implementation(projects.stoikUtils)
 
   // KSP
   implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")

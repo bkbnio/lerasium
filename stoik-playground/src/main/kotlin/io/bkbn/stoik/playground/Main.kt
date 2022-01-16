@@ -16,7 +16,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 
-fun main(args: Array<String>) {
+fun main() {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.flyway.migrate()

@@ -1,18 +1,14 @@
 package io.bkbn.stoik.playground.spec
 
-import io.bkbn.stoik.dao.core.Dao
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.Unique
-import io.bkbn.stoik.generated.UserEntity
 import io.bkbn.stoik.ktor.core.Api
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.exposed.dao.UUIDEntity
 import java.util.UUID
 
 sealed interface UserSpec {
@@ -33,8 +29,8 @@ interface UserTableSpec : UserSpec {
   override val email: String
 }
 
-@Dao
-interface UserDaoSpec : UserSpec
+@Api("User")
+interface UserApiSpec: UserSpec
 
 object UUIDSerializer : KSerializer<UUID> {
   override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)

@@ -30,7 +30,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.VarChar
-import io.bkbn.stoik.exposed.processor.util.StringHelpers.snakeToUpperCamelCase
+import io.bkbn.stoik.utils.StringUtils.snakeToUpperCamelCase
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID

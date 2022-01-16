@@ -10,6 +10,10 @@ plugins {
 }
 
 sourdough {
-  libraryName.set("Stoik Dao Core")
-  libraryDescription.set("Collection of annotations for driving DAO generation️")
+  libraryName.set("Stoik Utils")
+  libraryDescription.set("Collection of utilities for use across all modules️")
+}
+
+dependencies {
+  implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
 }
