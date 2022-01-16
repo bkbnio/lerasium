@@ -1,8 +1,8 @@
 package io.bkbn.stoik.playground
 
 import io.bkbn.stoik.generated.UserApi.userController
-import io.bkbn.stoik.generated.UserEntity
-import io.bkbn.stoik.generated.UserTable
+import io.bkbn.stoik.generated.table.UserEntity
+import io.bkbn.stoik.generated.table.UserTable
 import io.bkbn.stoik.playground.config.DatabaseConfig
 import io.ktor.application.Application
 import io.ktor.routing.route

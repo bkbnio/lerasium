@@ -30,13 +30,14 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.VarChar
+import io.bkbn.stoik.utils.StringUtils.capitalized
 import io.bkbn.stoik.utils.StringUtils.snakeToUpperCamelCase
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class ExposedProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,
@@ -45,7 +46,7 @@ class ExposedProcessor(
 
   companion object {
     private const val DEFAULT_VARCHAR_SIZE = 128
-    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated"
+    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated.table"
   }
 
   init {
@@ -60,7 +61,8 @@ class ExposedProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val fb = FileSpec.builder("io.bkbn.stoik.generated", "Tables")
+      val name = it.getAnnotationsByType(Table::class).toList().first().name.snakeToUpperCamelCase()
+      val fb = FileSpec.builder(BASE_PACKAGE_NAME, name.plus("Table"))
       it.accept(Visitor(fb), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)

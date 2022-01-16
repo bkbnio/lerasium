@@ -23,4 +23,7 @@ object StringUtils {
     return this.snakeToLowerCamelCase()
       .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
   }
+
+  fun String.capitalized() =
+    this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
