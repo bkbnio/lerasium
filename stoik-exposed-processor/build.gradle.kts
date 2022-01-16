@@ -32,7 +32,7 @@ dependencies {
 
 testing {
   suites {
-    val test by getting(JvmTestSuite::class) {
+    named("test", JvmTestSuite::class) {
       useJUnitJupiter()
       dependencies {
         implementation("io.kotest:kotest-runner-junit5-jvm:5.0.3")
