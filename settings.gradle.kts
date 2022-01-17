@@ -1,20 +1,26 @@
 rootProject.name = "stoik"
 
-//
+// CORE
+include("core")
 
 // RDBMS
-include("stoik-exposed-core")
-include("stoik-exposed-processor")
+include("exposed-core")
+include("exposed-processor")
 
 // API
-include("stoik-ktor-core")
-include("stoik-ktor-processor")
+include("ktor-core")
+include("ktor-processor")
 
 // Playground
-include("stoik-playground")
+include("playground")
 
 // Utility
-include("stoik-utils")
+include("utils")
+
+
+run {
+  rootProject.children.forEach { it.name = "${rootProject.name}-${it.name}" }
+}
 
 // Feature Previews
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
