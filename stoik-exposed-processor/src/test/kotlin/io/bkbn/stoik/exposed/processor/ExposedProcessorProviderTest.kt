@@ -4,6 +4,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -412,8 +413,10 @@ class ExposedProcessorProviderTest : DescribeSpec({
       val result = compilation.compile()
       result shouldNotBe null
       result.kspGeneratedSources shouldHaveSize 2
-      result.kspGeneratedSources[0].name shouldBe "OtherWordsTable.kt"
-      result.kspGeneratedSources[1].name shouldBe "WordsTable.kt"
+
+      val fileNames = result.kspGeneratedSources.map { it.name }
+      fileNames shouldContain "OtherWordsTable.kt"
+      fileNames shouldContain "WordsTable.kt"
     }
   }
 }) {
