@@ -15,7 +15,7 @@ sourdough {
 }
 
 dependencies {
-  implementation(group = "io.konform", name = "konform-jvm", version = "0.3.0")
+  api(group = "io.konform", name = "konform-jvm", version = "0.3.0")
 }
 
 testing {

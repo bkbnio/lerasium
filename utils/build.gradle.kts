@@ -12,8 +12,11 @@ plugins {
 sourdough {
   libraryName.set("Stoik Utils")
   libraryDescription.set("Collection of utilities for use across all modules️")
+  compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 dependencies {
+  implementation(projects.stoikCore)
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
+  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")
 }

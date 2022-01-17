@@ -1,6 +1,6 @@
 package io.bkbn.stoik.playground
 
-import io.bkbn.stoik.generated.api.TodoApi.todoController
+import io.bkbn.stoik.generated.api.UserApi.userController
 import io.bkbn.stoik.generated.table.UserEntity
 import io.bkbn.stoik.generated.table.UserTable
 import io.bkbn.stoik.playground.config.DatabaseConfig
@@ -43,7 +43,7 @@ fun main() {
 fun Application.module() {
   routing {
     route("/user") {
-      todoController()
+      userController()
     }
   }
 }

@@ -1,33 +1,18 @@
 package io.bkbn.stoik.ktor.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
-import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
-import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSValueArgument
-import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.buildCodeBlock
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
-import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.writeTo
-import io.bkbn.stoik.core.Domain
-import io.bkbn.stoik.core.validation.DomainValidation
 import io.bkbn.stoik.ktor.core.Api
-import io.bkbn.stoik.ktor.processor.util.RouteUtils.addControlFlow
-import io.ktor.routing.Route
-import java.util.Locale
+import io.bkbn.stoik.utils.StoikUtils.findValidDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class KtorProcessor(
@@ -52,55 +37,13 @@ class KtorProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val domainType = it.superTypes
-        .map { t -> t.resolve().declaration }
-        .find { t -> t.isAnnotationPresent(Domain::class) }
-        ?: error("Api must implement an interface annotated with Domain")
-      val domain = domainType.getAnnotationsByType(Domain::class).first()
-      val domainValidation = DomainValidation.constraints.validate(domain)
-      require(domainValidation.errors.isEmpty()) { "Domain is invalid ${domainValidation.errors}" }
-      val name = domain.name
-      val fb = FileSpec.builder(BASE_PACKAGE_NAME, name.plus("Api"))
-      it.accept(Visitor(fb), Unit)
+      val domain = it.findValidDomain()
+      val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Api"))
+      it.accept(ApiVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
     }
 
     return symbols.filterNot { it.validate() }.toList()
-  }
-
-  inner class Visitor(private val fileBuilder: FileSpec.Builder) : KSVisitorVoid() {
-    @OptIn(KotlinPoetKspPreview::class)
-    override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
-      if (classDeclaration.classKind != ClassKind.INTERFACE) {
-        logger.error("Only an interface can be decorated with @Api", classDeclaration)
-        return
-      }
-
-      val apiName = "Todo"
-      val controllerName = apiName.plus("Controller").replaceFirstChar { it.lowercase(Locale.getDefault()) }
-      val apiObjectName = apiName.plus("Api")
-
-      val routeMember = MemberName("io.ktor.routing", "route")
-      val getMember = MemberName("io.ktor.routing", "get")
-      val callMember = MemberName("io.ktor.application", "call")
-      val respondText = MemberName("io.ktor.response", "respondText")
-
-      fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
-        addOriginatingKSFile(classDeclaration.containingFile!!)
-        addFunction(FunSpec.builder(controllerName).apply {
-          receiver(Route::class)
-          addCode(buildCodeBlock {
-            addControlFlow("%M(%S)", routeMember, "/") {
-              addControlFlow("%M", getMember) {
-                addControlFlow("%M.%M", callMember, respondText) {
-                  addStatement("%S", "hi")
-                }
-              }
-            }
-          })
-        }.build())
-      }.build())
-    }
   }
 }

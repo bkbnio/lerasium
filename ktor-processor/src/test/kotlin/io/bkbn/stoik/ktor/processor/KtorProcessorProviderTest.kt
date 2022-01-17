@@ -102,7 +102,7 @@ class KtorProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        // TODO
+
         """.trimIndent()
       )
     }

@@ -21,6 +21,7 @@ dependencies {
 
   // Stoik
   implementation(projects.stoikCore)
+  implementation(projects.stoikUtils)
   implementation(projects.stoikKtorCore)
 
   // Symbol Processing
@@ -29,9 +30,6 @@ dependencies {
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
   implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
-
-  // Validation
-  implementation(group = "io.konform", name = "konform-jvm", version = "0.3.0")
 }
 
 testing {
