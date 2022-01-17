@@ -1,15 +1,30 @@
 plugins {
-  id("io.bkbn.sourdough.library")
+  kotlin("jvm")
+  id("io.bkbn.sourdough.library.jvm")
+  id("io.gitlab.arturbosch.detekt")
+  id("com.adarshr.test-logger")
+  id("org.jetbrains.dokka")
+  id("maven-publish")
+  id("java-library")
+  id("signing")
 }
+
+sourdough {
+  libraryName.set("Stoik Exposed Processor")
+  libraryDescription.set("Annotation processor for Exposed ORM")
+  compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
+}
+
 
 dependencies {
   // IMPLEMENTATION
 
   // Stoik
   implementation(projects.stoikExposedCore)
+  implementation(projects.stoikUtils)
 
   // KSP
-  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.0-1.0.2")
+  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")
 
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
@@ -18,7 +33,7 @@ dependencies {
 
 testing {
   suites {
-    val test by getting(JvmTestSuite::class) {
+    named("test", JvmTestSuite::class) {
       useJUnitJupiter()
       dependencies {
         implementation("io.kotest:kotest-runner-junit5-jvm:5.0.3")

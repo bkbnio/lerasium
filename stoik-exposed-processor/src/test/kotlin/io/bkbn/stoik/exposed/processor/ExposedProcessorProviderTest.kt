@@ -4,6 +4,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -11,7 +12,7 @@ import org.intellij.lang.annotations.Language
 import java.io.File
 
 class ExposedProcessorProviderTest : DescribeSpec({
-  describe("Table Generator") {
+  describe("Table Generation") {
     it("Can construct a simple Table with a single column") {
       // arrange
       val sourceFile = SourceFile.kotlin(
@@ -40,7 +41,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.String
@@ -92,7 +93,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.Int
@@ -145,7 +146,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.Int
@@ -197,7 +198,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.Boolean
@@ -249,7 +250,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.Long
@@ -302,7 +303,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.Float
@@ -355,7 +356,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated
+        package io.bkbn.stoik.generated.table
 
         import java.util.UUID
         import kotlin.String
@@ -378,6 +379,44 @@ class ExposedProcessorProviderTest : DescribeSpec({
         }
         """.trimIndent()
       )
+    }
+  }
+  describe("File Creation") {
+    it("Can construct multiple tables in a single source set") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        import io.bkbn.stoik.exposed.VarChar
+        import io.bkbn.stoik.exposed.Table
+
+        @Table("words")
+        interface WordsTableSpec {
+          @VarChar(size = 256)
+          val word: String
+        }
+
+        @Table("other_words")
+        interface OtherWordsTableSpec {
+          @VarChar(size = 128)
+          val wordy: String
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+
+      val fileNames = result.kspGeneratedSources.map { it.name }
+      fileNames shouldContain "OtherWordsTable.kt"
+      fileNames shouldContain "WordsTable.kt"
     }
   }
 }) {

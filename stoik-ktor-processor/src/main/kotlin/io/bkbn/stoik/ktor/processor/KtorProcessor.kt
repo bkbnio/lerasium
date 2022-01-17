@@ -22,6 +22,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.ktor.core.Api
 import io.bkbn.stoik.ktor.processor.util.RouteUtils.addControlFlow
 import io.ktor.routing.Route
+import java.util.Locale
 
 class KtorProcessor(
   private val codeGenerator: CodeGenerator,
@@ -67,7 +68,7 @@ class KtorProcessor(
         .first { arg -> arg.name?.asString() == "name" }
 
       val apiName = nameArgument.value as String
-      val controllerName = apiName.plus("Controller").decapitalize()
+      val controllerName = apiName.plus("Controller").replaceFirstChar { it.lowercase(Locale.getDefault()) }
       val apiObjectName = apiName.plus("Api")
 
       val routeMember = MemberName("io.ktor.routing", "route")

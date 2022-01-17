@@ -1,8 +1,15 @@
-import io.bkbn.sourdough.gradle.core.extension.SourdoughLibraryExtension
+import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmPlugin
+import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmExtension
 
 plugins {
-  id("io.bkbn.sourdough.root") version "0.2.0"
+  kotlin("jvm") version "1.6.10" apply false
+  id("com.google.devtools.ksp") version "1.6.10-1.0.2" apply false
+  id("io.bkbn.sourdough.root") version "0.5.5"
+  id("io.bkbn.sourdough.library.jvm") version "0.5.5" apply false
   id("com.github.jakemarsden.git-hooks") version "0.0.2"
+  id("org.jetbrains.dokka") version "1.6.10"
+  id("org.jetbrains.kotlinx.kover") version "0.5.0-RC"
+  id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 gitHooks {
@@ -12,12 +19,6 @@ gitHooks {
       "pre-push" to "test"
     )
   )
-}
-
-sourdough {
-  toolChainJavaVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.majorVersion))
-  jvmTarget.set(JavaVersion.VERSION_11.majorVersion)
-  compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 allprojects {
@@ -33,19 +34,32 @@ allprojects {
 }
 
 subprojects {
-  if (name != "stoik-playground") {
-    apply(plugin = "io.bkbn.sourdough.library")
-
-    configure<SourdoughLibraryExtension> {
+  plugins.withType(LibraryJvmPlugin::class.java) {
+    extensions.configure(LibraryJvmExtension::class.java) {
       githubOrg.set("bkbnio")
       githubRepo.set("stoik")
-      libraryName.set("Stoik")
-      libraryDescription.set("A different approach to boilerplate generation")
       licenseName.set("MIT License")
       licenseUrl.set("https://mit-license.org")
-      developerId.set("bkbnio")
+      developerId.set("unredundant")
       developerName.set("Ryan Brink")
       developerEmail.set("admin@bkbn.io")
     }
   }
 }
+//subprojects {
+//  if (name != "stoik-playground") {
+//    apply(plugin = "io.bkbn.sourdough.library")
+//
+//    configure<SourdoughLibraryExtension> {
+//      githubOrg.set("bkbnio")
+//      githubRepo.set("stoik")
+//      libraryName.set("Stoik")
+//      libraryDescription.set("A different approach to boilerplate generation")
+//      licenseName.set("MIT License")
+//      licenseUrl.set("https://mit-license.org")
+//      developerId.set("bkbnio")
+//      developerName.set("Ryan Brink")
+//      developerEmail.set("admin@bkbn.io")
+//    }
+//  }
+//}
