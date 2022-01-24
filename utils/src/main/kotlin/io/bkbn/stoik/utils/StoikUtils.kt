@@ -14,7 +14,7 @@ object StoikUtils {
     val domainType = superTypes
       .map { t -> t.resolve().declaration }
       .find { t -> t.isAnnotationPresent(Domain::class) }
-      ?: error("Api must implement an interface annotated with Domain")
+      ?: error("Must implement an interface annotated with Domain")
     val domain = domainType.getAnnotationsByType(Domain::class).first()
     val domainValidation = DomainValidation.constraints.validate(domain)
     require(domainValidation.errors.isEmpty()) { "Domain is invalid ${domainValidation.errors}" }

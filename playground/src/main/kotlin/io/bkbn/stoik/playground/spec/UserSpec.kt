@@ -31,8 +31,8 @@ interface UserTableSpec : UserSpec {
   override val email: String
 }
 
-@Api
-interface UserApiSpec: UserSpec
+//@Api
+//interface UserApiSpec: UserSpec
 
 object UUIDSerializer : KSerializer<UUID> {
   override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)

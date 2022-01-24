@@ -37,7 +37,7 @@ class KtorProcessorProviderTest : DescribeSpec({
 
       // assert
       result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
-      result.messages shouldInclude "Api must implement an interface annotated with Domain"
+      result.messages shouldInclude "Must implement an interface annotated with Domain"
     }
     it("Throws error in event of invalid domain") {
       // arrange
@@ -102,7 +102,53 @@ class KtorProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
         """
+        package io.bkbn.stoik.generated.api
 
+        import io.bkbn.stoik.generated.UserCreateRequest
+        import io.bkbn.stoik.generated.UserUpdateRequest
+        import io.ktor.application.call
+        import io.ktor.http.HttpStatusCode
+        import io.ktor.http.HttpStatusCode.NoContent
+        import io.ktor.request.receive
+        import io.ktor.request.respond
+        import io.ktor.routing.Routing
+        import io.ktor.routing.`get`
+        import io.ktor.routing.delete
+        import io.ktor.routing.post
+        import io.ktor.routing.put
+        import io.ktor.routing.route
+        import java.util.UUID
+        import kotlin.Unit
+
+        public object UserApi {
+          public fun Routing.userController(): Unit {
+            route("/user") {
+              post {
+                val request = call.receive<UserCreateRequest>()
+                val result = dao.create(request)
+                call.respond(result)
+              }
+              route("/{id}") {
+                `get` {
+                  val id = UUID.fromString(call.parameters["id"])
+                  val result = dao.read(id)
+                  call.respond(result)
+                }
+                put {
+                  val id = UUID.fromString(call.parameters["id"])
+                  val request = call.receive<UserUpdateRequest>()
+                  val result = dao.update(id, request)
+                  call.respond(result)
+                }
+                delete {
+                  val id = UUID.fromString(call.parameters["id"])
+                  dao.delete(id)
+                  call.respond(HttpStatusCode.NoContent)
+                }
+              }
+            }
+          }
+        }
         """.trimIndent()
       )
     }
