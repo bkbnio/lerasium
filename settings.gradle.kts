@@ -2,13 +2,14 @@ rootProject.name = "stoik"
 
 // CORE
 include("core")
+include("processor")
 
 // RDBMS
-include("exposed-core")
+include("exposed")
 include("exposed-processor")
 
 // API
-include("ktor-core")
+include("ktor")
 include("ktor-processor")
 
 // Playground

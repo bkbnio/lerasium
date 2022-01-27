@@ -9,10 +9,10 @@ dependencies {
   implementation(projects.stoikCore)
 
   ksp(projects.stoikExposedProcessor)
-  implementation(projects.stoikExposedCore)
+  implementation(projects.stoikExposed)
 
   ksp(projects.stoikKtorProcessor)
-  implementation(projects.stoikKtorCore)
+  implementation(projects.stoikKtor)
 
   // Database
   implementation(group = "org.flywaydb", name = "flyway-core", version = "8.2.3")

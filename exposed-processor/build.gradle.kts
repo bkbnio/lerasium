@@ -20,7 +20,7 @@ dependencies {
   // IMPLEMENTATION
 
   // Stoik
-  implementation(projects.stoikExposedCore)
+  implementation(projects.stoikExposed)
   implementation(projects.stoikUtils)
 
   // KSP
