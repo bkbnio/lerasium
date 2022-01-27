@@ -19,7 +19,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         "Spec.kt", """
           package test
 
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
 
           @Api
           interface UserApiSpec
@@ -46,7 +46,7 @@ class KtorProcessorProviderTest : DescribeSpec({
           package test
 
           import io.bkbn.stoik.core.Domain
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
 
           @Domain("user")
           interface UserDomain
@@ -77,7 +77,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         "Spec.kt", """
           package test
 
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
           import io.bkbn.stoik.core.Domain
 
           @Domain("User")

@@ -11,7 +11,7 @@ import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
-import io.bkbn.stoik.ktor.core.Api
+import io.bkbn.stoik.ktor.Api
 import io.bkbn.stoik.utils.StoikUtils.findValidDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)

@@ -4,7 +4,7 @@ import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.exposed.Unique
-import io.bkbn.stoik.ktor.core.Api
+import io.bkbn.stoik.ktor.Api
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor

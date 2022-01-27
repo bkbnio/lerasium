@@ -2,7 +2,7 @@ rootProject.name = "stoik"
 
 // CORE
 include("core")
-include("processor")
+include("core-processor")
 
 // RDBMS
 include("exposed")

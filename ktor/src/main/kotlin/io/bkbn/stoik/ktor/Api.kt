@@ -1,4 +1,4 @@
-package io.bkbn.stoik.ktor.core
+package io.bkbn.stoik.ktor
 
 import kotlin.reflect.KClass
 
