@@ -50,32 +50,43 @@ class ModelProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated.models
 
+        import io.bkbn.stoik.core.model.Request
+        import io.bkbn.stoik.core.model.Response
+        import java.util.UUID
         import kotlin.Int
         import kotlin.String
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Serializable
 
+        @Serializable
         public data class UserCreateRequest(
           public val firstName: String,
           public val lastName: String,
           public val email: String,
           public val password: String,
           public val age: Int?
-        )
+        ) : Request.Create<UserCreateRequest, String>
 
+        @Serializable
         public data class UserUpdateRequest(
           public val firstName: String?,
           public val lastName: String?,
           public val email: String?,
           public val password: String?,
           public val age: Int?
-        )
+        ) : Request.Update<UserCreateRequest, String>
 
+        @Serializable
         public data class UserResponse(
+          public val id: UUID,
           public val firstName: String,
           public val lastName: String,
           public val email: String,
           public val password: String,
-          public val age: Int?
-        )
+          public val age: Int?,
+          public val createdAt: LocalDateTime,
+          public val updatedAt: LocalDateTime
+        ) : Response
         """.trimIndent()
       )
     }
