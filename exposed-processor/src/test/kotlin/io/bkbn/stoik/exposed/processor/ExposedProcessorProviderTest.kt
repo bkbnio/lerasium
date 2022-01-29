@@ -17,13 +17,18 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
-        import io.bkbn.stoik.exposed.Column
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Table
 
-        @Table("user")
-        interface UserTableSpec {
+        @Domain("User")
+        interface User {
           val name: String
         }
+
+        @Table
+        interface UserTable : User
       """.trimIndent()
       )
 
@@ -38,8 +43,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -69,14 +74,19 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
-        import io.bkbn.stoik.exposed.Column
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Table
 
-        @Table("counter")
-        interface CounterTableSpec {
+        @Domain("Counter")
+        interface Counter {
           val count: Int
         }
-      """.trimIndent()
+
+        @Table
+        interface CounterTable : Counter
+        """.trimIndent()
       )
 
       val compilation = KotlinCompilation().apply {
@@ -90,8 +100,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "CounterTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -121,13 +131,21 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Column
         import io.bkbn.stoik.exposed.Table
 
-        @Table("big_name")
-        interface BigNameTableSpec {
+        @Domain("User")
+        interface User {
+          val userInfo: String
+        }
+
+        @Table
+        interface UserTable : User {
           @Column("super_important_field")
-          val superImportantField: Int
+          override val userInfo: String
         }
       """.trimIndent()
       )
@@ -143,29 +161,29 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
         import java.util.UUID
-        import kotlin.Int
+        import kotlin.String
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
 
-        public object BigNameTable : UUIDTable("big_name") {
-          public val superImportantField: Column<Int> = integer("super_important_field")
+        public object UserTable : UUIDTable("user") {
+          public val userInfo: Column<String> = varchar("super_important_field", 128)
         }
 
-        public class BigNameEntity(
+        public class UserEntity(
           id: EntityID<UUID>
         ) : UUIDEntity(id) {
-          public var superImportantField: Int by BigNameTable.superImportantField
+          public var userInfo: String by UserTable.userInfo
 
-          public companion object : UUIDEntityClass<BigNameEntity>(BigNameTable)
+          public companion object : UUIDEntityClass<UserEntity>(UserTable)
         }
         """.trimIndent()
       )
@@ -174,13 +192,19 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Column
         import io.bkbn.stoik.exposed.Table
 
-        @Table("facts")
-        interface FactTableSpec {
+        @Domain("Facts")
+        interface Facts {
           val isFact: Boolean
         }
+
+        @Table
+        interface FactTableSpec : Facts
       """.trimIndent()
       )
 
@@ -195,8 +219,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "FactsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -209,7 +233,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.Column
 
         public object FactsTable : UUIDTable("facts") {
-          public val isFact: Column<Boolean> = bool("isFact")
+          public val isFact: Column<Boolean> = bool("is_fact")
         }
 
         public class FactsEntity(
@@ -226,13 +250,19 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Column
         import io.bkbn.stoik.exposed.Table
 
-        @Table("big_num")
-        interface BigNumTableSpec {
+        @Domain("BigNum")
+        interface BigNum {
           val size: Long
         }
+
+        @Table
+        interface BigNumTableSpec : BigNum
       """.trimIndent()
       )
 
@@ -247,8 +277,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "BigNumTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -278,14 +308,19 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.Column
         import io.bkbn.stoik.exposed.Table
 
-        @Table("floaty")
-        interface FloatyTableSpec {
-          @Column("pointy_num")
+        @Domain("Floaty")
+        interface Floaty {
           val pointyNum: Float
         }
+
+        @Table
+        interface FloatyTableSpec : Floaty
       """.trimIndent()
       )
 
@@ -300,8 +335,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "FloatyTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -331,13 +366,21 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.VarChar
         import io.bkbn.stoik.exposed.Table
 
-        @Table("words")
-        interface WordsTableSpec {
-          @VarChar(size = 256)
+        @Domain("Words")
+        interface Words {
           val word: String
+        }
+
+        @Table
+        interface WordsTableSpec : Words {
+          @VarChar(size = 256)
+          override val word: String
         }
       """.trimIndent()
       )
@@ -353,8 +396,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 1
-      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first{ it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -386,19 +429,32 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // arrange
       val sourceFile = SourceFile.kotlin(
         "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
         import io.bkbn.stoik.exposed.VarChar
         import io.bkbn.stoik.exposed.Table
 
-        @Table("words")
-        interface WordsTableSpec {
-          @VarChar(size = 256)
+        @Domain("Words")
+        interface Words {
           val word: String
         }
 
-        @Table("other_words")
-        interface OtherWordsTableSpec {
-          @VarChar(size = 128)
+        @Table
+        interface WordsTable : Words {
+          @VarChar(size = 256)
+          override val word: String
+        }
+
+        @Domain("OtherWords")
+        interface OtherWords {
           val wordy: String
+        }
+
+        @Table
+        interface OtherWordsTableSpec : OtherWords {
+          @VarChar(size = 128)
+          override val wordy: String
         }
       """.trimIndent()
       )
@@ -412,7 +468,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // act
       val result = compilation.compile()
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources shouldHaveSize 4
 
       val fileNames = result.kspGeneratedSources.map { it.name }
       fileNames shouldContain "OtherWordsTable.kt"

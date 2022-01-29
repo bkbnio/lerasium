@@ -21,12 +21,6 @@ sealed interface UserSpec {
 
 @Table("user")
 interface UserTableSpec : UserSpec {
-  @Column("first_name")
-  override val firstName: String
-
-  @Column("last_name")
-  override val lastName: String
-
   @Unique
   override val email: String
 }

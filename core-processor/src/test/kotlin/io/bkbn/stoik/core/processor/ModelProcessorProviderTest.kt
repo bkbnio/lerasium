@@ -52,10 +52,12 @@ class ModelProcessorProviderTest : DescribeSpec({
 
         import io.bkbn.stoik.core.model.Request
         import io.bkbn.stoik.core.model.Response
+        import io.bkbn.stoik.generated.table.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.String
         import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Contextual
         import kotlinx.serialization.Serializable
 
         @Serializable
@@ -65,7 +67,11 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val email: String,
           public val password: String,
           public val age: Int?
-        ) : Request.Create<UserCreateRequest, String>
+        ) : Request.Create<UserCreateRequest, UserEntity> {
+          public override fun UserCreateRequest.toEntity(): UserEntity {
+            TODO("Not yet implemented")
+          }
+        }
 
         @Serializable
         public data class UserUpdateRequest(
@@ -74,10 +80,15 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val email: String?,
           public val password: String?,
           public val age: Int?
-        ) : Request.Update<UserCreateRequest, String>
+        ) : Request.Update<UserUpdateRequest, UserEntity> {
+          public override fun UserUpdateRequest.toEntity(): UserEntity {
+            TODO("Not yet implemented")
+          }
+        }
 
         @Serializable
         public data class UserResponse(
+          @Contextual
           public val id: UUID,
           public val firstName: String,
           public val lastName: String,

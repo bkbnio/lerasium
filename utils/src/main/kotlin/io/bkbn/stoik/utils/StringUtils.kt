@@ -12,6 +12,12 @@ object StringUtils {
     }.lowercase(Locale.getDefault())
   }
 
+  fun String.pascalToSnakeCase(): String {
+    return "((?<=.)[A-Z][a-zA-Z]*)|((?<=[a-zA-Z])\\d+)".toRegex().replace(this) {
+      "_${it.value}"
+    }.lowercase(Locale.getDefault())
+  }
+
   fun String.snakeToLowerCamelCase(): String {
     return snakeRegex.replace(this) {
       it.value.replace("_", "")
