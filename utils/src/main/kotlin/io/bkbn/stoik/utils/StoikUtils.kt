@@ -10,7 +10,15 @@ import io.bkbn.stoik.core.validation.DomainValidation
 @OptIn(KspExperimental::class)
 object StoikUtils {
 
-  fun KSClassDeclaration.findValidDomain(): Domain {
+  fun KSClassDeclaration.getDomain(): Domain {
+    return this.getAnnotationsByType(Domain::class).firstOrNull()?.let {
+      val domainValidation = DomainValidation.constraints.validate(it)
+      require(domainValidation.errors.isEmpty()) { "Domain is invalid ${domainValidation.errors}" }
+      it
+    } ?: error("$this is not annotated with a valid domain!")
+  }
+
+  fun KSClassDeclaration.findParentDomain(): Domain {
     val domainType = superTypes
       .map { t -> t.resolve().declaration }
       .find { t -> t.isAnnotationPresent(Domain::class) }

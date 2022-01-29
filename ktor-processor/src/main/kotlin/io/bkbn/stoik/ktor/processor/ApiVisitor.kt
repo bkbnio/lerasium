@@ -18,7 +18,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.stoik.utils.BaseName
 import io.bkbn.stoik.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
-import io.bkbn.stoik.utils.StoikUtils.findValidDomain
+import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 import io.bkbn.stoik.utils.toCreateRequestClass
 import io.bkbn.stoik.utils.toUpdateRequestClass
 import io.ktor.http.HttpStatusCode
@@ -48,7 +48,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       return
     }
 
-    val apiName = classDeclaration.findValidDomain().name
+    val apiName = classDeclaration.findParentDomain().name
     val baseName = apiName.replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val controllerName = apiName.plus("Controller").replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val apiObjectName = apiName.plus("Api")
