@@ -397,7 +397,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       // assert
       result shouldNotBe null
       result.kspGeneratedSources shouldHaveSize 2
-      result.kspGeneratedSources.first{ it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
+      result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.stoik.generated.table
 
@@ -422,6 +422,93 @@ class ExposedProcessorProviderTest : DescribeSpec({
         }
         """.trimIndent()
       )
+    }
+  }
+  describe("Dao Generation") {
+    it("Can create a simple dao") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
+        import io.bkbn.stoik.exposed.Table
+
+        @Domain("User")
+        interface User {
+          val firstName: String
+          val lastName: String
+        }
+
+        @Table
+        interface UserTable : User
+        """.trimIndent()
+      )
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.table
+
+        import io.bkbn.stoik.core.dao.Dao
+        import io.bkbn.stoik.generated.models.UserCreateRequest
+        import io.bkbn.stoik.generated.models.UserEntity
+        import io.bkbn.stoik.generated.models.UserResponse
+        import io.bkbn.stoik.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Unit
+        import kotlinx.datetime.Clock
+        import org.jetbrains.exposed.sql.transactions.transaction
+
+        public class UserDao : Dao<UserCreateRequest, UserUpdateRequest, UserResponse, UserEntity> {
+          public override fun create(request: UserCreateRequest): UserResponse = transaction {
+            val now = Clock.now()
+            val entity = transaction {
+              UserEntity.new {
+                firstName = request.firstName
+                lastName = request.lastName
+                createdAt = now
+                updatedAt = now
+              }
+            }
+            entity.toResponse()
+          }
+
+          public override fun read(id: UUID): UserResponse = transaction {
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.toResponse()
+          }
+
+          public override fun update(request: UserUpdateRequest, id: UUID): UserResponse = transaction {
+            val now = Clock.now()
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            request.firstName?.let {
+              entity.firstName = it
+            }
+            request.lastName?.let {
+              entity.lastName = it
+            }
+            entity.updatedAt = now
+            entity.toResponse()
+          }
+
+          public override fun delete(): Unit {
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.delete()
+          }
+        }
+      """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
     }
   }
   describe("File Creation") {
@@ -477,6 +564,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
   }
 }) {
   companion object {
+    const val errorMessage = "\"\"Unable to get entity with id: \$id\"\""
     private val KotlinCompilation.Result.workingDir: File
       get() =
         outputDirectory.parentFile!!
@@ -491,6 +579,9 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
     fun File.readTrimmed() = readText().trim()
 
-    fun kotlinCode(@Language("kotlin") contents: String): String = contents
+    fun kotlinCode(
+      @Language("kotlin") contents: String,
+      postProcess: (String) -> String = { it }
+    ): String = postProcess(contents)
   }
 }
