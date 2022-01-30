@@ -52,6 +52,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.UserResponse
         import java.util.UUID
         import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -77,8 +79,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by UserTable.updatedAt
 
-          public override fun toResponse(): UserResponse {
-            TODO()
+          public override fun toResponse(): UserResponse = with(::UserResponse) {
+            val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                UserResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@UserEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<UserEntity>(UserTable)
@@ -125,6 +134,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.CounterResponse
         import java.util.UUID
         import kotlin.Int
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -150,8 +161,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by CounterTable.updatedAt
 
-          public override fun toResponse(): CounterResponse {
-            TODO()
+          public override fun toResponse(): CounterResponse = with(::CounterResponse) {
+            val propertiesByName = CounterEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                CounterResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@CounterEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<CounterEntity>(CounterTable)
@@ -202,6 +220,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.UserResponse
         import java.util.UUID
         import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -227,8 +247,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by UserTable.updatedAt
 
-          public override fun toResponse(): UserResponse {
-            TODO()
+          public override fun toResponse(): UserResponse = with(::UserResponse) {
+            val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                UserResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@UserEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<UserEntity>(UserTable)
@@ -276,6 +303,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.FactsResponse
         import java.util.UUID
         import kotlin.Boolean
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -301,8 +330,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by FactsTable.updatedAt
 
-          public override fun toResponse(): FactsResponse {
-            TODO()
+          public override fun toResponse(): FactsResponse = with(::FactsResponse) {
+            val propertiesByName = FactsEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                FactsResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@FactsEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<FactsEntity>(FactsTable)
@@ -350,6 +386,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.BigNumResponse
         import java.util.UUID
         import kotlin.Long
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -375,8 +413,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by BigNumTable.updatedAt
 
-          public override fun toResponse(): BigNumResponse {
-            TODO()
+          public override fun toResponse(): BigNumResponse = with(::BigNumResponse) {
+            val propertiesByName = BigNumEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                BigNumResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@BigNumEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<BigNumEntity>(BigNumTable)
@@ -424,6 +469,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.FloatyResponse
         import java.util.UUID
         import kotlin.Float
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -449,8 +496,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by FloatyTable.updatedAt
 
-          public override fun toResponse(): FloatyResponse {
-            TODO()
+          public override fun toResponse(): FloatyResponse = with(::FloatyResponse) {
+            val propertiesByName = FloatyEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                FloatyResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@FloatyEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<FloatyEntity>(FloatyTable)
@@ -501,6 +555,8 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.WordsResponse
         import java.util.UUID
         import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
         import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -526,8 +582,15 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
           public var updatedAt: LocalDateTime by WordsTable.updatedAt
 
-          public override fun toResponse(): WordsResponse {
-            TODO()
+          public override fun toResponse(): WordsResponse = with(::WordsResponse) {
+            val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                WordsResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@WordsEntity)
+              }
+            }
+            callBy(params)
           }
 
           public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
