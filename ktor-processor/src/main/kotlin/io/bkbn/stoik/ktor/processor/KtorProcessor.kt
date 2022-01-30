@@ -11,8 +11,8 @@ import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
-import io.bkbn.stoik.ktor.core.Api
-import io.bkbn.stoik.utils.StoikUtils.findValidDomain
+import io.bkbn.stoik.ktor.Api
+import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class KtorProcessor(
@@ -37,7 +37,7 @@ class KtorProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val domain = it.findValidDomain()
+      val domain = it.findParentDomain()
       val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Api"))
       it.accept(ApiVisitor(fb, logger), Unit)
       val fs = fb.build()

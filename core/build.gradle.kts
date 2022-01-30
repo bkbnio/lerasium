@@ -15,6 +15,7 @@ sourdough {
 }
 
 dependencies {
+  api(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.3.2")
   api(group = "io.konform", name = "konform-jvm", version = "0.3.0")
 }
 

@@ -7,6 +7,8 @@ complexity:
     constructorThreshold: 10
   ComplexMethod:
     threshold: 20
+  LargeClass:
+    excludes: ["**/test/**/*"]
 formatting:
   Indentation:
     active: false
@@ -22,7 +24,7 @@ style:
     active: true
     maxLineLength: 120
   MagicNumber:
-    excludes: ['**/kompendium-playground/**/*', '**/test/**/*']
+    excludes: ['**/playground/**/*', '**/test/**/*']
 naming:
   ConstructorParameterNaming:
     active: false

@@ -20,8 +20,9 @@ dependencies {
   // IMPLEMENTATION
 
   // Stoik
-  implementation(projects.stoikExposedCore)
+  implementation(projects.stoikExposed)
   implementation(projects.stoikUtils)
+  implementation(projects.stoikCore)
 
   // KSP
   implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")
@@ -29,6 +30,9 @@ dependencies {
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
   implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
+
+  // Date
+  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.3.1")
 }
 
 testing {

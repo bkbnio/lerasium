@@ -19,7 +19,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         "Spec.kt", """
           package test
 
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
 
           @Api
           interface UserApiSpec
@@ -46,7 +46,7 @@ class KtorProcessorProviderTest : DescribeSpec({
           package test
 
           import io.bkbn.stoik.core.Domain
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
 
           @Domain("user")
           interface UserDomain
@@ -77,7 +77,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         "Spec.kt", """
           package test
 
-          import io.bkbn.stoik.ktor.core.Api
+          import io.bkbn.stoik.ktor.Api
           import io.bkbn.stoik.core.Domain
 
           @Domain("User")
@@ -104,14 +104,14 @@ class KtorProcessorProviderTest : DescribeSpec({
         """
         package io.bkbn.stoik.generated.api
 
-        import io.bkbn.stoik.generated.UserCreateRequest
-        import io.bkbn.stoik.generated.UserUpdateRequest
+        import io.bkbn.stoik.generated.entity.UserDao
+        import io.bkbn.stoik.generated.models.UserCreateRequest
+        import io.bkbn.stoik.generated.models.UserUpdateRequest
         import io.ktor.application.call
         import io.ktor.http.HttpStatusCode
-        import io.ktor.http.HttpStatusCode.NoContent
         import io.ktor.request.receive
-        import io.ktor.request.respond
-        import io.ktor.routing.Routing
+        import io.ktor.response.respond
+        import io.ktor.routing.Route
         import io.ktor.routing.`get`
         import io.ktor.routing.delete
         import io.ktor.routing.post
@@ -121,7 +121,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         import kotlin.Unit
 
         public object UserApi {
-          public fun Routing.userController(): Unit {
+          public fun Route.userController(dao: UserDao = UserDao()): Unit {
             route("/user") {
               post {
                 val request = call.receive<UserCreateRequest>()

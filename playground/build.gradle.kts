@@ -8,16 +8,25 @@ plugins {
 dependencies {
   implementation(projects.stoikCore)
 
+  ksp(projects.stoikCoreProcessor)
+  implementation(projects.stoikCore)
+
   ksp(projects.stoikExposedProcessor)
-  implementation(projects.stoikExposedCore)
+  implementation(projects.stoikExposed)
 
   ksp(projects.stoikKtorProcessor)
-  implementation(projects.stoikKtorCore)
+  implementation(projects.stoikKtor)
 
   // Database
   implementation(group = "org.flywaydb", name = "flyway-core", version = "8.2.3")
   implementation(group = "com.zaxxer", name = "HikariCP", version = "5.0.0")
   implementation(group = "org.postgresql", name = "postgresql", version = "42.3.1")
+
+  // Date
+  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.3.1")
+
+  // Serialization
+  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.3.2")
 
   // Logging
   implementation(group = "org.apache.logging.log4j", name = "log4j-api-kotlin", version = "1.1.0")
