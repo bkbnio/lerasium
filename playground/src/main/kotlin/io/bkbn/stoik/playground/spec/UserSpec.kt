@@ -19,7 +19,7 @@ sealed interface UserSpec {
   val email: String
 }
 
-@Table("user")
+@Table
 interface UserTableSpec : UserSpec {
   @Unique
   override val email: String

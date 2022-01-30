@@ -10,18 +10,26 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
+import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
+import io.bkbn.stoik.core.Domain
+import io.bkbn.stoik.core.model.Entity
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.VarChar
+import io.bkbn.stoik.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 import io.bkbn.stoik.utils.StringUtils.camelToSnakeCase
 import io.bkbn.stoik.utils.StringUtils.pascalToSnakeCase
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -33,6 +41,8 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
   companion object {
     private const val DEFAULT_VARCHAR_SIZE = 128
+    val exposedColumn = ClassName("org.jetbrains.exposed.sql", "Column")
+    val exposedDateTime = MemberName("org.jetbrains.exposed.sql.kotlin.datetime", "datetime")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -41,17 +51,18 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       return
     }
 
-    val domainName = classDeclaration.findParentDomain().name
+    val domain = classDeclaration.findParentDomain()
 
-    fileBuilder.addTable(classDeclaration, domainName)
-    fileBuilder.addEntity(classDeclaration, domainName)
+    fileBuilder.addTable(classDeclaration, domain)
+    fileBuilder.addEntity(classDeclaration, domain)
   }
 
-  private fun FileSpec.Builder.addTable(cd: KSClassDeclaration, domainName: String) {
+  private fun FileSpec.Builder.addTable(cd: KSClassDeclaration, domain: Domain) {
     val properties = cd.getAllProperties().toList()
-    addType(TypeSpec.objectBuilder(domainName.plus("Table")).apply {
+    addType(TypeSpec.objectBuilder(domain.name.plus("Table")).apply {
+      addOriginatingKSFile(cd.containingFile!!)
       superclass(UUIDTable::class)
-      addSuperclassConstructorParameter("%S", domainName.pascalToSnakeCase())
+      addSuperclassConstructorParameter("%S", domain.name.pascalToSnakeCase())
       properties.forEach { property ->
         val columnAnnotation: Column? = property.getAnnotationsByType(Column::class).firstOrNull()
         val fieldName = property.simpleName.asString()
@@ -61,14 +72,26 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           setColumnInitializer(columnName, property)
         }.build())
       }
+      addProperty(
+        PropertySpec.builder("createdAt", exposedColumn.parameterizedBy(LocalDateTime::class.asTypeName())).apply {
+          initializer("%M(%S)", exposedDateTime, "created_at")
+        }.build()
+      )
+      addProperty(
+        PropertySpec.builder("updatedAt", exposedColumn.parameterizedBy(LocalDateTime::class.asTypeName())).apply {
+          initializer("%M(%S)", exposedDateTime, "updated_at")
+        }.build()
+      )
     }.build())
   }
 
-  private fun FileSpec.Builder.addEntity(cd: KSClassDeclaration, domainName: String) {
+  private fun FileSpec.Builder.addEntity(cd: KSClassDeclaration, domain: Domain) {
     val properties = cd.getAllProperties().toList()
-    val tableObject = ClassName(this.packageName, domainName.plus("Table"))
-    val entityClass = ClassName(this.packageName, domainName.plus("Entity"))
-    addType(TypeSpec.classBuilder(domainName.plus("Entity")).apply {
+    val tableObject = ClassName(this.packageName, domain.name.plus("Table"))
+    val entityClass = ClassName(this.packageName, domain.name.plus("Entity"))
+    addType(TypeSpec.classBuilder(domain.name.plus("Entity")).apply {
+      addOriginatingKSFile(cd.containingFile!!)
+      addSuperinterface(Entity::class.asClassName().parameterizedBy(domain.toResponseClass()))
       superclass(UUIDEntity::class)
       addSuperclassConstructorParameter("id")
       primaryConstructor(FunSpec.constructorBuilder().apply {
@@ -78,6 +101,11 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         superclass(UUIDEntityClass::class.asTypeName().parameterizedBy(entityClass))
         addSuperclassConstructorParameter("%T", tableObject)
       }.build())
+      addFunction(FunSpec.builder("toResponse").apply {
+        addModifiers(KModifier.OVERRIDE)
+        returns(domain.toResponseClass())
+        addCode("TODO()")
+      }.build())
       properties.forEach { property ->
         val fieldName = property.simpleName.asString()
         val fieldType = property.type.toTypeName()
@@ -86,6 +114,14 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           mutable()
         }.build())
       }
+      addProperty(PropertySpec.builder("createdAt", LocalDateTime::class).apply {
+        delegate("%T.createdAt", tableObject)
+        mutable()
+      }.build())
+      addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class).apply {
+        delegate("%T.updatedAt", tableObject)
+        mutable()
+      }.build())
     }.build())
   }
 

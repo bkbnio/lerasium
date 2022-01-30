@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.core.Domain
+import io.bkbn.stoik.utils.KotlinPoetUtils.BASE_MODEL_PACKAGE_NAME
 import io.bkbn.stoik.utils.StoikUtils.getDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
@@ -20,10 +21,6 @@ class ModelProcessor(
   private val logger: KSPLogger,
   options: Map<String, String>
 ) : SymbolProcessor {
-
-  companion object {
-    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated.models"
-  }
 
   init {
     logger.info(options.toString())
@@ -38,7 +35,7 @@ class ModelProcessor(
 
     symbols.forEach {
       val domain = it.getDomain()
-      val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Models"))
+      val fb = FileSpec.builder(BASE_MODEL_PACKAGE_NAME, domain.name.plus("Models"))
       it.accept(ModelVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)

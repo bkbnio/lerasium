@@ -5,7 +5,7 @@ import io.bkbn.stoik.core.model.Request
 import io.bkbn.stoik.core.model.Response
 import java.util.UUID
 
-interface Dao<RESP, ENT, CRE, UPT>
+interface Dao<ENT, RESP, CRE, UPT>
   where RESP : Response,
         ENT : Entity<RESP>,
         CRE : Request.Create<ENT>,

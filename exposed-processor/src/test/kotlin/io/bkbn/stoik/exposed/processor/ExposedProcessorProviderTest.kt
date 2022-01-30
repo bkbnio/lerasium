@@ -466,11 +466,10 @@ class ExposedProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.UserResponse
         import io.bkbn.stoik.generated.models.UserUpdateRequest
         import java.util.UUID
-        import kotlin.Unit
         import kotlinx.datetime.Clock
         import org.jetbrains.exposed.sql.transactions.transaction
 
-        public class UserDao : Dao<UserCreateRequest, UserUpdateRequest, UserResponse, UserEntity> {
+        public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           public override fun create(request: UserCreateRequest): UserResponse = transaction {
             val now = Clock.now()
             val entity = transaction {
@@ -489,7 +488,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
             entity.toResponse()
           }
 
-          public override fun update(request: UserUpdateRequest, id: UUID): UserResponse = transaction {
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse = transaction {
             val now = Clock.now()
             val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
             request.firstName?.let {
@@ -502,7 +501,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
             entity.toResponse()
           }
 
-          public override fun delete(): Unit {
+          public override fun delete(id: UUID) = transaction {
             val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
             entity.delete()
           }

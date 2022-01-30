@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.exposed.Table
+import io.bkbn.stoik.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
 import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
@@ -20,10 +21,6 @@ class ExposedProcessor(
   private val logger: KSPLogger,
   options: Map<String, String>
 ) : SymbolProcessor {
-
-  companion object {
-    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated.table"
-  }
 
   init {
     logger.info(options.toString())
@@ -38,7 +35,7 @@ class ExposedProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Table"))
+      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
       it.accept(TableVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
@@ -46,7 +43,7 @@ class ExposedProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Dao"))
+      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Dao"))
       it.accept(DaoVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
