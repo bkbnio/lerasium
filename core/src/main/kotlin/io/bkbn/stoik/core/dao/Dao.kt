@@ -8,8 +8,8 @@ import java.util.UUID
 interface Dao<ENT, RESP, CRE, UPT>
   where RESP : Response,
         ENT : Entity<RESP>,
-        CRE : Request.Create<ENT>,
-        UPT : Request.Update<ENT> {
+        CRE : Request.Create,
+        UPT : Request.Update {
   fun create(request: CRE): RESP
   fun read(id: UUID): RESP
   fun update(id: UUID, request: UPT): RESP

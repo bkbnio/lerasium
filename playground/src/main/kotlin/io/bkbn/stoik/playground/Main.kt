@@ -5,13 +5,17 @@ import io.bkbn.stoik.generated.entity.UserEntity
 import io.bkbn.stoik.generated.entity.UserTable
 import io.bkbn.stoik.playground.config.DatabaseConfig
 import io.ktor.application.Application
+import io.ktor.application.install
+import io.ktor.features.ContentNegotiation
 import io.ktor.routing.route
 import io.ktor.routing.routing
+import io.ktor.serialization.json
 import io.ktor.server.netty.EngineMain
 import kotlin.random.Random
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.kotlin.logger
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
@@ -48,6 +52,9 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+  install(ContentNegotiation) {
+    json()
+  }
   routing {
     route("/") {
       userController()

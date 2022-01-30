@@ -8,6 +8,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -25,6 +26,8 @@ import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.core.model.Entity
 import io.bkbn.stoik.exposed.Column
 import io.bkbn.stoik.exposed.VarChar
+import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
+import io.bkbn.stoik.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 import io.bkbn.stoik.utils.StringUtils.camelToSnakeCase
@@ -43,6 +46,8 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     private const val DEFAULT_VARCHAR_SIZE = 128
     val exposedColumn = ClassName("org.jetbrains.exposed.sql", "Column")
     val exposedDateTime = MemberName("org.jetbrains.exposed.sql.kotlin.datetime", "datetime")
+    val memberProps = MemberName("kotlin.reflect.full", "memberProperties")
+    val valueParams = MemberName("kotlin.reflect.full", "valueParameters")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -104,7 +109,22 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       addFunction(FunSpec.builder("toResponse").apply {
         addModifiers(KModifier.OVERRIDE)
         returns(domain.toResponseClass())
-        addCode("TODO()")
+        addCode(CodeBlock.builder().apply {
+          addControlFlow("return with(::%T)", domain.toResponseClass()) {
+            addStatement(
+              "val propertiesByName = %T::class.%M.associateBy { it.name }",
+              domain.toEntityClass(),
+              memberProps
+            )
+            addControlFlow("val params = %M.associateWith", valueParams) {
+              addControlFlow("when (it.name)") {
+                addStatement("%T::id.name -> id.value", domain.toResponseClass())
+                addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
+              }
+            }
+            addStatement("callBy(params)")
+          }
+        }.build())
       }.build())
       properties.forEach { property ->
         val fieldName = property.simpleName.asString()
