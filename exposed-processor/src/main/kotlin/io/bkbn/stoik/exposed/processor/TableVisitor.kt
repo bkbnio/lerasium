@@ -157,6 +157,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       Int::class.asTypeName() -> initializer("integer(%S)", columnName)
       Long::class.asTypeName() -> initializer("long(%S)", columnName)
       Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
+      Double::class.asTypeName() -> initializer("double(%S)", columnName)
       Float::class.asTypeName() -> initializer("float(%S)", columnName)
       else -> TODO()
     }

@@ -1,5 +1,6 @@
 package io.bkbn.stoik.playground
 
+import io.bkbn.stoik.generated.api.BookApi.bookController
 import io.bkbn.stoik.generated.api.UserApi.userController
 import io.bkbn.stoik.generated.entity.UserEntity
 import io.bkbn.stoik.generated.entity.UserTable
@@ -53,11 +54,15 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
   install(ContentNegotiation) {
-    json()
+    json(Json {
+      encodeDefaults = true
+      explicitNulls = false
+    })
   }
   routing {
     route("/") {
       userController()
+      bookController()
     }
   }
 }
