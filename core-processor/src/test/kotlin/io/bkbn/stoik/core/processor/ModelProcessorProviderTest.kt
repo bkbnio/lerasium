@@ -52,6 +52,7 @@ class ModelProcessorProviderTest : DescribeSpec({
 
         import io.bkbn.stoik.core.model.Request
         import io.bkbn.stoik.core.model.Response
+        import io.bkbn.stoik.generated.entity.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.String

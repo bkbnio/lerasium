@@ -46,24 +46,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.UserResponse
         import java.util.UUID
         import kotlin.String
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object UserTable : UUIDTable("user") {
           public val name: Column<String> = varchar("name", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class UserEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<UserResponse> {
           public var name: String by UserTable.name
+
+          public var createdAt: LocalDateTime by UserTable.createdAt
+
+          public var updatedAt: LocalDateTime by UserTable.updatedAt
+
+          public override fun toResponse(): UserResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<UserEntity>(UserTable)
         }
@@ -103,24 +119,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "CounterTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.CounterResponse
         import java.util.UUID
         import kotlin.Int
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object CounterTable : UUIDTable("counter") {
           public val count: Column<Int> = integer("count")
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class CounterEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<CounterResponse> {
           public var count: Int by CounterTable.count
+
+          public var createdAt: LocalDateTime by CounterTable.createdAt
+
+          public var updatedAt: LocalDateTime by CounterTable.updatedAt
+
+          public override fun toResponse(): CounterResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<CounterEntity>(CounterTable)
         }
@@ -164,24 +196,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.UserResponse
         import java.util.UUID
         import kotlin.String
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object UserTable : UUIDTable("user") {
           public val userInfo: Column<String> = varchar("super_important_field", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class UserEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<UserResponse> {
           public var userInfo: String by UserTable.userInfo
+
+          public var createdAt: LocalDateTime by UserTable.createdAt
+
+          public var updatedAt: LocalDateTime by UserTable.updatedAt
+
+          public override fun toResponse(): UserResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<UserEntity>(UserTable)
         }
@@ -222,24 +270,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "FactsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.FactsResponse
         import java.util.UUID
         import kotlin.Boolean
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object FactsTable : UUIDTable("facts") {
           public val isFact: Column<Boolean> = bool("is_fact")
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class FactsEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<FactsResponse> {
           public var isFact: Boolean by FactsTable.isFact
+
+          public var createdAt: LocalDateTime by FactsTable.createdAt
+
+          public var updatedAt: LocalDateTime by FactsTable.updatedAt
+
+          public override fun toResponse(): FactsResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<FactsEntity>(FactsTable)
         }
@@ -280,24 +344,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "BigNumTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.BigNumResponse
         import java.util.UUID
         import kotlin.Long
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object BigNumTable : UUIDTable("big_num") {
           public val size: Column<Long> = long("size")
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class BigNumEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<BigNumResponse> {
           public var size: Long by BigNumTable.size
+
+          public var createdAt: LocalDateTime by BigNumTable.createdAt
+
+          public var updatedAt: LocalDateTime by BigNumTable.updatedAt
+
+          public override fun toResponse(): BigNumResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<BigNumEntity>(BigNumTable)
         }
@@ -338,24 +418,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "FloatyTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.FloatyResponse
         import java.util.UUID
         import kotlin.Float
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object FloatyTable : UUIDTable("floaty") {
           public val pointyNum: Column<Float> = float("pointy_num")
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class FloatyEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<FloatyResponse> {
           public var pointyNum: Float by FloatyTable.pointyNum
+
+          public var createdAt: LocalDateTime by FloatyTable.createdAt
+
+          public var updatedAt: LocalDateTime by FloatyTable.updatedAt
+
+          public override fun toResponse(): FloatyResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<FloatyEntity>(FloatyTable)
         }
@@ -399,24 +495,40 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.WordsResponse
         import java.util.UUID
         import kotlin.String
+        import kotlinx.datetime.LocalDateTime
         import org.jetbrains.exposed.dao.UUIDEntity
         import org.jetbrains.exposed.dao.UUIDEntityClass
         import org.jetbrains.exposed.dao.id.EntityID
         import org.jetbrains.exposed.dao.id.UUIDTable
         import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object WordsTable : UUIDTable("words") {
           public val word: Column<String> = varchar("word", 256)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
         }
 
         public class WordsEntity(
           id: EntityID<UUID>
-        ) : UUIDEntity(id) {
+        ) : UUIDEntity(id), Entity<WordsResponse> {
           public var word: String by WordsTable.word
+
+          public var createdAt: LocalDateTime by WordsTable.createdAt
+
+          public var updatedAt: LocalDateTime by WordsTable.updatedAt
+
+          public override fun toResponse(): WordsResponse {
+            TODO()
+          }
 
           public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
         }
@@ -458,20 +570,21 @@ class ExposedProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.stoik.generated.table
+        package io.bkbn.stoik.generated.entity
 
         import io.bkbn.stoik.core.dao.Dao
         import io.bkbn.stoik.generated.models.UserCreateRequest
-        import io.bkbn.stoik.generated.models.UserEntity
         import io.bkbn.stoik.generated.models.UserResponse
         import io.bkbn.stoik.generated.models.UserUpdateRequest
         import java.util.UUID
         import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
         import org.jetbrains.exposed.sql.transactions.transaction
 
         public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           public override fun create(request: UserCreateRequest): UserResponse = transaction {
-            val now = Clock.now()
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val entity = transaction {
               UserEntity.new {
                 firstName = request.firstName
@@ -489,7 +602,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
           }
 
           public override fun update(id: UUID, request: UserUpdateRequest): UserResponse = transaction {
-            val now = Clock.now()
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
             request.firstName?.let {
               entity.firstName = it
