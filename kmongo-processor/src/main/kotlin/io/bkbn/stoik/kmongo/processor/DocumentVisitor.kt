@@ -21,7 +21,6 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.core.model.Entity
-import io.bkbn.stoik.core.serialization.Serializers
 import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.stoik.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toParameter
@@ -67,9 +66,6 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
       }.build())
       properties.forEach { addProperty(it.toProperty(true)) }
       addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
-//        addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-//          addMember("with = %T::class", Serializers.Uuid::class)
-//        }.build())
         addAnnotation(Contextual::class)
         addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
           addMember("%S", "_id")
@@ -96,7 +92,6 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
             )
             addControlFlow("val params = %M.associateWith", valueParams) {
               addControlFlow("when (it.name)") {
-                // todo handle nested documents
                 addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
               }
             }
