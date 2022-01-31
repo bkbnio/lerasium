@@ -62,9 +62,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val baseName = domain.name.replaceFirstChar { it.lowercase(Locale.getDefault()) }
     addFunction(FunSpec.builder(controllerName).apply {
       receiver(Route::class)
-      addParameter(ParameterSpec.builder("dao", domain.toDaoClass()).apply {
-        defaultValue("%T()", domain.toDaoClass())
-      }.build())
+      addParameter(ParameterSpec.builder("dao", domain.toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
           addCreateRoute(domain)

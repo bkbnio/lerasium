@@ -4,11 +4,15 @@ rootProject.name = "stoik"
 include("core")
 include("core-processor")
 
-// RDBMS
+// Exposed (RDBMS)
 include("exposed")
 include("exposed-processor")
 
-// API
+// KMongo (NoSQL)
+include("kmongo")
+include("kmongo-processor")
+
+// Ktor (API)
 include("ktor")
 include("ktor-processor")
 

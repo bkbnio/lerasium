@@ -8,3 +8,12 @@ services:
       - POSTGRES_DB=test_db
     ports:
       - "5432:5432"
+  mongo:
+    image: mongo:4.4-bionic
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=test_user
+      - MONGO_INITDB_ROOT_PASSWORD=test_password
+      - MONGO_INITDB_DATABASE=test_db
+    ports:
+      - "27017:27017"
