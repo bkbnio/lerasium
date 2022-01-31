@@ -3,7 +3,6 @@ package io.bkbn.stoik.core.processor
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
@@ -20,6 +19,8 @@ import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.core.model.Request
 import io.bkbn.stoik.core.model.Response
 import io.bkbn.stoik.core.serialization.Serializers
+import io.bkbn.stoik.utils.KotlinPoetUtils.toParameter
+import io.bkbn.stoik.utils.KotlinPoetUtils.toProperty
 import io.bkbn.stoik.utils.StoikUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -107,11 +108,4 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     }.build())
   }
 
-  private fun KSPropertyDeclaration.toParameter() =
-    ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
-
-  private fun KSPropertyDeclaration.toProperty() =
-    PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
-      initializer(simpleName.getShortName())
-    }.build()
 }

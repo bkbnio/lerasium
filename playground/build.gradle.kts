@@ -1,8 +1,13 @@
 plugins {
   kotlin("jvm")
   kotlin("plugin.serialization") version "1.6.10"
+  id("io.bkbn.sourdough.application.jvm") version "0.6.0"
   id("com.google.devtools.ksp")
   application
+}
+
+sourdough {
+  compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 dependencies {
@@ -16,6 +21,9 @@ dependencies {
 
   ksp(projects.stoikKtorProcessor)
   implementation(projects.stoikKtor)
+
+  ksp(projects.stoikKmongoProcessor)
+  implementation(projects.stoikKmongo)
 
   // Database
   implementation(group = "org.flywaydb", name = "flyway-core", version = "8.2.3")

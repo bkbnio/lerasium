@@ -121,7 +121,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         import kotlin.Unit
 
         public object UserApi {
-          public fun Route.userController(dao: UserDao = UserDao()): Unit {
+          public fun Route.userController(dao: UserDao): Unit {
             route("/user") {
               post {
                 val request = call.receive<UserCreateRequest>()

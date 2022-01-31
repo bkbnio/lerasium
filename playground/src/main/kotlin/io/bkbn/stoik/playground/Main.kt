@@ -1,7 +1,11 @@
 package io.bkbn.stoik.playground
 
 import io.bkbn.stoik.generated.api.BookApi.bookController
+import io.bkbn.stoik.generated.api.ProfileApi.profileController
 import io.bkbn.stoik.generated.api.UserApi.userController
+import io.bkbn.stoik.generated.entity.BookDao
+import io.bkbn.stoik.generated.entity.ProfileDao
+import io.bkbn.stoik.generated.entity.UserDao
 import io.bkbn.stoik.generated.entity.UserEntity
 import io.bkbn.stoik.generated.entity.UserTable
 import io.bkbn.stoik.playground.config.DatabaseConfig
@@ -16,6 +20,7 @@ import kotlin.random.Random
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.kotlin.logger
 import org.jetbrains.exposed.sql.Expression
@@ -30,28 +35,11 @@ fun main(args: Array<String>) {
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.flyway.migrate()
   DatabaseConfig.relationalDatabase
-
-  val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-  val test = transaction {
-    UserEntity.new {
-      firstName = "Ryan"
-      lastName = "Brink-${Random.Default.nextInt()}"
-      email = "$lastName@pm.me"
-      createdAt = now
-      updatedAt = now
-    }
-  }
-
-  logger.info { "Created new user: ${test.id}" }
-
-  val otherTest = Testerino.readByEmail(test.email, test.firstName)
-
-  logger.info { "Found you: ${otherTest.firstName} ${otherTest.lastName}" }
-
   logger.info { "Launching API" }
   EngineMain.main(args)
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun Application.module() {
   install(ContentNegotiation) {
     json(Json {
@@ -61,8 +49,9 @@ fun Application.module() {
   }
   routing {
     route("/") {
-      userController()
-      bookController()
+      userController(UserDao())
+      bookController(BookDao())
+      profileController(ProfileDao(DatabaseConfig.documentDatabase))
     }
   }
 }

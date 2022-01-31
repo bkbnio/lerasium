@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Api CRUD generator
 - Dao CRUD generator
+- Beginnings of document support (Mongo)
 
 ## [0.3.0] - 12/30/2021
 ### Added
