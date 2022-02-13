@@ -8,6 +8,12 @@ import io.bkbn.stoik.ktor.Api
 sealed interface Profile {
   val mood: String
   val viewCount: Long
+  val metadata: ProfileMetadata
+}
+
+interface ProfileMetadata {
+  val isPrivate: Boolean
+  val otherThing: String
 }
 
 @Document

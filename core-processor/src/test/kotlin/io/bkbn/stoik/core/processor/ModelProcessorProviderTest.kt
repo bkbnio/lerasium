@@ -92,6 +92,204 @@ class ModelProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can generate models with nested domain models") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+          package test
+
+          import io.bkbn.stoik.core.Domain
+
+          @Domain("User")
+          interface UserDomain {
+            val email: String
+            val metadata: UserMetadata
+          }
+
+          interface UserMetadata {
+            val firstName: String
+            val lastName: String
+          }
+
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ModelProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.models
+
+        import io.bkbn.stoik.core.model.Request
+        import io.bkbn.stoik.core.model.Response
+        import io.bkbn.stoik.core.serialization.Serializers
+        import java.util.UUID
+        import kotlin.String
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserCreateRequest(
+          public val email: String,
+          public val metadata: UserMetadataCreateRequest
+        ) : Request.Create
+
+        @Serializable
+        public data class UserUpdateRequest(
+          public val email: String?,
+          public val metadata: UserMetadataUpdateRequest?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserResponse(
+          @Serializable(with = Serializers.Uuid::class)
+          public val id: UUID,
+          public val email: String,
+          public val metadata: UserMetadataResponse,
+          public val createdAt: LocalDateTime,
+          public val updatedAt: LocalDateTime
+        ) : Response
+
+        @Serializable
+        public data class UserMetadataCreateRequest(
+          public val firstName: String,
+          public val lastName: String
+        ) : Request.Create
+
+        @Serializable
+        public data class UserMetadataUpdateRequest(
+          public val firstName: String?,
+          public val lastName: String?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserMetadataResponse(
+          public val firstName: String,
+          public val lastName: String
+        ) : Response
+        """.trimIndent()
+      )
+    }
+    it("Can support a domain with deeply nested models") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+          package test
+
+          import io.bkbn.stoik.core.Domain
+
+          @Domain("User")
+          interface UserDomain {
+            val email: String
+            val metadata: UserMetadata
+          }
+
+          interface UserMetadata {
+            val firstName: String
+            val lastName: String
+            val otherStuffs: OhBoiWeDeepInItNow
+          }
+
+          interface OhBoiWeDeepInItNow {
+            val otherInfo: String
+          }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ModelProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.models
+
+        import io.bkbn.stoik.core.model.Request
+        import io.bkbn.stoik.core.model.Response
+        import io.bkbn.stoik.core.serialization.Serializers
+        import java.util.UUID
+        import kotlin.String
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserCreateRequest(
+          public val email: String,
+          public val metadata: UserMetadataCreateRequest
+        ) : Request.Create
+
+        @Serializable
+        public data class UserUpdateRequest(
+          public val email: String?,
+          public val metadata: UserMetadataUpdateRequest?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserResponse(
+          @Serializable(with = Serializers.Uuid::class)
+          public val id: UUID,
+          public val email: String,
+          public val metadata: UserMetadataResponse,
+          public val createdAt: LocalDateTime,
+          public val updatedAt: LocalDateTime
+        ) : Response
+
+        @Serializable
+        public data class OhBoiWeDeepInItNowCreateRequest(
+          public val otherInfo: String
+        ) : Request.Create
+
+        @Serializable
+        public data class OhBoiWeDeepInItNowUpdateRequest(
+          public val otherInfo: String?
+        ) : Request.Update
+
+        @Serializable
+        public data class OhBoiWeDeepInItNowResponse(
+          public val otherInfo: String
+        ) : Response
+
+        @Serializable
+        public data class UserMetadataCreateRequest(
+          public val firstName: String,
+          public val lastName: String,
+          public val otherStuffs: OhBoiWeDeepInItNowCreateRequest
+        ) : Request.Create
+
+        @Serializable
+        public data class UserMetadataUpdateRequest(
+          public val firstName: String?,
+          public val lastName: String?,
+          public val otherStuffs: OhBoiWeDeepInItNowUpdateRequest?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserMetadataResponse(
+          public val firstName: String,
+          public val lastName: String,
+          public val otherStuffs: OhBoiWeDeepInItNowResponse
+        ) : Response
+        """.trimIndent()
+      )
+    }
   }
 }) {
   companion object {
