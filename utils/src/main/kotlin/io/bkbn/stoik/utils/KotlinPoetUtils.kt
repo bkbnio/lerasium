@@ -40,6 +40,9 @@ object KotlinPoetUtils {
   fun Domain.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toDaoClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Dao"))
 
+  fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
+  fun String.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, this.plus("Entity"))
+
   fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
 
   fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false) =

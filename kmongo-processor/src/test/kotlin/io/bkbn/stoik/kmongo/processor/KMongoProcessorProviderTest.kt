@@ -15,7 +15,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
     it("Can generate a simple document") {
       // arrange
       val compilation = KotlinCompilation().apply {
-        sources = listOf(sourceFile)
+        sources = listOf(simpleSourceFile)
         symbolProcessorProviders = listOf(KMongoProcessorProvider())
         inheritClassPath = true
       }
@@ -63,12 +63,169 @@ class KMongoProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can generate a simple nested document") {
+      // arrange
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(nestedDocumentFile)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDocument.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.entity
+
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.UserPreferencesResponse
+        import io.bkbn.stoik.generated.models.UserResponse
+        import kotlin.Boolean
+        import kotlin.Int
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserEntity(
+          public var name: String,
+          public var age: Int,
+          public var preferences: UserPreferencesEntity
+        ) : Entity<UserResponse> {
+          public override fun toResponse(): UserResponse = with(::UserResponse) {
+            val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                "preferences" -> preferences.toResponse()
+                else -> propertiesByName[it.name]?.get(this@UserEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+
+        @Serializable
+        public data class UserPreferencesEntity(
+          public var status: String,
+          public var subscribed: Boolean
+        ) : Entity<UserPreferencesResponse> {
+          public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
+            val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                else -> propertiesByName[it.name]?.get(this@UserPreferencesEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can generate a deeply nested document") {
+      // arrange
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(deeplyNestedDocument)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDocument.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.entity
+
+        import io.bkbn.stoik.core.model.Entity
+        import io.bkbn.stoik.generated.models.UserInfoResponse
+        import io.bkbn.stoik.generated.models.UserPreferencesResponse
+        import io.bkbn.stoik.generated.models.UserResponse
+        import io.bkbn.stoik.generated.models.UserStuffResponse
+        import kotlin.Boolean
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserEntity(
+          public var preferences: UserPreferencesEntity
+        ) : Entity<UserResponse> {
+          public override fun toResponse(): UserResponse = with(::UserResponse) {
+            val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                "preferences" -> preferences.toResponse()
+                else -> propertiesByName[it.name]?.get(this@UserEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+
+        @Serializable
+        public data class UserPreferencesEntity(
+          public var stuff: UserStuffEntity
+        ) : Entity<UserPreferencesResponse> {
+          public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
+            val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                "stuff" -> stuff.toResponse()
+                else -> propertiesByName[it.name]?.get(this@UserPreferencesEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+
+        @Serializable
+        public data class UserStuffEntity(
+          public var info: UserInfoEntity
+        ) : Entity<UserStuffResponse> {
+          public override fun toResponse(): UserStuffResponse = with(::UserStuffResponse) {
+            val propertiesByName = UserStuffEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                "info" -> info.toResponse()
+                else -> propertiesByName[it.name]?.get(this@UserStuffEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+
+        @Serializable
+        public data class UserInfoEntity(
+          public var isCool: Boolean
+        ) : Entity<UserInfoResponse> {
+          public override fun toResponse(): UserInfoResponse = with(::UserInfoResponse) {
+            val propertiesByName = UserInfoEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                else -> propertiesByName[it.name]?.get(this@UserInfoEntity)
+              }
+            }
+            callBy(params)
+          }
+        }
+        """.trimIndent()
+      )
+    }
   }
   describe("Dao Generation") {
     it("can build a simple crud dao") {
       // arrange
       val compilation = KotlinCompilation().apply {
-        sources = listOf(sourceFile)
+        sources = listOf(simpleSourceFile)
         symbolProcessorProviders = listOf(KMongoProcessorProvider())
         inheritClassPath = true
       }
@@ -139,6 +296,9 @@ class KMongoProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
+    it("Can build a dao with nested objects") {
+
+    }
   }
 }) {
   companion object {
@@ -162,7 +322,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       postProcess: (String) -> String = { it }
     ): String = postProcess(contents)
 
-    val sourceFile = SourceFile.kotlin(
+    val simpleSourceFile = SourceFile.kotlin(
       "Spec.kt", """
         package test
 
@@ -177,6 +337,60 @@ class KMongoProcessorProviderTest : DescribeSpec({
         @Document
         interface UserDoc : User
         """.trimIndent()
+    )
+
+    val nestedDocumentFile = SourceFile.kotlin(
+      "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
+        import io.bkbn.stoik.kmongo.Document
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val age: Int
+          val preferences: UserPreferences
+        }
+
+        interface UserPreferences {
+          val status: String
+          val subscribed: Boolean
+        }
+
+        @Document
+        interface UserDoc : User
+      """.trimIndent()
+    )
+
+    val deeplyNestedDocument = SourceFile.kotlin(
+      "Spec.kt", """
+        package test
+
+        import io.bkbn.stoik.core.Domain
+        import io.bkbn.stoik.kmongo.Document
+
+        @Domain("User")
+        interface User {
+          val preferences: UserPreferences
+        }
+
+        interface UserPreferences {
+          val stuff: UserStuff
+        }
+
+        interface UserStuff {
+          val info: UserInfo
+        }
+
+
+        interface UserInfo {
+          val isCool: Boolean
+        }
+
+        @Document
+        interface UserDoc : User
+      """.trimIndent()
     )
   }
 }
