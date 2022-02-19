@@ -6,17 +6,17 @@ import io.bkbn.stoik.exposed.Unique
 import io.bkbn.stoik.ktor.Api
 
 @Domain("User")
-sealed interface User {
+private sealed interface UserDomain {
   val firstName: String
   val lastName: String
   val email: String
 }
 
 @Table
-interface UserTable : User {
+private interface UserTable : UserDomain {
   @Unique
   override val email: String
 }
 
 @Api
-interface UserApi: User
+private interface UserApi: UserDomain

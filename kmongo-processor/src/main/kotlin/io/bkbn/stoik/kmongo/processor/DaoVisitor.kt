@@ -1,8 +1,10 @@
 package io.bkbn.stoik.kmongo.processor
 
+import com.google.devtools.ksp.closestClassDeclaration
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
@@ -14,13 +16,17 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.core.dao.Dao
 import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
+import io.bkbn.stoik.utils.KotlinPoetUtils.addObjectInstantiation
+import io.bkbn.stoik.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.stoik.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toResponseClass
@@ -80,25 +86,45 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     responseClass: ClassName,
     entityClass: ClassName
   ) {
-    val props = cd.getAllProperties().toList()
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("request", requestClass)
       returns(responseClass)
       addCode(CodeBlock.builder().apply {
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
-        val fieldAssignments = props.joinToString(separator = ",\n") {
-          "${it.simpleName.getShortName()} = request.${it.simpleName.getShortName()}"
-        }
-        addStatement(
-          "val entity = %T(\nid = %T.randomUUID(),\n$fieldAssignments,\ncreatedAt = now,\nupdatedAt = now\n)",
-          entityClass,
-          UUID::class
-        )
+        add("val entity = ")
+        convertToNewEntity(entityClass, cd, "request", true)
         addStatement("collection.%M(entity)", Save)
         addStatement("return entity.toResponse()")
       }.build())
     }.build())
+  }
+
+  private fun CodeBlock.Builder.convertToNewEntity(
+    entityClass: ClassName,
+    cd: KSClassDeclaration,
+    receiverName: String,
+    isDomainModel: Boolean = false
+  ): Unit = addObjectInstantiation(entityClass) {
+    val props = cd.getAllProperties().toList()
+    if (isDomainModel) {
+      addStatement("id = %T.randomUUID(),", UUID::class)
+      addStatement("createdAt = now,")
+      addStatement("updatedAt = now,")
+    }
+    props.forEach { prop ->
+      val propName = prop.simpleName.getShortName()
+      when (prop.type.isSupportedScalar()) {
+        true -> addStatement("$propName = $receiverName.$propName,")
+        false -> {
+          addControlFlow("$propName = $receiverName.$propName.let { $propName ->") {
+            val propTn = (prop.type.toTypeName() as ClassName).toEntityClass()
+            val propDef = prop.type.resolve().declaration as KSClassDeclaration
+            convertToNewEntity(propTn, propDef, propName)
+          }
+        }
+      }
+    }
   }
 
   private fun TypeSpec.Builder.addReadFunction(responseClass: ClassName) {
@@ -118,7 +144,6 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     requestClass: ClassName,
     responseClass: ClassName,
   ) {
-    val props = cd.getAllProperties().toList()
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("id", UUID::class)
@@ -127,17 +152,38 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCode(CodeBlock.builder().apply {
         addStatement("val entity = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
-        props.forEach { property ->
-          val propName = property.simpleName.getShortName()
-          addControlFlow("request.%L?.let", propName) {
-            addStatement("entity.%L = it", propName)
-          }
-        }
+        addEntityUpdates(cd)
         addStatement("entity.updatedAt = now")
         addStatement("collection.%M(entity)", Save)
         addStatement("return entity.toResponse()")
       }.build())
     }.build())
+  }
+
+  private fun CodeBlock.Builder.addEntityUpdates(
+    cd: KSClassDeclaration,
+    requestName: String = "request",
+    entityName: String = "entity"
+  ) {
+    val props = cd.getAllProperties().toList()
+    props.forEach { property ->
+      val propName = property.simpleName.getShortName()
+      when (property.type.isSupportedScalar()) {
+        true -> {
+          addControlFlow("$requestName.%L?.let", propName) {
+            addStatement("$entityName.%L = it", propName)
+          }
+        }
+        false -> {
+          addControlFlow("$requestName.$propName?.let") {
+            addControlFlow("$entityName.$propName.let { $propName ->") {
+              val propDef = property.type.resolve().declaration as KSClassDeclaration
+              addEntityUpdates(propDef, "it", propName)
+            }
+          }
+        }
+      }
+    }
   }
 
   private fun TypeSpec.Builder.addDeleteFunction() {

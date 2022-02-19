@@ -4,8 +4,12 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -19,9 +23,13 @@ import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.toClassName
 import io.bkbn.stoik.core.Domain
 import io.bkbn.stoik.core.model.Entity
+import io.bkbn.stoik.utils.KotlinPoetUtils
+import io.bkbn.stoik.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
 import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
+import io.bkbn.stoik.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.stoik.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toParameter
 import io.bkbn.stoik.utils.KotlinPoetUtils.toProperty
@@ -41,64 +49,119 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
     val valueParams = MemberName("kotlin.reflect.full", "valueParameters")
   }
 
+  private lateinit var containingFile: KSFile
+
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
     if (classDeclaration.classKind != ClassKind.INTERFACE) {
-      logger.error("Only an interface can be decorated with @Table", classDeclaration)
+      logger.error("Only an interface can be decorated with @Document", classDeclaration)
       return
     }
 
+    containingFile = classDeclaration.containingFile!!
+
     val domain = classDeclaration.findParentDomain()
-    fileBuilder.addDocument(classDeclaration, domain)
+    fileBuilder.addDocument(classDeclaration, domain.name, true)
+
+    classDeclaration.getAllProperties().toList()
+      .filterNot { it.type.isSupportedScalar() }
+      .forEach { visitTypeReference(it.type, Unit) }
   }
 
-  private fun FileSpec.Builder.addDocument(cd: KSClassDeclaration, domain: Domain) {
+  override fun visitTypeReference(typeReference: KSTypeReference, data: Unit) {
+    val simpleName = typeReference.resolve().toClassName().simpleName
+    val classDeclaration = typeReference.resolve().declaration as KSClassDeclaration
+
+    fileBuilder.addDocument(classDeclaration, simpleName)
+
+    classDeclaration.getAllProperties().toList()
+      .filterNot { it.type.isSupportedScalar() }
+      .forEach { visitTypeReference(it.type, Unit) }
+  }
+
+  private fun FileSpec.Builder.addDocument(cd: KSClassDeclaration, name: String, isDomainModel: Boolean = false) {
     val properties = cd.getAllProperties().toList()
-    addType(TypeSpec.classBuilder(domain.name.plus("Entity")).apply {
+    addType(TypeSpec.classBuilder(name.plus("Entity")).apply {
       addOriginatingKSFile(cd.containingFile!!)
-      addSuperinterface(Entity::class.asClassName().parameterizedBy(domain.toResponseClass()))
+      addSuperinterface(Entity::class.asClassName().parameterizedBy(name.toResponseClass()))
       addAnnotation(Serializable::class)
       addModifiers(KModifier.DATA)
       primaryConstructor(FunSpec.constructorBuilder().apply {
-        addParameter(ParameterSpec("id", UUID::class.asTypeName()))
-        properties.forEach { addParameter(it.toParameter()) }
-        addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
-        addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
-      }.build())
-      properties.forEach { addProperty(it.toProperty(true)) }
-      addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
-        addAnnotation(Contextual::class)
-        addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
-          addMember("%S", "_id")
-        }.build())
-        initializer("id")
-      }.build())
-      addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName()).apply {
-        mutable()
-        initializer("createdAt")
-      }.build())
-      addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName()).apply {
-        mutable()
-        initializer("updatedAt")
-      }.build())
-      addFunction(FunSpec.builder("toResponse").apply {
-        addModifiers(KModifier.OVERRIDE)
-        returns(domain.toResponseClass())
-        addCode(CodeBlock.builder().apply {
-          addControlFlow("return with(::%T)", domain.toResponseClass()) {
-            addStatement(
-              "val propertiesByName = %T::class.%M.associateBy { it.name }",
-              domain.toEntityClass(),
-              memberProps
-            )
-            addControlFlow("val params = %M.associateWith", valueParams) {
-              addControlFlow("when (it.name)") {
-                addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
-              }
+        if (isDomainModel) addParameter(ParameterSpec("id", UUID::class.asTypeName()))
+        properties.forEach {
+          val param = when (it.type.isSupportedScalar()) {
+            true -> it.toParameter()
+            false -> {
+              val n = it.simpleName.getShortName()
+              val t = it.type.resolve().toClassName().simpleName.plus("Entity")
+              val cn = ClassName(BASE_ENTITY_PACKAGE_NAME, t)
+              ParameterSpec.builder(n, cn).build()
             }
-            addStatement("callBy(params)")
           }
-        }.build())
+          addParameter(param)
+        }
+        if (isDomainModel) addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
+        if (isDomainModel) addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
       }.build())
+      properties.forEach {
+        val prop = when (it.type.isSupportedScalar()) {
+          true -> it.toProperty(true)
+          false -> {
+            val n = it.simpleName.getShortName()
+            val t = it.type.resolve().toClassName().simpleName.plus("Entity")
+            val cn = ClassName(BASE_ENTITY_PACKAGE_NAME, t)
+            PropertySpec.builder(n, cn).apply {
+              mutable(true)
+              initializer(n)
+            }.build()
+          }
+        }
+        addProperty(prop)
+      }
+      if (isDomainModel) addDomainModelProps()
+      addResponseConverter(name, properties)
     }.build())
   }
+
+  private fun TypeSpec.Builder.addDomainModelProps() {
+    addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
+      addAnnotation(Contextual::class)
+      addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
+        addMember("%S", "_id")
+      }.build())
+      initializer("id")
+    }.build())
+    addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName()).apply {
+      mutable()
+      initializer("createdAt")
+    }.build())
+    addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName()).apply {
+      mutable()
+      initializer("updatedAt")
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addResponseConverter(name: String, properties: List<KSPropertyDeclaration>) =
+    addFunction(FunSpec.builder("toResponse").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(name.toResponseClass())
+      addCode(CodeBlock.builder().apply {
+        addControlFlow("return with(::%T)", name.toResponseClass()) {
+          addStatement(
+            "val propertiesByName = %T::class.%M.associateBy { it.name }",
+            name.toEntityClass(),
+            memberProps
+          )
+          addControlFlow("val params = %M.associateWith", valueParams) {
+            addControlFlow("when (it.name)") {
+              properties.filterNot { it.type.isSupportedScalar() }.forEach {
+                val propName = it.simpleName.getShortName()
+                addStatement("%S -> $propName.toResponse()", propName)
+              }
+              addStatement("else -> propertiesByName[it.name]?.get(this@%L)", name.toEntityClass().simpleName)
+            }
+          }
+          addStatement("callBy(params)")
+        }
+      }.build())
+    }.build())
 }
