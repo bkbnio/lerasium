@@ -7,6 +7,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
@@ -28,6 +29,17 @@ object KotlinPoetUtils {
     endControlFlow()
   }
 
+  fun CodeBlock.Builder.addObjectInstantiation(
+    type: TypeName,
+    init: CodeBlock.Builder.() -> Unit
+  ) {
+    add("%T(\n", type)
+    indent()
+    add(CodeBlock.Builder().apply(init).build())
+    unindent()
+    add(")\n")
+  }
+
   fun FunSpec.Builder.addCodeBlock(
     init: CodeBlock.Builder.() -> Unit
   ) {
@@ -42,6 +54,8 @@ object KotlinPoetUtils {
 
   fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
   fun String.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, this.plus("Entity"))
+
+  fun ClassName.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
 
   fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
 

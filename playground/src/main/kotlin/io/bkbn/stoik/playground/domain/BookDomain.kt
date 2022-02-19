@@ -5,14 +5,14 @@ import io.bkbn.stoik.exposed.Table
 import io.bkbn.stoik.ktor.Api
 
 @Domain("Book")
-sealed interface Book {
+private sealed interface BookDomain {
   val title: String
   val isbn: String
   val rating: Double
 }
 
 @Table
-interface BookTable : Book
+private interface BookTable : BookDomain
 
 @Api
-interface BookApi : Book
+private interface BookApi : BookDomain

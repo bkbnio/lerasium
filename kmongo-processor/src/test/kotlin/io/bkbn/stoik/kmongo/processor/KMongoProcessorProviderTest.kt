@@ -282,11 +282,11 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun create(request: UserCreateRequest): UserResponse {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val entity = UserEntity(
-                id = UUID.randomUUID(),
-                name = request.name,
-                createdAt = now,
-                updatedAt = now
-                )
+              id = UUID.randomUUID(),
+              createdAt = now,
+              updatedAt = now,
+              name = request.name,
+            )
             collection.save(entity)
             return entity.toResponse()
           }
@@ -315,7 +315,196 @@ class KMongoProcessorProviderTest : DescribeSpec({
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
     it("Can build a dao with nested objects") {
+      // arrange
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(nestedDocumentFile)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
 
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.entity
+
+        import com.mongodb.client.MongoCollection
+        import com.mongodb.client.MongoDatabase
+        import io.bkbn.stoik.core.dao.Dao
+        import io.bkbn.stoik.generated.models.UserCreateRequest
+        import io.bkbn.stoik.generated.models.UserResponse
+        import io.bkbn.stoik.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Unit
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.litote.kmongo.deleteOneById
+        import org.litote.kmongo.findOneById
+        import org.litote.kmongo.getCollection
+        import org.litote.kmongo.save
+
+        public class UserDao(
+          db: MongoDatabase
+        ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+          private val collection: MongoCollection<UserEntity> = db.getCollection()
+
+          public override fun create(request: UserCreateRequest): UserResponse {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = UserEntity(
+              id = UUID.randomUUID(),
+              createdAt = now,
+              updatedAt = now,
+              name = request.name,
+              age = request.age,
+              preferences = request.preferences.let { preferences ->
+                UserPreferencesEntity(
+                  status = preferences.status,
+                  subscribed = preferences.subscribed,
+                )
+              }
+            )
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun read(id: UUID): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            return entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            request.name?.let {
+              entity.name = it
+            }
+            request.age?.let {
+              entity.age = it
+            }
+            request.preferences?.let {
+              entity.preferences.let { preferences ->
+                it.status?.let {
+                  preferences.status = it
+                }
+                it.subscribed?.let {
+                  preferences.subscribed = it
+                }
+              }
+            }
+            entity.updatedAt = now
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun delete(id: UUID): Unit {
+            collection.deleteOneById(id)
+          }
+        }
+        """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
+    }
+    it("Can build a dao with deeply nested objects") {
+      // arrange
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(deeplyNestedDocument)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.stoik.generated.entity
+
+        import com.mongodb.client.MongoCollection
+        import com.mongodb.client.MongoDatabase
+        import io.bkbn.stoik.core.dao.Dao
+        import io.bkbn.stoik.generated.models.UserCreateRequest
+        import io.bkbn.stoik.generated.models.UserResponse
+        import io.bkbn.stoik.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Unit
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.litote.kmongo.deleteOneById
+        import org.litote.kmongo.findOneById
+        import org.litote.kmongo.getCollection
+        import org.litote.kmongo.save
+
+        public class UserDao(
+          db: MongoDatabase
+        ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+          private val collection: MongoCollection<UserEntity> = db.getCollection()
+
+          public override fun create(request: UserCreateRequest): UserResponse {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = UserEntity(
+              id = UUID.randomUUID(),
+              createdAt = now,
+              updatedAt = now,
+              preferences = request.preferences.let { preferences ->
+                UserPreferencesEntity(
+                  stuff = preferences.stuff.let { stuff ->
+                    UserStuffEntity(
+                      info = stuff.info.let { info ->
+                        UserInfoEntity(
+                          isCool = info.isCool,
+                        )
+                      }
+                    )
+                  }
+                )
+              }
+            )
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun read(id: UUID): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            return entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            request.preferences?.let {
+              entity.preferences.let { preferences ->
+                it.stuff?.let {
+                  preferences.stuff.let { stuff ->
+                    it.info?.let {
+                      stuff.info.let { info ->
+                        it.isCool?.let {
+                          info.isCool = it
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            entity.updatedAt = now
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun delete(id: UUID): Unit {
+            collection.deleteOneById(id)
+          }
+        }
+        """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
     }
   }
 }) {

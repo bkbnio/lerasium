@@ -5,19 +5,19 @@ import io.bkbn.stoik.kmongo.Document
 import io.bkbn.stoik.ktor.Api
 
 @Domain("Profile")
-sealed interface Profile {
+private sealed interface ProfileDomain {
   val mood: String
   val viewCount: Long
   val metadata: ProfileMetadata
 }
 
-interface ProfileMetadata {
+private interface ProfileMetadata {
   val isPrivate: Boolean
   val otherThing: String
 }
 
 @Document
-interface ProfileDocument : Profile
+private interface ProfileDocument : ProfileDomain
 
 @Api
-interface ProfileApi : Profile
+private interface ProfileApi : ProfileDomain
