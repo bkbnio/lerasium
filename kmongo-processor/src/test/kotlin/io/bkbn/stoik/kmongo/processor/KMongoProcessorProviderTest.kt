@@ -84,18 +84,27 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.core.model.Entity
         import io.bkbn.stoik.generated.models.UserPreferencesResponse
         import io.bkbn.stoik.generated.models.UserResponse
+        import java.util.UUID
         import kotlin.Boolean
         import kotlin.Int
         import kotlin.String
         import kotlin.reflect.full.memberProperties
         import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Contextual
+        import kotlinx.serialization.SerialName
         import kotlinx.serialization.Serializable
 
         @Serializable
         public data class UserEntity(
+          @Contextual
+          @SerialName("_id")
+          public val id: UUID,
           public var name: String,
           public var age: Int,
-          public var preferences: UserPreferencesEntity
+          public var preferences: UserPreferencesEntity,
+          public var createdAt: LocalDateTime,
+          public var updatedAt: LocalDateTime
         ) : Entity<UserResponse> {
           public override fun toResponse(): UserResponse = with(::UserResponse) {
             val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
@@ -150,14 +159,23 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.stoik.generated.models.UserPreferencesResponse
         import io.bkbn.stoik.generated.models.UserResponse
         import io.bkbn.stoik.generated.models.UserStuffResponse
+        import java.util.UUID
         import kotlin.Boolean
         import kotlin.reflect.full.memberProperties
         import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Contextual
+        import kotlinx.serialization.SerialName
         import kotlinx.serialization.Serializable
 
         @Serializable
         public data class UserEntity(
-          public var preferences: UserPreferencesEntity
+          @Contextual
+          @SerialName("_id")
+          public val id: UUID,
+          public var preferences: UserPreferencesEntity,
+          public var createdAt: LocalDateTime,
+          public var updatedAt: LocalDateTime
         ) : Entity<UserResponse> {
           public override fun toResponse(): UserResponse = with(::UserResponse) {
             val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }

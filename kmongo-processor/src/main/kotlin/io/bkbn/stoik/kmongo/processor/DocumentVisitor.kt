@@ -60,7 +60,7 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
     containingFile = classDeclaration.containingFile!!
 
     val domain = classDeclaration.findParentDomain()
-    fileBuilder.addDocument(classDeclaration, domain.name)
+    fileBuilder.addDocument(classDeclaration, domain.name, true)
 
     classDeclaration.getAllProperties().toList()
       .filterNot { it.type.isSupportedScalar() }
