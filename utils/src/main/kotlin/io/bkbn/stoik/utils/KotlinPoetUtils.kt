@@ -16,8 +16,10 @@ import io.bkbn.stoik.core.Domain
 @OptIn(KotlinPoetKspPreview::class)
 object KotlinPoetUtils {
 
-  const val BASE_MODEL_PACKAGE_NAME = "io.bkbn.stoik.generated.models"
-  const val BASE_ENTITY_PACKAGE_NAME = "io.bkbn.stoik.generated.entity"
+  private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated"
+  const val BASE_API_PACKAGE_NAME = "$BASE_PACKAGE_NAME.api"
+  const val BASE_MODEL_PACKAGE_NAME = "$BASE_PACKAGE_NAME.models"
+  const val BASE_ENTITY_PACKAGE_NAME = "$BASE_PACKAGE_NAME.entity"
 
   fun CodeBlock.Builder.addControlFlow(
     controlFlow: String,
@@ -31,13 +33,17 @@ object KotlinPoetUtils {
 
   fun CodeBlock.Builder.addObjectInstantiation(
     type: TypeName,
+    trailingComma: Boolean = false,
     init: CodeBlock.Builder.() -> Unit
   ) {
     add("%T(\n", type)
     indent()
     add(CodeBlock.Builder().apply(init).build())
     unindent()
-    add(")\n")
+    when (trailingComma) {
+      true ->  add("),\n")
+      false ->  add(")\n")
+    }
   }
 
   fun FunSpec.Builder.addCodeBlock(
@@ -46,6 +52,7 @@ object KotlinPoetUtils {
     addCode(CodeBlock.builder().apply(init).build())
   }
 
+  fun Domain.toTocClass(): ClassName = ClassName(BASE_API_PACKAGE_NAME, name.plus("ToC"))
   fun Domain.toCreateRequestClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("CreateRequest"))
   fun Domain.toUpdateRequestClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("UpdateRequest"))
   fun Domain.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("Response"))

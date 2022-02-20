@@ -20,6 +20,7 @@ import io.bkbn.stoik.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.stoik.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.stoik.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toDaoClass
+import io.bkbn.stoik.utils.KotlinPoetUtils.toTocClass
 import io.bkbn.stoik.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 import io.ktor.http.HttpStatusCode
@@ -32,10 +33,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   companion object {
     val routeMember = MemberName("io.ktor.routing", "route")
-    val getMember = MemberName("io.ktor.routing", "get")
-    val postMember = MemberName("io.ktor.routing", "post")
-    val putMember = MemberName("io.ktor.routing", "put")
-    val deleteMember = MemberName("io.ktor.routing", "delete")
+    val notarizedGetMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedGet")
+    val notarizedPostMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedPost")
+    val notarizedPutMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedPut")
+    val notarizedDeleteMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedDelete")
     val callMember = MemberName("io.ktor.application", "call")
     val receiveMember = MemberName("io.ktor.request", "receive")
     val respondMember = MemberName("io.ktor.response", "respond")
@@ -67,9 +68,9 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
           addCreateRoute(domain)
           addControlFlow("%M(%S)", routeMember, "/{id}") {
-            addReadRoute()
+            addReadRoute(domain)
             addUpdateRoute(domain)
-            addDeleteRoute()
+            addDeleteRoute(domain)
           }
         }
       }
@@ -78,7 +79,8 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   private fun CodeBlock.Builder.addCreateRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      addControlFlow("%M", postMember) {
+      val toc = MemberName(domain.toTocClass(), "create${domain.name}")
+      addControlFlow("%M(%M)", notarizedPostMember, toc) {
         addStatement("val request = %M.%M<%T>()", callMember, receiveMember, domain.toCreateRequestClass())
         addStatement("val result = dao.create(request)")
         addStatement("%M.%M(result)", callMember, respondMember)
@@ -86,9 +88,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addReadRoute() {
+  private fun CodeBlock.Builder.addReadRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      addControlFlow("%M", getMember) {
+      val toc = MemberName(domain.toTocClass(), "get${domain.name}")
+      addControlFlow("%M(%M)", notarizedGetMember, toc) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("val result = dao.read(id)")
         addStatement("%M.%M(result)", callMember, respondMember)
@@ -98,7 +101,8 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   private fun CodeBlock.Builder.addUpdateRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      addControlFlow("%M", putMember) {
+      val toc = MemberName(domain.toTocClass(), "update${domain.name}")
+      addControlFlow("%M(%M)", notarizedPutMember, toc) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("val request = %M.%M<%T>()", callMember, receiveMember, domain.toUpdateRequestClass())
         addStatement("val result = dao.update(id, request)")
@@ -107,9 +111,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addDeleteRoute() {
+  private fun CodeBlock.Builder.addDeleteRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      addControlFlow("%M", deleteMember) {
+      val toc = MemberName(domain.toTocClass(), "delete${domain.name}")
+      addControlFlow("%M(%M)", notarizedDeleteMember, toc) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("dao.delete(id)")
         addStatement("%M.%M(%T.NoContent)", callMember, respondMember, HttpStatusCode::class)
