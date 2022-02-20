@@ -16,15 +16,15 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '17'
-#      - name: Publish to GitHub Packages
-#        uses: burrunan/gradle-cache-action@v1
-#        with:
-#          gradle-version: wrapper
-#          arguments: publishAllPublicationsToGithubPackagesRepository
-#          properties: |
-#            release=true
-#            org.gradle.vfs.watch=false
-#            org.gradle.vfs.verbose=false
+      - name: Publish to GitHub Packages
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          gradle-version: wrapper
+          arguments: publishAllPublicationsToGithubPackagesRepository
+          properties: |
+            release=true
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish-to-nexus:

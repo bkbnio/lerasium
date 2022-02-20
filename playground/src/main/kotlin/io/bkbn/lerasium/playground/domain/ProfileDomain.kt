@@ -6,7 +6,7 @@ import io.bkbn.lerasium.api.Api
 
 @Domain("Profile")
 private sealed interface ProfileDomain {
-  val mood: String
+  val mood: String?
   val viewCount: Long
   val metadata: ProfileMetadata
 }

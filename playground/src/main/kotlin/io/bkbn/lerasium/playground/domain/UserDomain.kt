@@ -10,6 +10,7 @@ private sealed interface UserDomain {
   val firstName: String
   val lastName: String
   val email: String
+  val favoriteFood: String?
 }
 
 @Table
