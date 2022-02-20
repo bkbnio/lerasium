@@ -10,15 +10,15 @@ plugins {
 }
 
 sourdough {
-  libraryName.set("Stoik Core Processor")
-  libraryDescription.set("Processes the essential Stoik annotations️")
+  libraryName.set("Lerasium Core Processor")
+  libraryDescription.set("Processes the essential Lerasium annotations️")
   compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 dependencies {
-  // Stoik
-  implementation(projects.stoikCore)
-  implementation(projects.stoikUtils)
+  // Lerasium
+  implementation(projects.lerasiumCore)
+  implementation(projects.lerasiumUtils)
 
   // KSP
   implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")

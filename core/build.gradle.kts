@@ -10,8 +10,8 @@ plugins {
 }
 
 sourdough {
-  libraryName.set("Stoik Core")
-  libraryDescription.set("The absolute essence of Stoik️")
+  libraryName.set("Lerasium Core")
+  libraryDescription.set("The absolute essence of Lerasium")
 }
 
 dependencies {

@@ -4,8 +4,8 @@ import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmExtension
 plugins {
   kotlin("jvm") version "1.6.10" apply false
   id("com.google.devtools.ksp") version "1.6.10-1.0.2" apply false
-  id("io.bkbn.sourdough.root") version "0.5.5"
-  id("io.bkbn.sourdough.library.jvm") version "0.5.5" apply false
+  id("io.bkbn.sourdough.root") version "0.6.0"
+  id("io.bkbn.sourdough.library.jvm") version "0.6.0" apply false
   id("com.github.jakemarsden.git-hooks") version "0.0.2"
   id("org.jetbrains.dokka") version "1.6.10"
   id("org.jetbrains.kotlinx.kover") version "0.5.0-RC"
@@ -37,7 +37,7 @@ subprojects {
   plugins.withType(LibraryJvmPlugin::class.java) {
     extensions.configure(LibraryJvmExtension::class.java) {
       githubOrg.set("bkbnio")
-      githubRepo.set("stoik")
+      githubRepo.set("lerasium")
       licenseName.set("MIT License")
       licenseUrl.set("https://mit-license.org")
       developerId.set("unredundant")
@@ -46,20 +46,3 @@ subprojects {
     }
   }
 }
-//subprojects {
-//  if (name != "stoik-playground") {
-//    apply(plugin = "io.bkbn.sourdough.library")
-//
-//    configure<SourdoughLibraryExtension> {
-//      githubOrg.set("bkbnio")
-//      githubRepo.set("stoik")
-//      libraryName.set("Stoik")
-//      libraryDescription.set("A different approach to boilerplate generation")
-//      licenseName.set("MIT License")
-//      licenseUrl.set("https://mit-license.org")
-//      developerId.set("bkbnio")
-//      developerName.set("Ryan Brink")
-//      developerEmail.set("admin@bkbn.io")
-//    }
-//  }
-//}

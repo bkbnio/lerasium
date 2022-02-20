@@ -1,20 +1,20 @@
-rootProject.name = "stoik"
+rootProject.name = "lerasium"
 
 // CORE
 include("core")
 include("core-processor")
 
 // Exposed (RDBMS)
-include("exposed")
-include("exposed-processor")
+include("rdbms")
+include("rdbms-processor")
 
 // KMongo (NoSQL)
-include("kmongo")
-include("kmongo-processor")
+include("mongo")
+include("mongo-processor")
 
 // Ktor (API)
-include("ktor")
-include("ktor-processor")
+include("api")
+include("api-processor")
 
 // Playground
 include("playground")

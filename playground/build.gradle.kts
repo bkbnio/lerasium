@@ -11,19 +11,19 @@ sourdough {
 }
 
 dependencies {
-  implementation(projects.stoikCore)
+  implementation(projects.lerasiumCore)
 
-  ksp(projects.stoikCoreProcessor)
-  implementation(projects.stoikCore)
+  ksp(projects.lerasiumCoreProcessor)
+  implementation(projects.lerasiumCore)
 
-  ksp(projects.stoikExposedProcessor)
-  implementation(projects.stoikExposed)
+  ksp(projects.lerasiumRdbmsProcessor)
+  implementation(projects.lerasiumRdbms)
 
-  ksp(projects.stoikKtorProcessor)
-  implementation(projects.stoikKtor)
+  ksp(projects.lerasiumApiProcessor)
+  implementation(projects.lerasiumApi)
 
-  ksp(projects.stoikKmongoProcessor)
-  implementation(projects.stoikKmongo)
+  ksp(projects.lerasiumMongoProcessor)
+  implementation(projects.lerasiumMongo)
 
   // Database
   implementation(group = "org.flywaydb", name = "flyway-core", version = "8.2.3")
@@ -54,5 +54,5 @@ kotlin {
 
 application {
   @Suppress("DEPRECATION")
-  mainClassName = "io.bkbn.stoik.playground.MainKt"
+  mainClassName = "io.bkbn.lerasium.playground.MainKt"
 }
