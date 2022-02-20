@@ -11,8 +11,6 @@ sourdough {
 }
 
 dependencies {
-  implementation(projects.lerasiumCore)
-
   ksp(projects.lerasiumCoreProcessor)
   implementation(projects.lerasiumCore)
 

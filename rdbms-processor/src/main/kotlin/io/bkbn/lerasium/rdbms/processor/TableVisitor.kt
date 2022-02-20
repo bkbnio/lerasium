@@ -152,19 +152,61 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
   private fun PropertySpec.Builder.setColumnInitializer(fieldName: String, property: KSPropertyDeclaration) {
     val columnName = fieldName.camelToSnakeCase()
-    when (property.type.toTypeName()) {
-      String::class.asTypeName() -> initializer("varchar(%S, %L)", columnName, determineVarCharSize(property))
-      Int::class.asTypeName() -> initializer("integer(%S)", columnName)
-      Long::class.asTypeName() -> initializer("long(%S)", columnName)
-      Boolean::class.asTypeName() -> initializer("bool(%S)", columnName)
-      Double::class.asTypeName() -> initializer("double(%S)", columnName)
-      Float::class.asTypeName() -> initializer("float(%S)", columnName)
-      else -> TODO()
+    when (property.type.resolve().declaration.simpleName.getShortName()) {
+      "String" -> handleString(columnName, property)
+      "Int" -> handleInt(columnName, property)
+      "Long" -> handleLong(columnName, property)
+      "Boolean" -> handleBoolean(columnName, property)
+      "Double" -> handleDouble(columnName, property)
+      "Float" -> handleFloat(columnName, property)
+      else -> TODO("${property.type} is not yet supported for Table definitions")
     }
+  }
+
+  private fun PropertySpec.Builder.handleString(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("varchar(%S, %L)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName, determineVarCharSize(property))
   }
 
   private fun determineVarCharSize(property: KSPropertyDeclaration): Int {
     val varCharAnnotation = property.getAnnotationsByType(VarChar::class).firstOrNull()
     return varCharAnnotation?.size ?: DEFAULT_VARCHAR_SIZE
+  }
+
+  private fun PropertySpec.Builder.handleInt(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("integer(%S)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleLong(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("long(%S)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleBoolean(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("bool(%S)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleDouble(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("double(%S)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleFloat(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    format.append("float(%S)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), columnName)
   }
 }

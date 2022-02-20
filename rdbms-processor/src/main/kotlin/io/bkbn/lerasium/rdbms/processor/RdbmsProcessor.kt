@@ -16,7 +16,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
-class ExposedProcessor(
+class RdbmsProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,
   options: Map<String, String>

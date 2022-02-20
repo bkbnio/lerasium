@@ -6,17 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-
-### Changed
-
-### Removed
-
-## [0.1.0] - 02/20/2022
-### Added
 - MVP RDBMS Generator
 - MVP Mongo Generator
 - MVP API Generator
 - MVP Model Generator
+- Support for nullable table columns 
+
+### Changed
+
+### Removed
 
 ## [0.0.1] - 11/19/2021
 - Started my project using sourdough ❤️

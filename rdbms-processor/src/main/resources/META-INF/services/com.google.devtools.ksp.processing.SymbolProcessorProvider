@@ -1,1 +1,1 @@
-io.bkbn.lerasium.rdbms.processor.ExposedProcessorProvider
+io.bkbn.lerasium.rdbms.processor.RdbmsProcessorProvider

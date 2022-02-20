@@ -11,7 +11,7 @@ import io.kotest.matchers.shouldNotBe
 import org.intellij.lang.annotations.Language
 import java.io.File
 
-class ExposedProcessorProviderTest : DescribeSpec({
+class RdbmsProcessorProviderTest : DescribeSpec({
   describe("Table Generation") {
     it("Can construct a simple Table with a single column") {
       // arrange
@@ -34,7 +34,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -116,7 +116,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -202,7 +202,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -285,7 +285,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -368,7 +368,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -451,7 +451,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -537,7 +537,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -598,6 +598,118 @@ class ExposedProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a table with nullable fields") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Letters")
+        interface Letters {
+          val s: String?
+          val i: Int?
+          val l: Long?
+          val b: Boolean?
+          val d: Double?
+          val f: Float?
+        }
+
+        @Table
+        interface LetterTable : Letters
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "LettersTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.LettersResponse
+        import java.util.UUID
+        import kotlin.Boolean
+        import kotlin.Double
+        import kotlin.Float
+        import kotlin.Int
+        import kotlin.Long
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object LettersTable : UUIDTable("letters") {
+          public val s: Column<String?> = varchar("s", 128).nullable()
+
+          public val i: Column<Int?> = integer("i").nullable()
+
+          public val l: Column<Long?> = long("l").nullable()
+
+          public val b: Column<Boolean?> = bool("b").nullable()
+
+          public val d: Column<Double?> = double("d").nullable()
+
+          public val f: Column<Float?> = float("f").nullable()
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class LettersEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<LettersResponse> {
+          public var s: String? by LettersTable.s
+
+          public var i: Int? by LettersTable.i
+
+          public var l: Long? by LettersTable.l
+
+          public var b: Boolean? by LettersTable.b
+
+          public var d: Double? by LettersTable.d
+
+          public var f: Float? by LettersTable.f
+
+          public var createdAt: LocalDateTime by LettersTable.createdAt
+
+          public var updatedAt: LocalDateTime by LettersTable.updatedAt
+
+          public override fun toResponse(): LettersResponse = with(::LettersResponse) {
+            val propertiesByName = LettersEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                LettersResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@LettersEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<LettersEntity>(LettersTable)
+        }
+        """.trimIndent()
+      )
+    }
   }
   describe("Dao Generation") {
     it("Can create a simple dao") {
@@ -621,7 +733,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
       )
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
@@ -723,7 +835,7 @@ class ExposedProcessorProviderTest : DescribeSpec({
 
       val compilation = KotlinCompilation().apply {
         sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(ExposedProcessorProvider())
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
         inheritClassPath = true
       }
 
