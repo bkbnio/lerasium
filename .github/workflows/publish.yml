@@ -2,9 +2,9 @@ name: Publish to GitHub Packages
 on:
   push:
     branches: [ main ]
-#env:
-#  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SONATYPE_SIGNING_KEY }}
-#  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
+env:
+  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SONATYPE_SIGNING_KEY }}
+  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -14,13 +14,13 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '17'
-#      - name: Publish to GitHub Packages
-#        uses: burrunan/gradle-cache-action@v1
-#        with:
-#          gradle-version: wrapper
-#          arguments: publishAllPublicationsToGithubPackagesRepository
-#          properties: |
-#            org.gradle.vfs.watch=false
-#            org.gradle.vfs.verbose=false
+      - name: Publish to GitHub Packages
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          gradle-version: wrapper
+          arguments: publishAllPublicationsToGithubPackagesRepository
+          properties: |
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
