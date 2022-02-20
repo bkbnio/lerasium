@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dao CRUD generator
 - Beginnings of document support (Mongo)
 - Completed Document Support 🎉
+- CRUD Documentation via Kompendium
 
 ## [0.3.0] - 12/30/2021
 ### Added

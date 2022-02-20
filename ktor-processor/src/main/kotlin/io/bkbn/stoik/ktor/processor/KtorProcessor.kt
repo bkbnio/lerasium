@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.stoik.ktor.Api
+import io.bkbn.stoik.utils.KotlinPoetUtils.BASE_API_PACKAGE_NAME
 import io.bkbn.stoik.utils.StoikUtils.findParentDomain
 
 @OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
@@ -20,10 +21,6 @@ class KtorProcessor(
   private val logger: KSPLogger,
   options: Map<String, String>
 ) : SymbolProcessor {
-
-  companion object {
-    private const val BASE_PACKAGE_NAME = "io.bkbn.stoik.generated.api"
-  }
 
   init {
     logger.info(options.toString())
@@ -38,8 +35,16 @@ class KtorProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_PACKAGE_NAME, domain.name.plus("Api"))
+      val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("Api"))
       it.accept(ApiVisitor(fb, logger), Unit)
+      val fs = fb.build()
+      fs.writeTo(codeGenerator, false)
+    }
+
+    symbols.forEach {
+      val domain = it.findParentDomain()
+      val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("ToC"))
+      it.accept(TocVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
     }

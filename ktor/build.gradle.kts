@@ -14,7 +14,6 @@ sourdough {
   libraryDescription.set("Collection of annotations for driving API generation️")
 }
 
-
 dependencies {
   // IMPLEMENTATION
 
@@ -22,4 +21,7 @@ dependencies {
   api(group = "io.ktor", name = "ktor-server-core", version = "1.6.7")
   api(group = "io.ktor", name = "ktor-server-netty", version = "1.6.7")
   api(group = "io.ktor", name = "ktor-serialization", version = "1.6.7")
+
+  // Kompendium
+  api(group = "io.bkbn", name = "kompendium-core", version = "2.1.1")
 }
