@@ -4,6 +4,7 @@ import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.rdbms.Unique
 import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.Sensitive
 
 @Domain("User")
 private sealed interface UserDomain {
@@ -11,6 +12,8 @@ private sealed interface UserDomain {
   val lastName: String
   val email: String
   val favoriteFood: String?
+  @Sensitive
+  val password: String
 }
 
 @Table

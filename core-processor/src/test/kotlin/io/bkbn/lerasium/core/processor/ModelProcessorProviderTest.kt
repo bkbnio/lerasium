@@ -3,6 +3,9 @@ package io.bkbn.lerasium.core.processor
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import io.bkbn.lerasium.utils.TestUtils.kotlinCode
+import io.bkbn.lerasium.utils.TestUtils.kspGeneratedSources
+import io.bkbn.lerasium.utils.TestUtils.readTrimmed
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -291,23 +294,4 @@ class ModelProcessorProviderTest : DescribeSpec({
       )
     }
   }
-}) {
-  companion object {
-    private val KotlinCompilation.Result.workingDir: File
-      get() =
-        outputDirectory.parentFile!!
-
-    val KotlinCompilation.Result.kspGeneratedSources: List<File>
-      get() {
-        val kspWorkingDir = workingDir.resolve("ksp")
-        val kspGeneratedDir = kspWorkingDir.resolve("sources")
-        val kotlinGeneratedDir = kspGeneratedDir.resolve("kotlin")
-        return kotlinGeneratedDir.walkTopDown().toList().filter { it.isFile }
-      }
-
-    fun File.readTrimmed() = readText().trim()
-
-    fun kotlinCode(@Language("kotlin") contents: String): String = contents
-  }
-}
-
+})
