@@ -600,92 +600,6 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
-    it("Can construct a field with a unique constraint") {
-      // arrange
-      val sourceFile = SourceFile.kotlin(
-        "Spec.kt", """
-        package test
-
-        import io.bkbn.lerasium.core.Domain
-        import io.bkbn.lerasium.rdbms.Table
-        import io.bkbn.lerasium.rdbms.Unique
-
-        @Domain("Words")
-        interface Words {
-          val word: String
-        }
-
-        @Table
-        interface WordsTableSpec : Words {
-          @Unique
-          override val word: String
-        }
-      """.trimIndent()
-      )
-
-      val compilation = KotlinCompilation().apply {
-        sources = listOf(sourceFile)
-        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
-        inheritClassPath = true
-      }
-
-      // act
-      val result = compilation.compile()
-
-      // assert
-      result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 2
-      result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
-        """
-        package io.bkbn.lerasium.generated.entity
-
-        import io.bkbn.lerasium.core.model.Entity
-        import io.bkbn.lerasium.generated.models.WordsResponse
-        import java.util.UUID
-        import kotlin.String
-        import kotlin.reflect.full.memberProperties
-        import kotlin.reflect.full.valueParameters
-        import kotlinx.datetime.LocalDateTime
-        import org.jetbrains.exposed.dao.UUIDEntity
-        import org.jetbrains.exposed.dao.UUIDEntityClass
-        import org.jetbrains.exposed.dao.id.EntityID
-        import org.jetbrains.exposed.dao.id.UUIDTable
-        import org.jetbrains.exposed.sql.Column
-        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-
-        public object WordsTable : UUIDTable("words") {
-          public val word: Column<String> = varchar("word", 128).uniqueIndex()
-
-          public val createdAt: Column<LocalDateTime> = datetime("created_at")
-
-          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
-        }
-
-        public class WordsEntity(
-          id: EntityID<UUID>
-        ) : UUIDEntity(id), Entity<WordsResponse> {
-          public var word: String by WordsTable.word
-
-          public var createdAt: LocalDateTime by WordsTable.createdAt
-
-          public var updatedAt: LocalDateTime by WordsTable.updatedAt
-
-          public override fun toResponse(): WordsResponse = with(::WordsResponse) {
-            val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
-            val params = valueParameters.associateWith {
-              when (it.name) {
-                WordsResponse::id.name -> id.value
-                else -> propertiesByName[it.name]?.get(this@WordsEntity)
-              }
-            }
-            callBy(params)
-          }
-
-          public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
-        }
-        """.trimIndent()
-      )
-    }
     it("Can construct a table with nullable fields") {
       // arrange
       val sourceFile = SourceFile.kotlin(
@@ -794,6 +708,275 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           }
 
           public companion object : UUIDEntityClass<LettersEntity>(LettersTable)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a indexed field") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.Index
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Words")
+        interface Words {
+          val word: String
+        }
+
+        @Table
+        interface WordsTableSpec : Words {
+          @Index
+          override val word: String
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.WordsResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object WordsTable : UUIDTable("words") {
+          public val word: Column<String> = varchar("word", 128).index()
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class WordsEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<WordsResponse> {
+          public var word: String by WordsTable.word
+
+          public var createdAt: LocalDateTime by WordsTable.createdAt
+
+          public var updatedAt: LocalDateTime by WordsTable.updatedAt
+
+          public override fun toResponse(): WordsResponse = with(::WordsResponse) {
+            val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                WordsResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@WordsEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a unique index field") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.Index
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Words")
+        interface Words {
+          val word: String
+        }
+
+        @Table
+        interface WordsTableSpec : Words {
+          @Index(unique = true)
+          override val word: String
+          o
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.WordsResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object WordsTable : UUIDTable("words") {
+          public val word: Column<String> = varchar("word", 128).uniqueIndex()
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class WordsEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<WordsResponse> {
+          public var word: String by WordsTable.word
+
+          public var createdAt: LocalDateTime by WordsTable.createdAt
+
+          public var updatedAt: LocalDateTime by WordsTable.updatedAt
+
+          public override fun toResponse(): WordsResponse = with(::WordsResponse) {
+            val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                WordsResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@WordsEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a composite index") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.CompositeIndex
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Words")
+        interface Words {
+          val word: String
+          val language: String
+        }
+
+        @Table
+        @CompositeIndex(true, "word", "language")
+        interface WordsTableSpec : Words {
+          override val word: String
+          override val language: String
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.WordsResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object WordsTable : UUIDTable("words") {
+          public val word: Column<String> = varchar("word", 128)
+
+          public val language: Column<String> = varchar("language", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+
+          init {
+            index(true, word, language)
+          }
+        }
+
+        public class WordsEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<WordsResponse> {
+          public var word: String by WordsTable.word
+
+          public var language: String by WordsTable.language
+
+          public var createdAt: LocalDateTime by WordsTable.createdAt
+
+          public var updatedAt: LocalDateTime by WordsTable.updatedAt
+
+          public override fun toResponse(): WordsResponse = with(::WordsResponse) {
+            val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                WordsResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@WordsEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
         }
         """.trimIndent()
       )
