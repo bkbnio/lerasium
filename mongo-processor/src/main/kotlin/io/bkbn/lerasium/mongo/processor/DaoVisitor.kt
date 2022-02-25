@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.mongo.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -21,6 +23,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
+import io.bkbn.lerasium.mongo.Unique
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
@@ -33,13 +36,14 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {
     private val GetCollection = MemberName("org.litote.kmongo", "getCollection")
     private val FindOneById = MemberName("org.litote.kmongo", "findOneById")
     private val DeleteOneById = MemberName("org.litote.kmongo", "deleteOneById")
+    private val EnsureUniqueIndex = MemberName("org.litote.kmongo", "ensureUniqueIndex")
     private val Save = MemberName("org.litote.kmongo", "save")
     private val toLDT = MemberName("kotlinx.datetime", "toLocalDateTime")
   }
@@ -70,6 +74,16 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addModifiers(KModifier.PRIVATE)
         initializer("db.%M()", GetCollection)
       }.build())
+      if (cd.getAllProperties().any { it.isAnnotationPresent(Unique::class) }) {
+        addInitializerBlock(CodeBlock.builder().apply {
+          cd.getAllProperties()
+            .filter { it.isAnnotationPresent(Unique::class) }
+            .forEach { uniqueProp ->
+              val name = uniqueProp.simpleName.getShortName()
+              addStatement("collection.%M(%T::$name)", EnsureUniqueIndex, ec)
+            }
+        }.build())
+      }
       addCreateFunction(cd, crc, rc, ec)
       addReadFunction(rc)
       addUpdateFunction(cd, urc, rc)
