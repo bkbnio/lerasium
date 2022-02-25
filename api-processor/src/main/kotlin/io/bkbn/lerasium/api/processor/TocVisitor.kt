@@ -19,8 +19,9 @@ import io.bkbn.kompendium.core.metadata.method.DeleteInfo
 import io.bkbn.kompendium.core.metadata.method.GetInfo
 import io.bkbn.kompendium.core.metadata.method.PostInfo
 import io.bkbn.kompendium.core.metadata.method.PutInfo
-import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.api.model.GetByIdParams
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -43,6 +44,7 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     fileBuilder.addType(TypeSpec.objectBuilder(tocName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
       addCreateInfo(domain)
+      addCountInfo(domain)
       addReadInfo(domain)
       addUpdateInfo(domain)
       addDeleteInfo(domain)
@@ -84,6 +86,25 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addObjectInstantiation(ResponseInfo::class.asClassName(), trailingComma = true) {
             addStatement("status = %T.Created,", HttpStatusCode::class)
             addStatement("description = %S", "The ${domain.name} was retrieved successfully")
+          }
+          addStatement("tags = setOf(%S)", domain.name)
+        }
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addCountInfo(domain: Domain) {
+    val countPropType = GetInfo::class.asClassName()
+      .parameterizedBy(Unit::class.asClassName(), CountResponse::class.asClassName())
+    addProperty(PropertySpec.builder("countAll${domain.name}", countPropType).apply {
+      initializer(CodeBlock.builder().apply {
+        addObjectInstantiation(countPropType) {
+          addStatement("summary = %S,", "Count ${domain.name}")
+          addStatement("description = %S,", "Counts total ${domain.name} entities")
+          add("responseInfo = ")
+          addObjectInstantiation(ResponseInfo::class.asClassName(), trailingComma = true) {
+            addStatement("status = %T.OK,", HttpStatusCode::class)
+            addStatement("description = %S", "Successfully retrieved the total ${domain.name} entity count")
           }
           addStatement("tags = setOf(%S)", domain.name)
         }

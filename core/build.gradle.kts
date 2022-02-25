@@ -1,5 +1,6 @@
 plugins {
   kotlin("jvm")
+  kotlin("plugin.serialization")
   id("io.bkbn.sourdough.library.jvm")
   id("io.gitlab.arturbosch.detekt")
   id("com.adarshr.test-logger")

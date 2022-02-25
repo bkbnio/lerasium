@@ -836,6 +836,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         package io.bkbn.lerasium.generated.entity
 
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -880,6 +881,11 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID) = transaction {
             val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
             entity.delete()
+          }
+
+          public override fun countAll(): CountResponse {
+            val count = UserEntity.count()
+            return CountResponse(count)
           }
         }
       """.trimIndent()

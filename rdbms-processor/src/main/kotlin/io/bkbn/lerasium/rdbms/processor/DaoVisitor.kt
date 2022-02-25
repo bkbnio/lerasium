@@ -17,6 +17,7 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -57,6 +58,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addReadFunction(rc, ec)
       addUpdateFunction(cd, urc, rc, ec)
       addDeleteFunction(ec)
+      addCountAllFunction(ec)
     }.build())
   }
 
@@ -86,6 +88,17 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           }
           addStatement("entity.toResponse()")
         }
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addCountAllFunction(entityClass: ClassName) {
+    addFunction(FunSpec.builder("countAll").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(CountResponse::class)
+      addCode(CodeBlock.builder().apply {
+        addStatement("val count = %T.count()", entityClass)
+        addStatement("return %T(count)", CountResponse::class)
       }.build())
     }.build())
   }

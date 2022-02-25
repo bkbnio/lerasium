@@ -23,6 +23,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.mongo.Unique
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
@@ -88,6 +89,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addReadFunction(rc)
       addUpdateFunction(cd, urc, rc)
       addDeleteFunction()
+      addCountAllFunction()
     }.build())
   }
 
@@ -203,6 +205,17 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addParameter("id", UUID::class)
       addCode(CodeBlock.builder().apply {
         addStatement("collection.%M(id)", DeleteOneById)
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addCountAllFunction() {
+    addFunction(FunSpec.builder("countAll").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(CountResponse::class)
+      addCode(CodeBlock.builder().apply {
+        addStatement("val count = collection.countDocuments()")
+        addStatement("return %T(count)", CountResponse::class)
       }.build())
     }.build())
   }

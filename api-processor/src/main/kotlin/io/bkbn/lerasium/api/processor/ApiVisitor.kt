@@ -72,6 +72,9 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addUpdateRoute(domain)
             addDeleteRoute(domain)
           }
+          addControlFlow("%M(%S)", routeMember, "/count") {
+            addCountRoute(domain)
+          }
         }
       }
     }.build())
@@ -83,6 +86,18 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addControlFlow("%M(%M)", notarizedPostMember, toc) {
         addStatement("val request = %M.%M<%T>()", callMember, receiveMember, domain.toCreateRequestClass())
         addStatement("val result = dao.create(request)")
+        addStatement("%M.%M(result)", callMember, respondMember)
+      }
+    }.build())
+  }
+
+  private fun CodeBlock.Builder.addCountRoute(domain: Domain) {
+    add(CodeBlock.builder().apply {
+      val toc = MemberName(domain.toTocClass(), "countAll${domain.name}")
+      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+//        addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
+//        addStatement("val offset = %M.parameters[%S]?.toLong() ?: 0", callMember, "offset")
+        addStatement("val result = dao.countAll()")
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())

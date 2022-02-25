@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm")
-  kotlin("plugin.serialization") version "1.6.10"
-  id("io.bkbn.sourdough.application.jvm") version "0.6.0"
+  kotlin("plugin.serialization")
+  id("io.bkbn.sourdough.application.jvm")
   id("com.google.devtools.ksp")
   application
 }

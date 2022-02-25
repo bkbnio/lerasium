@@ -94,6 +94,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.bkbn.kompendium.core.Notarized.notarizedGet
         import io.bkbn.kompendium.core.Notarized.notarizedPost
         import io.bkbn.kompendium.core.Notarized.notarizedPut
+        import io.bkbn.lerasium.generated.api.UserToC.countAllUser
         import io.bkbn.lerasium.generated.api.UserToC.createUser
         import io.bkbn.lerasium.generated.api.UserToC.deleteUser
         import io.bkbn.lerasium.generated.api.UserToC.getUser
@@ -136,6 +137,12 @@ class KtorProcessorProviderTest : DescribeSpec({
                   call.respond(HttpStatusCode.NoContent)
                 }
               }
+              route("/count") {
+                notarizedGet(countAllUser) {
+                  val result = dao.countAll()
+                  call.respond(result)
+                }
+              }
             }
           }
         }
@@ -167,6 +174,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.bkbn.kompendium.core.metadata.method.PostInfo
         import io.bkbn.kompendium.core.metadata.method.PutInfo
         import io.bkbn.lerasium.api.model.GetByIdParams
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -184,6 +192,17 @@ class KtorProcessorProviderTest : DescribeSpec({
             responseInfo = ResponseInfo(
               status = HttpStatusCode.Created,
               description = "The User was retrieved successfully"
+            ),
+            tags = setOf("User")
+          )
+
+
+          public val countAllUser: GetInfo<Unit, CountResponse> = GetInfo<Unit, CountResponse>(
+            summary = "Count User",
+            description = "Counts total User entities",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "Successfully retrieved the total User entity count"
             ),
             tags = setOf("User")
           )

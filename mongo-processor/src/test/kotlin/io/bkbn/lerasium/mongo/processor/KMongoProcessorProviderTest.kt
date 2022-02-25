@@ -263,6 +263,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -312,6 +313,11 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
           }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
         }
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
@@ -358,6 +364,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -412,6 +419,11 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
           }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
         }
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
@@ -437,6 +449,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -506,6 +519,11 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
           }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
         }
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
@@ -531,6 +549,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
@@ -603,6 +622,11 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
+          }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
           }
         }
         """.trimIndent()
