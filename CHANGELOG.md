@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for nullable table columns
 - Centralize test utils in util fixture
 - Omit sensitive fields from response payload
+- Unique constraint for document and table fields
 
 ### Changed
 

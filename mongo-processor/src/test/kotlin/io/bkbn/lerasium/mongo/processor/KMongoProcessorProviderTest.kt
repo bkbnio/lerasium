@@ -316,6 +316,106 @@ class KMongoProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
+    it("Can build a dao with a unique index") {
+      // arrange
+      val simpleSourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.mongo.Document
+        import io.bkbn.lerasium.mongo.Unique
+
+        @Domain("User")
+        interface User {
+          val name: String
+        }
+
+        @Document
+        interface UserDoc : User {
+          @Unique
+          override val name: String
+        }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(simpleSourceFile)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import com.mongodb.client.MongoCollection
+        import com.mongodb.client.MongoDatabase
+        import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.generated.models.UserCreateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Unit
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.litote.kmongo.deleteOneById
+        import org.litote.kmongo.ensureUniqueIndex
+        import org.litote.kmongo.findOneById
+        import org.litote.kmongo.getCollection
+        import org.litote.kmongo.save
+
+        public class UserDao(
+          db: MongoDatabase
+        ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+          private val collection: MongoCollection<UserEntity> = db.getCollection()
+
+          init {
+            collection.ensureUniqueIndex(UserEntity::name)
+          }
+
+          public override fun create(request: UserCreateRequest): UserResponse {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = UserEntity(
+              id = UUID.randomUUID(),
+              createdAt = now,
+              updatedAt = now,
+              name = request.name,
+            )
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun read(id: UUID): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            return entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            request.name?.let {
+              entity.name = it
+            }
+            entity.updatedAt = now
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun delete(id: UUID): Unit {
+            collection.deleteOneById(id)
+          }
+        }
+        """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
+    }
     it("Can build a dao with nested objects") {
       // arrange
       val compilation = KotlinCompilation().apply {

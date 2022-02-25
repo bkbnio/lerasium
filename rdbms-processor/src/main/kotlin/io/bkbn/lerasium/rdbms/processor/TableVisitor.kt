@@ -2,6 +2,7 @@ package io.bkbn.lerasium.rdbms.processor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -25,6 +26,7 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.Entity
 import io.bkbn.lerasium.rdbms.Column
+import io.bkbn.lerasium.rdbms.Unique
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
@@ -167,6 +169,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     val format = StringBuilder()
     format.append("varchar(%S, %L)")
     if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    if (property.isAnnotationPresent(Unique::class)) format.append(".uniqueIndex()")
     initializer(format.toString(), columnName, determineVarCharSize(property))
   }
 
