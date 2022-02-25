@@ -7,5 +7,5 @@ data class PaginatedQuery(
   @Param(ParamType.QUERY)
   val chunk: Int = 100,
   @Param(ParamType.QUERY)
-  val offset: Long = 0
+  val offset: Int = 0
 )

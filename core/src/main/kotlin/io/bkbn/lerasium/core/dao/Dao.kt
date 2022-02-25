@@ -16,4 +16,5 @@ interface Dao<ENT, RESP, CRE, UPT>
   fun update(id: UUID, request: UPT): RESP
   fun delete(id: UUID)
   fun countAll(): CountResponse
+  fun getAll(chunk: Int, offset: Int): List<RESP>
 }

@@ -841,6 +841,8 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -883,9 +885,16 @@ class RdbmsProcessorProviderTest : DescribeSpec({
             entity.delete()
           }
 
-          public override fun countAll(): CountResponse {
+          public override fun countAll(): CountResponse = transaction {
             val count = UserEntity.count()
-            return CountResponse(count)
+            CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> = transaction {
+            val entities = UserEntity.all().limit(chunk, offset.toLong())
+            entities.map { entity ->
+              entity.toResponse()
+            }
           }
         }
       """.trimIndent()

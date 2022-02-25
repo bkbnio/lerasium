@@ -14,9 +14,11 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
@@ -90,6 +92,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addUpdateFunction(cd, urc, rc)
       addDeleteFunction()
       addCountAllFunction()
+      addGetAllFunction(rc)
     }.build())
   }
 
@@ -216,6 +219,21 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCode(CodeBlock.builder().apply {
         addStatement("val count = collection.countDocuments()")
         addStatement("return %T(count)", CountResponse::class)
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addGetAllFunction(responseClass: ClassName) {
+    addFunction(FunSpec.builder("getAll").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(List::class.asClassName().parameterizedBy(responseClass))
+      addParameter(ParameterSpec.builder("chunk", Int::class).build())
+      addParameter(ParameterSpec.builder("offset", Int::class).build())
+      addCode(CodeBlock.builder().apply {
+        addStatement("val entities = collection.find().skip(chunk * offset).limit(chunk)")
+        addControlFlow("return entities.toList().map { entity ->") {
+          addStatement("entity.toResponse()")
+        }
       }.build())
     }.build())
   }

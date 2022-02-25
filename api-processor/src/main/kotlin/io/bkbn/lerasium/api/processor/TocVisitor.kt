@@ -20,6 +20,7 @@ import io.bkbn.kompendium.core.metadata.method.GetInfo
 import io.bkbn.kompendium.core.metadata.method.PostInfo
 import io.bkbn.kompendium.core.metadata.method.PutInfo
 import io.bkbn.lerasium.api.model.GetByIdParams
+import io.bkbn.lerasium.api.model.PaginatedQuery
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
@@ -48,6 +49,7 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addReadInfo(domain)
       addUpdateInfo(domain)
       addDeleteInfo(domain)
+      addGetAllInfo(domain)
     }.build())
   }
 
@@ -150,6 +152,31 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
             addStatement("status = %T.NoContent,", HttpStatusCode::class)
             addStatement("description = %S", "Successfully deleted ${domain.name}")
+          }
+          addStatement("tags = setOf(%S)", domain.name)
+        }
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addGetAllInfo(domain: Domain) {
+    val getAllPropType = GetInfo::class.asClassName()
+      .parameterizedBy(
+        PaginatedQuery::class.asTypeName(),
+        List::class.asClassName().parameterizedBy(domain.toResponseClass())
+      )
+    addProperty(PropertySpec.builder("getAll${domain.name}", getAllPropType).apply {
+      initializer(CodeBlock.builder().apply {
+        addObjectInstantiation(getAllPropType) {
+          addStatement("summary = %S,", "Get All ${domain.name}")
+          addStatement(
+            "description = %S,",
+            "Retrieves a collection of ${domain.name} entities, broken up by specified chunk and offset"
+          )
+          add("responseInfo = ")
+          addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
+            addStatement("status = %T.OK,", HttpStatusCode::class)
+            addStatement("description = %S", "Successfully retrieved the collection of ${domain.name} entities")
           }
           addStatement("tags = setOf(%S)", domain.name)
         }

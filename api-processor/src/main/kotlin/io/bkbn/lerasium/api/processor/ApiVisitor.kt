@@ -67,6 +67,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
           addCreateRoute(domain)
+          addGetAllRoute(domain)
           addControlFlow("%M(%S)", routeMember, "/{id}") {
             addReadRoute(domain)
             addUpdateRoute(domain)
@@ -95,9 +96,19 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     add(CodeBlock.builder().apply {
       val toc = MemberName(domain.toTocClass(), "countAll${domain.name}")
       addControlFlow("%M(%M)", notarizedGetMember, toc) {
-//        addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
-//        addStatement("val offset = %M.parameters[%S]?.toLong() ?: 0", callMember, "offset")
         addStatement("val result = dao.countAll()")
+        addStatement("%M.%M(result)", callMember, respondMember)
+      }
+    }.build())
+  }
+
+  private fun CodeBlock.Builder.addGetAllRoute(domain: Domain) {
+    add(CodeBlock.builder().apply {
+      val toc = MemberName(domain.toTocClass(), "getAll${domain.name}")
+      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+        addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
+        addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
+        addStatement("val result = dao.getAll(chunk, offset)")
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())

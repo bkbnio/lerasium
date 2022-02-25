@@ -97,6 +97,7 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.api.UserToC.countAllUser
         import io.bkbn.lerasium.generated.api.UserToC.createUser
         import io.bkbn.lerasium.generated.api.UserToC.deleteUser
+        import io.bkbn.lerasium.generated.api.UserToC.getAllUser
         import io.bkbn.lerasium.generated.api.UserToC.getUser
         import io.bkbn.lerasium.generated.api.UserToC.updateUser
         import io.bkbn.lerasium.generated.entity.UserDao
@@ -117,6 +118,12 @@ class KtorProcessorProviderTest : DescribeSpec({
               notarizedPost(createUser) {
                 val request = call.receive<UserCreateRequest>()
                 val result = dao.create(request)
+                call.respond(result)
+              }
+              notarizedGet(getAllUser) {
+                val chunk = call.parameters["chunk"]?.toInt() ?: 100
+                val offset = call.parameters["offset"]?.toInt() ?: 0
+                val result = dao.getAll(chunk, offset)
                 call.respond(result)
               }
               route("/{id}") {
@@ -174,12 +181,14 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.bkbn.kompendium.core.metadata.method.PostInfo
         import io.bkbn.kompendium.core.metadata.method.PutInfo
         import io.bkbn.lerasium.api.model.GetByIdParams
+        import io.bkbn.lerasium.api.model.PaginatedQuery
         import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import io.ktor.http.HttpStatusCode
         import kotlin.Unit
+        import kotlin.collections.List
 
         public object UserToC {
           public val createUser: PostInfo<Unit, UserCreateRequest, UserResponse> =
@@ -240,6 +249,19 @@ class KtorProcessorProviderTest : DescribeSpec({
             responseInfo = ResponseInfo(
               status = HttpStatusCode.NoContent,
               description = "Successfully deleted User"
+            ),
+            tags = setOf("User")
+          )
+
+
+          public val getAllUser: GetInfo<PaginatedQuery, List<UserResponse>> =
+              GetInfo<PaginatedQuery, List<UserResponse>>(
+            summary = "Get All User",
+            description =
+                "Retrieves a collection of User entities, broken up by specified chunk and offset",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "Successfully retrieved the collection of User entities"
             ),
             tags = setOf("User")
           )
