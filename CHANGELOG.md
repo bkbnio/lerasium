@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased [0.2.0-SNAPSHOT]
 ### Added
 - Support for nullable table columns
+- Centralize test utils in util fixture
+- Omit sensitive fields from response payload
 
 ### Changed
 

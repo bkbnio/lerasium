@@ -32,17 +32,15 @@ dependencies {
 
   // Serialization
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.3.2")
+
+  // Test Utils
+  testImplementation(testFixtures(projects.lerasiumUtils))
 }
 
 testing {
   suites {
     named("test", JvmTestSuite::class) {
       useJUnitJupiter()
-      dependencies {
-        implementation("io.kotest:kotest-runner-junit5-jvm:5.0.3")
-        implementation("io.kotest:kotest-assertions-core-jvm:5.0.3")
-        implementation("com.github.tschuchortdev:kotlin-compile-testing-ksp:1.4.7")
-      }
     }
   }
 }

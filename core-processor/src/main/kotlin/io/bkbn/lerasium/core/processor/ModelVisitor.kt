@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.core.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -19,6 +21,7 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.Request
 import io.bkbn.lerasium.core.model.Response
 import io.bkbn.lerasium.core.serialization.Serializers
@@ -31,7 +34,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   private lateinit var containingFile: KSFile
@@ -151,7 +154,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addResponseModel(cd: KSClassDeclaration, name: String, isDomainModel: Boolean = false) {
-    val properties = cd.getAllProperties().toList()
+    val responseProperties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Sensitive::class) }
     addType(TypeSpec.classBuilder(name.plus("Response")).apply {
       addOriginatingKSFile(containingFile)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())
@@ -159,7 +162,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       addSuperinterface(Response::class.asTypeName())
       primaryConstructor(FunSpec.constructorBuilder().apply {
         if (isDomainModel) addParameter(ParameterSpec("id", UUID::class.asTypeName()))
-        properties.forEach {
+        responseProperties.forEach {
           val param = when (it.type.isSupportedScalar()) {
             true -> it.toParameter()
             false -> {
@@ -174,7 +177,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         if (isDomainModel) addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
         if (isDomainModel) addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
       }.build())
-      properties.forEach {
+      responseProperties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
           true -> it.toProperty()
           false -> {

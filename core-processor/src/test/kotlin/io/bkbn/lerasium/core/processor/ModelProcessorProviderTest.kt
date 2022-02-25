@@ -3,6 +3,9 @@ package io.bkbn.lerasium.core.processor
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import io.bkbn.lerasium.utils.TestUtils.kotlinCode
+import io.bkbn.lerasium.utils.TestUtils.kspGeneratedSources
+import io.bkbn.lerasium.utils.TestUtils.readTrimmed
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -290,24 +293,78 @@ class ModelProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
-  }
-}) {
-  companion object {
-    private val KotlinCompilation.Result.workingDir: File
-      get() =
-        outputDirectory.parentFile!!
+    it("Is aware of fields marked as sensitive") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+          package test
 
-    val KotlinCompilation.Result.kspGeneratedSources: List<File>
-      get() {
-        val kspWorkingDir = workingDir.resolve("ksp")
-        val kspGeneratedDir = kspWorkingDir.resolve("sources")
-        val kotlinGeneratedDir = kspGeneratedDir.resolve("kotlin")
-        return kotlinGeneratedDir.walkTopDown().toList().filter { it.isFile }
+          import io.bkbn.lerasium.core.Domain
+          import io.bkbn.lerasium.core.Sensitive
+
+          @Domain("User")
+          interface UserDomain {
+            val firstName: String
+            val lastName: String
+            val email: String
+            @Sensitive
+            val password: String
+          }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ModelProcessorProvider())
+        inheritClassPath = true
       }
 
-    fun File.readTrimmed() = readText().trim()
+      // act
+      val result = compilation.compile()
 
-    fun kotlinCode(@Language("kotlin") contents: String): String = contents
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.models
+
+        import io.bkbn.lerasium.core.model.Request
+        import io.bkbn.lerasium.core.model.Response
+        import io.bkbn.lerasium.core.serialization.Serializers
+        import java.util.UUID
+        import kotlin.String
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserCreateRequest(
+          public val firstName: String,
+          public val lastName: String,
+          public val email: String,
+          public val password: String
+        ) : Request.Create
+
+        @Serializable
+        public data class UserUpdateRequest(
+          public val firstName: String?,
+          public val lastName: String?,
+          public val email: String?,
+          public val password: String?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserResponse(
+          @Serializable(with = Serializers.Uuid::class)
+          public val id: UUID,
+          public val firstName: String,
+          public val lastName: String,
+          public val email: String,
+          public val createdAt: LocalDateTime,
+          public val updatedAt: LocalDateTime
+        ) : Response
+        """.trimIndent()
+      )
+    }
   }
-}
-
+})

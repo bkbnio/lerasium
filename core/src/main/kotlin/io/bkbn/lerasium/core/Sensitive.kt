@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.rdbms
+package io.bkbn.lerasium.core
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.PROPERTY)
