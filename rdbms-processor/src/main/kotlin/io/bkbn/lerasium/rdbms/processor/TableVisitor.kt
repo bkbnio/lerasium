@@ -26,7 +26,8 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.Entity
 import io.bkbn.lerasium.rdbms.Column
-import io.bkbn.lerasium.rdbms.Unique
+import io.bkbn.lerasium.persistence.CompositeIndex
+import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
@@ -89,6 +90,17 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           initializer("%M(%S)", exposedDateTime, "updated_at")
         }.build()
       )
+
+      if (cd.isAnnotationPresent(CompositeIndex::class)) {
+        addInitializerBlock(CodeBlock.builder().apply {
+          cd.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
+            require(ci.fields.size > 1) {
+              "Composite index must have at least 2 fields, if applying single field index, use @Index"
+            }
+            addStatement("index(%L, %L)", ci.unique, ci.fields.joinToString(", "))
+          }
+        }.build())
+      }
     }.build())
   }
 
@@ -108,26 +120,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         superclass(UUIDEntityClass::class.asTypeName().parameterizedBy(entityClass))
         addSuperclassConstructorParameter("%T", tableObject)
       }.build())
-      addFunction(FunSpec.builder("toResponse").apply {
-        addModifiers(KModifier.OVERRIDE)
-        returns(domain.toResponseClass())
-        addCode(CodeBlock.builder().apply {
-          addControlFlow("return with(::%T)", domain.toResponseClass()) {
-            addStatement(
-              "val propertiesByName = %T::class.%M.associateBy { it.name }",
-              domain.toEntityClass(),
-              memberProps
-            )
-            addControlFlow("val params = %M.associateWith", valueParams) {
-              addControlFlow("when (it.name)") {
-                addStatement("%T::id.name -> id.value", domain.toResponseClass())
-                addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
-              }
-            }
-            addStatement("callBy(params)")
-          }
-        }.build())
-      }.build())
+      addResponseConverter(domain)
       properties.forEach { property ->
         val fieldName = property.simpleName.asString()
         val fieldType = property.type.toTypeName()
@@ -146,6 +139,27 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       }.build())
     }.build())
   }
+
+  private fun TypeSpec.Builder.addResponseConverter(domain: Domain) = addFunction(FunSpec.builder("toResponse").apply {
+    addModifiers(KModifier.OVERRIDE)
+    returns(domain.toResponseClass())
+    addCode(CodeBlock.builder().apply {
+      addControlFlow("return with(::%T)", domain.toResponseClass()) {
+        addStatement(
+          "val propertiesByName = %T::class.%M.associateBy { it.name }",
+          domain.toEntityClass(),
+          memberProps
+        )
+        addControlFlow("val params = %M.associateWith", valueParams) {
+          addControlFlow("when (it.name)") {
+            addStatement("%T::id.name -> id.value", domain.toResponseClass())
+            addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
+          }
+        }
+        addStatement("callBy(params)")
+      }
+    }.build())
+  }.build())
 
   private fun KSPropertyDeclaration.toColumnType(): TypeName {
     val columnBase = ClassName("org.jetbrains.exposed.sql", "Column")
@@ -169,7 +183,13 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     val format = StringBuilder()
     format.append("varchar(%S, %L)")
     if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    if (property.isAnnotationPresent(Unique::class)) format.append(".uniqueIndex()")
+    if (property.isAnnotationPresent(Index::class)) {
+      val index = property.getAnnotationsByType(Index::class).first()
+      when (index.unique) {
+        true -> format.append(".uniqueIndex()")
+        false -> format.append(".index()")
+      }
+    }
     initializer(format.toString(), columnName, determineVarCharSize(property))
   }
 

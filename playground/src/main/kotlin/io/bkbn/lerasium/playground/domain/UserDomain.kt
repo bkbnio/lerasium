@@ -1,10 +1,11 @@
 package io.bkbn.lerasium.playground.domain
 
-import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.rdbms.Table
-import io.bkbn.lerasium.rdbms.Unique
 import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Sensitive
+import io.bkbn.lerasium.persistence.CompositeIndex
+import io.bkbn.lerasium.persistence.Index
+import io.bkbn.lerasium.rdbms.Table
 
 @Domain("User")
 private sealed interface UserDomain {
@@ -17,8 +18,10 @@ private sealed interface UserDomain {
 }
 
 @Table
+@CompositeIndex(unique = false, "firstName", "lastName")
+@CompositeIndex(unique = false, "favoriteFood", "lastName")
 private interface UserTable : UserDomain {
-  @Unique
+  @Index(true)
   override val email: String
 }
 

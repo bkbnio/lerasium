@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unique constraint for document and table fields
 - Count All functionality
 - Get All functionality
+- Set indices on relational tables
+- Set indices on documents 
+- Persistence Annotation Module
 
 ### Changed
 
