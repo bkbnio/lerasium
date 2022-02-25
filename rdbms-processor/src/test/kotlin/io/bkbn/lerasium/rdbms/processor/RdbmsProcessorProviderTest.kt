@@ -836,10 +836,13 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         package io.bkbn.lerasium.generated.entity
 
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -880,6 +883,18 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID) = transaction {
             val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
             entity.delete()
+          }
+
+          public override fun countAll(): CountResponse = transaction {
+            val count = UserEntity.count()
+            CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> = transaction {
+            val entities = UserEntity.all().limit(chunk, offset.toLong())
+            entities.map { entity ->
+              entity.toResponse()
+            }
           }
         }
       """.trimIndent()

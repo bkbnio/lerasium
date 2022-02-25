@@ -19,8 +19,10 @@ import io.bkbn.kompendium.core.metadata.method.DeleteInfo
 import io.bkbn.kompendium.core.metadata.method.GetInfo
 import io.bkbn.kompendium.core.metadata.method.PostInfo
 import io.bkbn.kompendium.core.metadata.method.PutInfo
-import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.api.model.GetByIdParams
+import io.bkbn.lerasium.api.model.PaginatedQuery
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -43,9 +45,11 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     fileBuilder.addType(TypeSpec.objectBuilder(tocName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
       addCreateInfo(domain)
+      addCountInfo(domain)
       addReadInfo(domain)
       addUpdateInfo(domain)
       addDeleteInfo(domain)
+      addGetAllInfo(domain)
     }.build())
   }
 
@@ -91,6 +95,25 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
+  private fun TypeSpec.Builder.addCountInfo(domain: Domain) {
+    val countPropType = GetInfo::class.asClassName()
+      .parameterizedBy(Unit::class.asClassName(), CountResponse::class.asClassName())
+    addProperty(PropertySpec.builder("countAll${domain.name}", countPropType).apply {
+      initializer(CodeBlock.builder().apply {
+        addObjectInstantiation(countPropType) {
+          addStatement("summary = %S,", "Count ${domain.name}")
+          addStatement("description = %S,", "Counts total ${domain.name} entities")
+          add("responseInfo = ")
+          addObjectInstantiation(ResponseInfo::class.asClassName(), trailingComma = true) {
+            addStatement("status = %T.OK,", HttpStatusCode::class)
+            addStatement("description = %S", "Successfully retrieved the total ${domain.name} entity count")
+          }
+          addStatement("tags = setOf(%S)", domain.name)
+        }
+      }.build())
+    }.build())
+  }
+
   private fun TypeSpec.Builder.addUpdateInfo(domain: Domain) {
     val updatePropType = PutInfo::class.asClassName()
       .parameterizedBy(GetByIdParams::class.asTypeName(), domain.toUpdateRequestClass(), domain.toResponseClass())
@@ -129,6 +152,31 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
             addStatement("status = %T.NoContent,", HttpStatusCode::class)
             addStatement("description = %S", "Successfully deleted ${domain.name}")
+          }
+          addStatement("tags = setOf(%S)", domain.name)
+        }
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addGetAllInfo(domain: Domain) {
+    val getAllPropType = GetInfo::class.asClassName()
+      .parameterizedBy(
+        PaginatedQuery::class.asTypeName(),
+        List::class.asClassName().parameterizedBy(domain.toResponseClass())
+      )
+    addProperty(PropertySpec.builder("getAll${domain.name}", getAllPropType).apply {
+      initializer(CodeBlock.builder().apply {
+        addObjectInstantiation(getAllPropType) {
+          addStatement("summary = %S,", "Get All ${domain.name}")
+          addStatement(
+            "description = %S,",
+            "Retrieves a collection of ${domain.name} entities, broken up by specified chunk and offset"
+          )
+          add("responseInfo = ")
+          addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
+            addStatement("status = %T.OK,", HttpStatusCode::class)
+            addStatement("description = %S", "Successfully retrieved the collection of ${domain.name} entities")
           }
           addStatement("tags = setOf(%S)", domain.name)
         }

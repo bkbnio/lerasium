@@ -263,11 +263,14 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
         import kotlin.Unit
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -311,6 +314,18 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
+          }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> {
+            val entities = collection.find().skip(chunk * offset).limit(chunk)
+            return entities.toList().map { entity ->
+              entity.toResponse()
+            }
           }
         }
         """.trimIndent()
@@ -358,11 +373,14 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
         import kotlin.Unit
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -412,6 +430,18 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
           }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> {
+            val entities = collection.find().skip(chunk * offset).limit(chunk)
+            return entities.toList().map { entity ->
+              entity.toResponse()
+            }
+          }
         }
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
@@ -437,11 +467,14 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
         import kotlin.Unit
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -506,6 +539,18 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
           }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> {
+            val entities = collection.find().skip(chunk * offset).limit(chunk)
+            return entities.toList().map { entity ->
+              entity.toResponse()
+            }
+          }
         }
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
@@ -531,11 +576,14 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
         import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
         import java.util.UUID
+        import kotlin.Int
         import kotlin.Unit
+        import kotlin.collections.List
         import kotlinx.datetime.Clock
         import kotlinx.datetime.TimeZone
         import kotlinx.datetime.toLocalDateTime
@@ -603,6 +651,18 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
           public override fun delete(id: UUID): Unit {
             collection.deleteOneById(id)
+          }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> {
+            val entities = collection.find().skip(chunk * offset).limit(chunk)
+            return entities.toList().map { entity ->
+              entity.toResponse()
+            }
           }
         }
         """.trimIndent()

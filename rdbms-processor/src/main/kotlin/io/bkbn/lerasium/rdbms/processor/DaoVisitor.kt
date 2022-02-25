@@ -10,13 +10,16 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -57,6 +60,8 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addReadFunction(rc, ec)
       addUpdateFunction(cd, urc, rc, ec)
       addDeleteFunction(ec)
+      addCountAllFunction(ec)
+      addGetAllFunction(ec, rc)
     }.build())
   }
 
@@ -85,6 +90,37 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             }
           }
           addStatement("entity.toResponse()")
+        }
+      }.build())
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addCountAllFunction(entityClass: ClassName) {
+    addFunction(FunSpec.builder("countAll").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(CountResponse::class)
+      addCode(CodeBlock.builder().apply {
+        addControlFlow("return %M", Transaction) {
+          addStatement("val count = %T.count()", entityClass)
+          addStatement("%T(count)", CountResponse::class)
+        }
+      }.build())
+    }.build())
+  }
+
+
+  private fun TypeSpec.Builder.addGetAllFunction(entityClass: ClassName, responseClass: ClassName) {
+    addFunction(FunSpec.builder("getAll").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(List::class.asClassName().parameterizedBy(responseClass))
+      addParameter(ParameterSpec.builder("chunk", Int::class).build())
+      addParameter(ParameterSpec.builder("offset", Int::class).build())
+      addCode(CodeBlock.builder().apply {
+        addControlFlow("return %M", Transaction) {
+          addStatement("val entities = %T.all().limit(chunk, offset.toLong())", entityClass)
+          addControlFlow("entities.map { entity ->") {
+            addStatement("entity.toResponse()")
+          }
         }
       }.build())
     }.build())

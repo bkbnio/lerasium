@@ -1,5 +1,6 @@
 package io.bkbn.lerasium.core.dao
 
+import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.core.model.Entity
 import io.bkbn.lerasium.core.model.Request
 import io.bkbn.lerasium.core.model.Response
@@ -14,4 +15,6 @@ interface Dao<ENT, RESP, CRE, UPT>
   fun read(id: UUID): RESP
   fun update(id: UUID, request: UPT): RESP
   fun delete(id: UUID)
+  fun countAll(): CountResponse
+  fun getAll(chunk: Int, offset: Int): List<RESP>
 }
