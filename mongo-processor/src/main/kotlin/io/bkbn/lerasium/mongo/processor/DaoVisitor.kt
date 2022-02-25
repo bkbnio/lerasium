@@ -1,6 +1,7 @@
 package io.bkbn.lerasium.mongo.processor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
@@ -26,7 +27,8 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
-import io.bkbn.lerasium.mongo.Unique
+import io.bkbn.lerasium.persistence.CompositeIndex
+import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
@@ -46,6 +48,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     private val GetCollection = MemberName("org.litote.kmongo", "getCollection")
     private val FindOneById = MemberName("org.litote.kmongo", "findOneById")
     private val DeleteOneById = MemberName("org.litote.kmongo", "deleteOneById")
+    private val EnsureIndex = MemberName("org.litote.kmongo", "ensureIndex")
     private val EnsureUniqueIndex = MemberName("org.litote.kmongo", "ensureUniqueIndex")
     private val Save = MemberName("org.litote.kmongo", "save")
     private val toLDT = MemberName("kotlinx.datetime", "toLocalDateTime")
@@ -77,14 +80,32 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addModifiers(KModifier.PRIVATE)
         initializer("db.%M()", GetCollection)
       }.build())
-      if (cd.getAllProperties().any { it.isAnnotationPresent(Unique::class) }) {
+      val hasIndices = cd.getAllProperties().any { it.isAnnotationPresent(Index::class) }
+        || cd.isAnnotationPresent(CompositeIndex::class)
+      if (hasIndices) {
         addInitializerBlock(CodeBlock.builder().apply {
           cd.getAllProperties()
-            .filter { it.isAnnotationPresent(Unique::class) }
-            .forEach { uniqueProp ->
-              val name = uniqueProp.simpleName.getShortName()
-              addStatement("collection.%M(%T::$name)", EnsureUniqueIndex, ec)
+            .filter { it.isAnnotationPresent(Index::class) }
+            .forEach { indexedProp ->
+              val index = indexedProp.getAnnotationsByType(Index::class).first()
+              val name = indexedProp.simpleName.getShortName()
+              when (index.unique) {
+                true -> addStatement("collection.%M(%T::$name)", EnsureUniqueIndex, ec)
+                false -> addStatement("collection.%M(%T::$name)", EnsureIndex, ec)
+              }
             }
+          cd.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
+            require(ci.fields.size > 1) {
+              "Composite index must have at least 2 fields, if applying single field index, use @Index"
+            }
+            val indexStatement = ci.fields.joinToString(separator = ", ") { "%T::$it" }
+            val args = ci.fields.map { ec }.toTypedArray()
+            when (ci.unique) {
+              true -> addStatement("collection.%M($indexStatement)", EnsureUniqueIndex, *args)
+              false -> addStatement("collection.%M($indexStatement)", EnsureIndex, *args)
+            }
+            // collection.ensureUniqueIndex(ProfileEntity::viewCount, ProfileEntity::mood)
+          }
         }.build())
       }
       addCreateFunction(cd, crc, rc, ec)

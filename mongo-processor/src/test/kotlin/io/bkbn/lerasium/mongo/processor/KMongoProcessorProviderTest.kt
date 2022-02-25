@@ -339,7 +339,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
         import io.bkbn.lerasium.core.Domain
         import io.bkbn.lerasium.mongo.Document
-        import io.bkbn.lerasium.mongo.Unique
+        import io.bkbn.lerasium.persistence.Index
 
         @Domain("User")
         interface User {
@@ -348,7 +348,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
         @Document
         interface UserDoc : User {
-          @Unique
+          @Index(unique = true)
           override val name: String
         }
         """.trimIndent()
@@ -421,6 +421,124 @@ class KMongoProcessorProviderTest : DescribeSpec({
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             request.name?.let {
               entity.name = it
+            }
+            entity.updatedAt = now
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun delete(id: UUID): Unit {
+            collection.deleteOneById(id)
+          }
+
+          public override fun countAll(): CountResponse {
+            val count = collection.countDocuments()
+            return CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> {
+            val entities = collection.find().skip(chunk * offset).limit(chunk)
+            return entities.toList().map { entity ->
+              entity.toResponse()
+            }
+          }
+        }
+        """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
+    }
+    it("Can build a dao with a composite index") {
+      // arrange
+      val simpleSourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.mongo.Document
+        import io.bkbn.lerasium.persistence.CompositeIndex
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val favoriteFood: String
+        }
+
+        @Document
+        @CompositeIndex(fields = ["name", "favoriteFood"])
+        interface UserDoc : User
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(simpleSourceFile)
+        symbolProcessorProviders = listOf(KMongoProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import com.mongodb.client.MongoCollection
+        import com.mongodb.client.MongoDatabase
+        import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
+        import io.bkbn.lerasium.generated.models.UserCreateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Int
+        import kotlin.Unit
+        import kotlin.collections.List
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.litote.kmongo.deleteOneById
+        import org.litote.kmongo.ensureIndex
+        import org.litote.kmongo.findOneById
+        import org.litote.kmongo.getCollection
+        import org.litote.kmongo.save
+
+        public class UserDao(
+          db: MongoDatabase
+        ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+          private val collection: MongoCollection<UserEntity> = db.getCollection()
+
+          init {
+            collection.ensureIndex(UserEntity::name, UserEntity::favoriteFood)
+          }
+
+          public override fun create(request: UserCreateRequest): UserResponse {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = UserEntity(
+              id = UUID.randomUUID(),
+              createdAt = now,
+              updatedAt = now,
+              name = request.name,
+              favoriteFood = request.favoriteFood,
+            )
+            collection.save(entity)
+            return entity.toResponse()
+          }
+
+          public override fun read(id: UUID): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            return entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse {
+            val entity = collection.findOneById(id) ?: error("PLACEHOLDER")
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            request.name?.let {
+              entity.name = it
+            }
+            request.favoriteFood?.let {
+              entity.favoriteFood = it
             }
             entity.updatedAt = now
             collection.save(entity)

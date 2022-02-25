@@ -719,7 +719,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         package test
 
         import io.bkbn.lerasium.core.Domain
-        import io.bkbn.lerasium.rdbms.Index
+        import io.bkbn.lerasium.persistence.Index
         import io.bkbn.lerasium.rdbms.Table
 
         @Domain("Words")
@@ -805,7 +805,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         package test
 
         import io.bkbn.lerasium.core.Domain
-        import io.bkbn.lerasium.rdbms.Index
+        import io.bkbn.lerasium.persistence.Index
         import io.bkbn.lerasium.rdbms.Table
 
         @Domain("Words")
@@ -892,7 +892,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         package test
 
         import io.bkbn.lerasium.core.Domain
-        import io.bkbn.lerasium.rdbms.CompositeIndex
+        import io.bkbn.lerasium.persistence.CompositeIndex
         import io.bkbn.lerasium.rdbms.Table
 
         @Domain("Words")

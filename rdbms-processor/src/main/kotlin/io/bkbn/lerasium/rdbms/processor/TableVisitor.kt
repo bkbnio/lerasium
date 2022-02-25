@@ -26,8 +26,8 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.Entity
 import io.bkbn.lerasium.rdbms.Column
-import io.bkbn.lerasium.rdbms.CompositeIndex
-import io.bkbn.lerasium.rdbms.Index
+import io.bkbn.lerasium.persistence.CompositeIndex
+import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass

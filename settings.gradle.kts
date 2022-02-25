@@ -4,6 +4,9 @@ rootProject.name = "lerasium"
 include("core")
 include("core-processor")
 
+// Persistence
+include("persistence")
+
 // Exposed (RDBMS)
 include("rdbms")
 include("rdbms-processor")

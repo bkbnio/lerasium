@@ -18,6 +18,9 @@ sourdough {
 dependencies {
   // IMPLEMENTATION
 
+  // Lerasium
+  api(projects.lerasiumPersistence)
+
   // Exposed
   api(group = "org.jetbrains.exposed", name = "exposed-core", version = "0.37.3")
   api(group = "org.jetbrains.exposed", name = "exposed-dao", version = "0.37.3")

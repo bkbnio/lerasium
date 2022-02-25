@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.rdbms
+package io.bkbn.lerasium.persistence
 
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
