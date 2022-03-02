@@ -136,6 +136,11 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         val prop = when (it.type.isSupportedScalar()) {
           true -> {
             PropertySpec.builder(it.simpleName.getShortName(), it.type.toTypeName().copy(nullable = true)).apply {
+              if (it.type.resolve().toClassName().simpleName == "UUID") {
+                addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+                  addMember("with = %T::class", Serializers.Uuid::class)
+                }.build())
+              }
               initializer(it.simpleName.getShortName())
             }.build()
           }

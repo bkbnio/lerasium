@@ -2,6 +2,7 @@ package io.bkbn.lerasium.utils
 
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -12,6 +13,8 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.serialization.Serializers
+import kotlinx.serialization.Serializable
 
 @OptIn(KotlinPoetKspPreview::class)
 object KotlinPoetUtils {
@@ -41,8 +44,8 @@ object KotlinPoetUtils {
     add(CodeBlock.Builder().apply(init).build())
     unindent()
     when (trailingComma) {
-      true ->  add("),\n")
-      false ->  add(")\n")
+      true -> add("),\n")
+      false -> add(")\n")
     }
   }
 
@@ -57,6 +60,7 @@ object KotlinPoetUtils {
   fun Domain.toUpdateRequestClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("UpdateRequest"))
   fun Domain.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("Response"))
   fun Domain.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Entity"))
+  fun Domain.toTableClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toDaoClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Dao"))
 
   fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
@@ -68,6 +72,11 @@ object KotlinPoetUtils {
 
   fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
+      if (type.resolve().toClassName().simpleName == "UUID") {
+        addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+          addMember("with = %T::class", Serializers.Uuid::class)
+        }.build())
+      }
       if (isMutable) mutable()
       initializer(simpleName.getShortName())
     }.build()
@@ -79,6 +88,7 @@ object KotlinPoetUtils {
     "Double" -> true
     "Float" -> true
     "Boolean" -> true
+    "UUID" -> true
     else -> false
   }
 }

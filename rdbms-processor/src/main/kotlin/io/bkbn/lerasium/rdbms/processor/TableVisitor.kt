@@ -25,10 +25,12 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.rdbms.Column
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
+import io.bkbn.lerasium.rdbms.Column
+import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.VarChar
+import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -175,6 +177,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       "Boolean" -> handleBoolean(columnName, property)
       "Double" -> handleDouble(columnName, property)
       "Float" -> handleFloat(columnName, property)
+      "UUID" -> handleUuid(columnName, property)
       else -> TODO("${property.type} is not yet supported for Table definitions")
     }
   }
@@ -231,5 +234,20 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     format.append("float(%S)")
     if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
     initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleUuid(columnName: String, property: KSPropertyDeclaration) {
+    val format = StringBuilder()
+    val args = mutableListOf<Any>()
+    format.append("uuid(%S)")
+    args.add(columnName)
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    if (property.isAnnotationPresent(ForeignKey::class)) {
+      val fk = property.getAnnotationsByType(ForeignKey::class).first()
+      val table = ClassName(BASE_ENTITY_PACKAGE_NAME, fk.domain.plus("Table"))
+      format.append(".references(%T.${fk.field})")
+      args.add(table)
+    }
+    initializer(format.toString(), *args.toTypedArray())
   }
 }

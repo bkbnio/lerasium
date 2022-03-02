@@ -4,7 +4,7 @@ import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmExtension
 plugins {
   kotlin("jvm") version "1.6.10" apply false
   kotlin("plugin.serialization") version "1.6.10" apply false
-  id("com.google.devtools.ksp") version "1.6.10-1.0.2" apply false
+  id("com.google.devtools.ksp") version "1.6.10-1.0.4" apply false
   id("io.bkbn.sourdough.root") version "0.6.0"
   id("io.bkbn.sourdough.library.jvm") version "0.6.0" apply false
   id("io.bkbn.sourdough.application.jvm") version "0.6.0" apply false
