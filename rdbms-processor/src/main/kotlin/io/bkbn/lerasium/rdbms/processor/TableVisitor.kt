@@ -158,31 +158,33 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     }.build())
   }
 
-  private fun TypeSpec.Builder.addResponseConverter(domain: Domain, properties: List<KSPropertyDeclaration>) = addFunction(FunSpec.builder("toResponse").apply {
-    addModifiers(KModifier.OVERRIDE)
-    returns(domain.toResponseClass())
-    addCode(CodeBlock.builder().apply {
-      addControlFlow("return with(::%T)", domain.toResponseClass()) {
-        addStatement(
-          "val propertiesByName = %T::class.%M.associateBy { it.name }",
-          domain.toEntityClass(),
-          memberProps
-        )
-        addControlFlow("val params = %M.associateWith", valueParams) {
-          addControlFlow("when (it.name)") {
-            addStatement("%T::id.name -> id.value", domain.toResponseClass())
-            properties.filter { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
-              .forEach { prop ->
+  private fun TypeSpec.Builder.addResponseConverter(domain: Domain, properties: List<KSPropertyDeclaration>) =
+    addFunction(FunSpec.builder("toResponse").apply {
+      addModifiers(KModifier.OVERRIDE)
+      returns(domain.toResponseClass())
+      addCode(CodeBlock.builder().apply {
+        addControlFlow("return with(::%T)", domain.toResponseClass()) {
+          addStatement(
+            "val propertiesByName = %T::class.%M.associateBy { it.name }",
+            domain.toEntityClass(),
+            memberProps
+          )
+          addControlFlow("val params = %M.associateWith", valueParams) {
+            addControlFlow("when (it.name)") {
+              addStatement("%T::id.name -> id.value", domain.toResponseClass())
+              properties.filter {
+                (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class)
+              }.forEach { prop ->
                 val n = prop.simpleName.getShortName()
                 addStatement("%T::$n.name -> $n.toResponse()", domain.toEntityClass())
               }
-            addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
+              addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
+            }
           }
+          addStatement("callBy(params)")
         }
-        addStatement("callBy(params)")
-      }
+      }.build())
     }.build())
-  }.build())
 
   private fun KSPropertyDeclaration.toColumnType(): TypeName {
     val columnBase = ClassName("org.jetbrains.exposed.sql", "Column")

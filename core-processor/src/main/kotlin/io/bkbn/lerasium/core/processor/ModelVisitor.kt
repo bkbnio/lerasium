@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -133,37 +134,13 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addUpdateRequestModel(cd: KSClassDeclaration, name: String) {
-    val properties = cd.getAllProperties().toList()
+    val properties = cd.getAllProperties()
     addType(TypeSpec.classBuilder(name.plus("UpdateRequest")).apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())
       addSuperinterface(Request.Update::class)
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        properties.forEach {
-          val param = when (it.type.isSupportedScalar()) {
-            true -> {
-              ParameterSpec.builder(it.simpleName.getShortName(), it.type.toTypeName().copy(nullable = true)).build()
-            }
-            false -> {
-              if ((it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class)) {
-                ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
-                  .apply {
-                    addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-                      addMember("with = %T::class", Serializers.Uuid::class)
-                    }.build())
-                  }.build()
-              } else {
-                val n = it.simpleName.getShortName()
-                val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
-                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
-                ParameterSpec.builder(n, cn).build()
-              }
-            }
-          }
-          addParameter(param)
-        }
-      }.build())
+      updatePrimaryConstructor(properties)
       properties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
           true -> {
@@ -197,37 +174,43 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     }.build())
   }
 
+  private fun TypeSpec.Builder.updatePrimaryConstructor(properties: Sequence<KSPropertyDeclaration>) {
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      properties.forEach {
+        val param = when (it.type.isSupportedScalar()) {
+          true -> {
+            ParameterSpec.builder(it.simpleName.getShortName(), it.type.toTypeName().copy(nullable = true)).build()
+          }
+          false -> {
+            if ((it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class)) {
+              ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
+                .apply {
+                  addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+                    addMember("with = %T::class", Serializers.Uuid::class)
+                  }.build())
+                }.build()
+            } else {
+              val n = it.simpleName.getShortName()
+              val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
+              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              ParameterSpec.builder(n, cn).build()
+            }
+          }
+        }
+        addParameter(param)
+      }
+    }.build())
+  }
+
   private fun FileSpec.Builder.addResponseModel(cd: KSClassDeclaration, name: String, isDomainModel: Boolean = false) {
-    val responseProperties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Sensitive::class) }
+    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Sensitive::class) }
     addType(TypeSpec.classBuilder(name.plus("Response")).apply {
       addOriginatingKSFile(containingFile)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())
       addModifiers(KModifier.DATA)
       addSuperinterface(Response::class.asTypeName())
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        if (isDomainModel) addParameter(ParameterSpec("id", UUID::class.asTypeName()))
-        responseProperties.forEach {
-          val param = when (it.type.isSupportedScalar()) {
-            true -> it.toParameter()
-            false -> {
-              val domain =
-                (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
-              if (domain != null) {
-                ParameterSpec.builder(it.simpleName.getShortName(), domain.toResponseClass()).build()
-              } else {
-                val n = it.simpleName.getShortName()
-                val t = it.type.resolve().toClassName().simpleName.plus("Response")
-                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
-                ParameterSpec.builder(n, cn).build()
-              }
-            }
-          }
-          addParameter(param)
-        }
-        if (isDomainModel) addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
-        if (isDomainModel) addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
-      }.build())
-      responseProperties.forEach {
+      responsePrimaryConstructor(isDomainModel, properties)
+      properties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
           true -> it.toProperty()
           false -> {
@@ -263,6 +246,35 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           initializer("updatedAt")
         }.build())
       }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.responsePrimaryConstructor(
+    isDomainModel: Boolean,
+    properties: Sequence<KSPropertyDeclaration>
+  ) {
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      if (isDomainModel) addParameter(ParameterSpec("id", UUID::class.asTypeName()))
+      properties.forEach {
+        val param = when (it.type.isSupportedScalar()) {
+          true -> it.toParameter()
+          false -> {
+            val domain =
+              (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+            if (domain != null) {
+              ParameterSpec.builder(it.simpleName.getShortName(), domain.toResponseClass()).build()
+            } else {
+              val n = it.simpleName.getShortName()
+              val t = it.type.resolve().toClassName().simpleName.plus("Response")
+              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              ParameterSpec.builder(n, cn).build()
+            }
+          }
+        }
+        addParameter(param)
+      }
+      if (isDomainModel) addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
+      if (isDomainModel) addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
     }.build())
   }
 }
