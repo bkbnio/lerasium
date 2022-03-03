@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.rdbms.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -22,6 +24,7 @@ import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
@@ -29,7 +32,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {
@@ -83,7 +86,14 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addControlFlow("%T.new", entityClass) {
               props.forEach { property ->
                 val propName = property.simpleName.getShortName()
-                addStatement("$propName = request.$propName")
+                val domain =
+                  (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class)
+                    .firstOrNull()
+                if (domain != null) {
+                  addStatement("$propName = %T[request.$propName]", domain.toEntityClass())
+                } else {
+                  addStatement("$propName = request.$propName")
+                }
               }
               addStatement("createdAt = now")
               addStatement("updatedAt = now")
@@ -159,7 +169,14 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           props.forEach { property ->
             val propName = property.simpleName.getShortName()
             addControlFlow("request.%L?.let", propName) {
-              addStatement("entity.%L = it", propName)
+              val domain =
+                (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class)
+                  .firstOrNull()
+              if (domain != null) {
+                addStatement("entity.$propName = %T[it]", domain.toEntityClass())
+              } else {
+                addStatement("entity.$propName = it")
+              }
             }
           }
           addStatement("entity.updatedAt = now")

@@ -10,12 +10,12 @@ CREATE TABLE IF NOT EXISTS book
 (
   id         uuid PRIMARY KEY,
   isbn       VARCHAR(128)     NOT NULL,
-  author_id  uuid             NOT NULL,
+  "name"     uuid             NOT NULL,
   title      VARCHAR(128)     NOT NULL,
   rating     DOUBLE PRECISION NOT NULL,
   created_at TIMESTAMP        NOT NULL,
   updated_at TIMESTAMP        NOT NULL,
-  CONSTRAINT fk_book_author_id__id FOREIGN KEY (author_id) REFERENCES author (id) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT fk_book_name__id FOREIGN KEY ("name") REFERENCES author (id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 ALTER TABLE book
