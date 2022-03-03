@@ -366,5 +366,82 @@ class ModelProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Applies a UUID serializer to any UUID type") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+          package test
+
+          import io.bkbn.lerasium.core.Domain
+          import io.bkbn.lerasium.core.Sensitive
+          import java.util.UUID
+
+          @Domain("User")
+          interface UserDomain {
+            val firstName: String
+            val lastName: String
+            val email: String
+            val favoriteUuid: UUID
+          }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(ModelProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 1
+      result.kspGeneratedSources.first().readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.models
+
+        import io.bkbn.lerasium.core.model.Request
+        import io.bkbn.lerasium.core.model.Response
+        import io.bkbn.lerasium.core.serialization.Serializers
+        import java.util.UUID
+        import kotlin.String
+        import kotlinx.datetime.LocalDateTime
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public data class UserCreateRequest(
+          public val firstName: String,
+          public val lastName: String,
+          public val email: String,
+          @Serializable(with = Serializers.Uuid::class)
+          public val favoriteUuid: UUID
+        ) : Request.Create
+
+        @Serializable
+        public data class UserUpdateRequest(
+          public val firstName: String?,
+          public val lastName: String?,
+          public val email: String?,
+          @Serializable(with = Serializers.Uuid::class)
+          public val favoriteUuid: UUID?
+        ) : Request.Update
+
+        @Serializable
+        public data class UserResponse(
+          @Serializable(with = Serializers.Uuid::class)
+          public val id: UUID,
+          public val firstName: String,
+          public val lastName: String,
+          public val email: String,
+          @Serializable(with = Serializers.Uuid::class)
+          public val favoriteUuid: UUID,
+          public val createdAt: LocalDateTime,
+          public val updatedAt: LocalDateTime
+        ) : Response
+        """.trimIndent()
+      )
+    }
   }
 })

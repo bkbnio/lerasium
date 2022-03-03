@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set indices on relational tables
 - Set indices on documents 
 - Persistence Annotation Module
+- RDBMS foreign key support
 
 ### Changed
 

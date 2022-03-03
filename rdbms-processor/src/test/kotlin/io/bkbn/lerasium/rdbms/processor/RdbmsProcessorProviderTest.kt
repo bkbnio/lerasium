@@ -817,7 +817,6 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         interface WordsTableSpec : Words {
           @Index(unique = true)
           override val word: String
-          o
         }
       """.trimIndent()
       )
@@ -977,6 +976,98 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           }
 
           public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can construct a table with a foreign key reference") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import java.util.UUID
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.ForeignKey
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val countryId: UUID
+        }
+
+        @Table
+        interface UserTable : User {
+          @ForeignKey("Country")
+          override val countryId: UUID
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object UserTable : UUIDTable("user") {
+          public val countryId: Column<UUID> = uuid("country_id").references(CountryTable.id)
+
+          public val name: Column<String> = varchar("name", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class UserEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<UserResponse> {
+          public var countryId: UUID by UserTable.countryId
+
+          public var name: String by UserTable.name
+
+          public var createdAt: LocalDateTime by UserTable.createdAt
+
+          public var updatedAt: LocalDateTime by UserTable.updatedAt
+
+          public override fun toResponse(): UserResponse = with(::UserResponse) {
+            val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                UserResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@UserEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<UserEntity>(UserTable)
         }
         """.trimIndent()
       )

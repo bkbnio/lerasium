@@ -7,11 +7,16 @@ import io.bkbn.kompendium.oas.info.Contact
 import io.bkbn.kompendium.oas.info.Info
 import io.bkbn.kompendium.oas.info.License
 import io.bkbn.kompendium.oas.schema.FormattedSchema
+import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
 import io.bkbn.kompendium.oas.server.Server
+import io.bkbn.lerasium.generated.api.AuthorApi.authorController
 import io.bkbn.lerasium.generated.api.BookApi.bookController
 import io.bkbn.lerasium.generated.api.ProfileApi.profileController
 import io.bkbn.lerasium.generated.api.UserApi.userController
+import io.bkbn.lerasium.generated.entity.AuthorDao
+import io.bkbn.lerasium.generated.entity.AuthorTable
 import io.bkbn.lerasium.generated.entity.BookDao
+import io.bkbn.lerasium.generated.entity.BookTable
 import io.bkbn.lerasium.generated.entity.ProfileDao
 import io.bkbn.lerasium.generated.entity.UserDao
 import io.bkbn.lerasium.generated.entity.UserEntity
@@ -30,6 +35,7 @@ import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.kotlin.logger
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -41,6 +47,12 @@ fun main(args: Array<String>) {
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.flyway.migrate()
   DatabaseConfig.relationalDatabase
+  transaction {
+    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable)
+    println("-------------")
+    statements.forEach { println(it) }
+    println("-------------")
+  }
   logger.info { "Launching API" }
   EngineMain.main(args)
 }
@@ -49,6 +61,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
   install(ContentNegotiation) {
     json(Json {
+      serializersModule = KompendiumSerializersModule.module
       encodeDefaults = true
       explicitNulls = false
     })
@@ -84,6 +97,7 @@ fun Application.module() {
     route("/") {
       userController(UserDao())
       bookController(BookDao())
+      authorController(AuthorDao())
       profileController(ProfileDao(DatabaseConfig.documentDatabase))
     }
   }
