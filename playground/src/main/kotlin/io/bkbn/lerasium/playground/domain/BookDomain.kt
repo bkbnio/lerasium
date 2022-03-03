@@ -12,7 +12,7 @@ private sealed interface BookDomain {
   val title: String
   val isbn: String
   val rating: Double
-  val authorId: UUID
+  val author: AuthorDomain
 }
 
 @Table
@@ -20,8 +20,8 @@ private interface BookTable : BookDomain {
   @Index(unique = true)
   override val isbn: String
 
-  @ForeignKey("Author")
-  override val authorId: UUID
+  @ForeignKey("name")
+  override val author: AuthorDomain
 }
 
 @Api

@@ -991,16 +991,24 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.rdbms.ForeignKey
         import io.bkbn.lerasium.rdbms.Table
 
+        @Domain("Country")
+        interface Country {
+          val name: String
+        }
+
+        @Table
+        interface CountryTable : Country
+
         @Domain("User")
         interface User {
           val name: String
-          val countryId: UUID
+          val country: Country
         }
 
         @Table
         interface UserTable : User {
-          @ForeignKey("Country")
-          override val countryId: UUID
+          @ForeignKey("name")
+          override val country: Country
         }
       """.trimIndent()
       )
@@ -1016,7 +1024,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources shouldHaveSize 4
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
         package io.bkbn.lerasium.generated.entity
@@ -1036,7 +1044,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object UserTable : UUIDTable("user") {
-          public val countryId: Column<UUID> = uuid("country_id").references(CountryTable.id)
+          public val country: Column<EntityID<UUID>> = reference("name", CountryTable)
 
           public val name: Column<String> = varchar("name", 128)
 
@@ -1048,7 +1056,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         public class UserEntity(
           id: EntityID<UUID>
         ) : UUIDEntity(id), Entity<UserResponse> {
-          public var countryId: UUID by UserTable.countryId
+          public var country: CountryEntity by CountryEntity referencedOn UserTable.country
 
           public var name: String by UserTable.name
 
@@ -1061,6 +1069,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
             val params = valueParameters.associateWith {
               when (it.name) {
                 UserResponse::id.name -> id.value
+                UserEntity::country.name -> country.toResponse()
                 else -> propertiesByName[it.name]?.get(this@UserEntity)
               }
             }

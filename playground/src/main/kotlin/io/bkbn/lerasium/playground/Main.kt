@@ -45,7 +45,6 @@ import java.net.URI
 fun main(args: Array<String>) {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
-  DatabaseConfig.flyway.migrate()
   DatabaseConfig.relationalDatabase
   transaction {
     val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable)
@@ -53,6 +52,7 @@ fun main(args: Array<String>) {
     statements.forEach { println(it) }
     println("-------------")
   }
+  DatabaseConfig.flyway.migrate()
   logger.info { "Launching API" }
   EngineMain.main(args)
 }

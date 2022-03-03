@@ -30,10 +30,11 @@ import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Column
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.VarChar
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
+import org.jetbrains.exposed.sql.Column as ExposedColumn
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
@@ -77,7 +78,12 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         val columnAnnotation: Column? = property.getAnnotationsByType(Column::class).firstOrNull()
         val fieldName = property.simpleName.asString()
         val columnName = columnAnnotation?.name ?: fieldName
-        val columnType = property.toColumnType()
+        val columnType = if (property.isAnnotationPresent(ForeignKey::class)) {
+          ExposedColumn::class.asTypeName()
+            .parameterizedBy(EntityID::class.asTypeName().parameterizedBy(UUID::class.asTypeName()))
+        } else {
+          property.toColumnType()
+        }
         addProperty(PropertySpec.builder(fieldName, columnType).apply {
           setColumnInitializer(columnName, property)
         }.build())
@@ -122,14 +128,24 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         superclass(UUIDEntityClass::class.asTypeName().parameterizedBy(entityClass))
         addSuperclassConstructorParameter("%T", tableObject)
       }.build())
-      addResponseConverter(domain)
+      addResponseConverter(domain, properties)
       properties.forEach { property ->
         val fieldName = property.simpleName.asString()
         val fieldType = property.type.toTypeName()
-        addProperty(PropertySpec.builder(fieldName, fieldType).apply {
-          delegate("%T.$fieldName", tableObject)
-          mutable()
-        }.build())
+        if (property.isAnnotationPresent(ForeignKey::class)) {
+          val fkDomain =
+            (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
+          addProperty(PropertySpec.builder(fieldName, fkDomain.toEntityClass()).apply {
+            delegate("%T referencedOn %T.%L", fkDomain.toEntityClass(), domain.toTableClass(), fieldName)
+            mutable()
+          }.build())
+        } else {
+          addProperty(PropertySpec.builder(fieldName, fieldType).apply {
+            delegate("%T.$fieldName", tableObject)
+            mutable()
+          }.build())
+        }
+
       }
       addProperty(PropertySpec.builder("createdAt", LocalDateTime::class).apply {
         delegate("%T.createdAt", tableObject)
@@ -142,7 +158,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     }.build())
   }
 
-  private fun TypeSpec.Builder.addResponseConverter(domain: Domain) = addFunction(FunSpec.builder("toResponse").apply {
+  private fun TypeSpec.Builder.addResponseConverter(domain: Domain, properties: List<KSPropertyDeclaration>) = addFunction(FunSpec.builder("toResponse").apply {
     addModifiers(KModifier.OVERRIDE)
     returns(domain.toResponseClass())
     addCode(CodeBlock.builder().apply {
@@ -155,6 +171,11 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         addControlFlow("val params = %M.associateWith", valueParams) {
           addControlFlow("when (it.name)") {
             addStatement("%T::id.name -> id.value", domain.toResponseClass())
+            properties.filter { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
+              .forEach { prop ->
+                val n = prop.simpleName.getShortName()
+                addStatement("%T::$n.name -> $n.toResponse()", domain.toEntityClass())
+              }
             addStatement("else -> propertiesByName[it.name]?.get(this@%L)", domain.toEntityClass().simpleName)
           }
         }
@@ -170,15 +191,19 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
   private fun PropertySpec.Builder.setColumnInitializer(fieldName: String, property: KSPropertyDeclaration) {
     val columnName = fieldName.camelToSnakeCase()
-    when (property.type.resolve().declaration.simpleName.getShortName()) {
-      "String" -> handleString(columnName, property)
-      "Int" -> handleInt(columnName, property)
-      "Long" -> handleLong(columnName, property)
-      "Boolean" -> handleBoolean(columnName, property)
-      "Double" -> handleDouble(columnName, property)
-      "Float" -> handleFloat(columnName, property)
-      "UUID" -> handleUuid(columnName, property)
-      else -> TODO("${property.type} is not yet supported for Table definitions")
+    if (property.isAnnotationPresent(ForeignKey::class)) {
+      handleForeignKey(property)
+    } else {
+      when (property.type.resolve().declaration.simpleName.getShortName()) {
+        "String" -> handleString(columnName, property)
+        "Int" -> handleInt(columnName, property)
+        "Long" -> handleLong(columnName, property)
+        "Boolean" -> handleBoolean(columnName, property)
+        "Double" -> handleDouble(columnName, property)
+        "Float" -> handleFloat(columnName, property)
+        "UUID" -> handleUuid(columnName, property)
+        else -> TODO("${property.type} is not yet supported for Table definitions")
+      }
     }
   }
 
@@ -238,16 +263,17 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
   private fun PropertySpec.Builder.handleUuid(columnName: String, property: KSPropertyDeclaration) {
     val format = StringBuilder()
-    val args = mutableListOf<Any>()
     format.append("uuid(%S)")
-    args.add(columnName)
     if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    if (property.isAnnotationPresent(ForeignKey::class)) {
-      val fk = property.getAnnotationsByType(ForeignKey::class).first()
-      val table = ClassName(BASE_ENTITY_PACKAGE_NAME, fk.domain.plus("Table"))
-      format.append(".references(%T.${fk.field})")
-      args.add(table)
-    }
-    initializer(format.toString(), *args.toTypedArray())
+    initializer(format.toString(), columnName)
+  }
+
+  private fun PropertySpec.Builder.handleForeignKey(property: KSPropertyDeclaration) {
+    val fk = property.getAnnotationsByType(ForeignKey::class).first()
+    val domain = (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
+    val format = StringBuilder()
+    format.append("reference(%S, %T)")
+    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
+    initializer(format.toString(), fk.field, domain.toTableClass())
   }
 }

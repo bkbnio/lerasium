@@ -5,13 +5,13 @@ import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.rdbms.Table
 
 @Domain("Author")
-private sealed interface AuthorDomain {
+internal sealed interface AuthorDomain {
   val name: String
   // todo books on-to-many
 }
 
 @Table
-private interface AuthorTableSpec : AuthorDomain
+internal interface AuthorTableSpec : AuthorDomain
 
 @Api
-private interface AuthorApiSpec : AuthorDomain
+internal interface AuthorApiSpec : AuthorDomain

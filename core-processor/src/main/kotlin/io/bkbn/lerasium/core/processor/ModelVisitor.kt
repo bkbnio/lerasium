@@ -1,6 +1,7 @@
 package io.bkbn.lerasium.core.processor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
@@ -16,11 +17,13 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.Request
 import io.bkbn.lerasium.core.model.Response
@@ -29,6 +32,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_MODEL_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -55,6 +59,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
     classDeclaration.getAllProperties().toList()
       .filterNot { it.type.isSupportedScalar() }
+      .filterNot { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
       .forEach { visitTypeReference(it.type, Unit) }
   }
 
@@ -84,9 +89,19 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
             true -> it.toParameter()
             false -> {
               val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
-              ParameterSpec.builder(n, cn).build()
+              val domain =
+                (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+              if (domain != null) {
+                ParameterSpec.builder(n, UUID::class).apply {
+                  addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+                    addMember("with = %T::class", Serializers.Uuid::class)
+                  }.build())
+                }.build()
+              } else {
+                val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
+                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+                ParameterSpec.builder(n, cn).build()
+              }
             }
           }
           addParameter(param)
@@ -97,11 +112,19 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           true -> it.toProperty()
           false -> {
             val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
-            val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
-            PropertySpec.builder(n, cn).apply {
-              initializer(n)
-            }.build()
+            val domain =
+              (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+            if (domain != null) {
+              PropertySpec.builder(n, UUID::class).apply {
+                initializer(n)
+              }.build()
+            } else {
+              val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
+              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              PropertySpec.builder(n, cn).apply {
+                initializer(n)
+              }.build()
+            }
           }
         }
         addProperty(prop)
@@ -123,10 +146,19 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
               ParameterSpec.builder(it.simpleName.getShortName(), it.type.toTypeName().copy(nullable = true)).build()
             }
             false -> {
-              val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
-              ParameterSpec.builder(n, cn).build()
+              if ((it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class)) {
+                ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
+                  .apply {
+                    addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+                      addMember("with = %T::class", Serializers.Uuid::class)
+                    }.build())
+                  }.build()
+              } else {
+                val n = it.simpleName.getShortName()
+                val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
+                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
+                ParameterSpec.builder(n, cn).build()
+              }
             }
           }
           addParameter(param)
@@ -145,12 +177,19 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
             }.build()
           }
           false -> {
-            val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
-            val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
-            PropertySpec.builder(n, cn).apply {
-              initializer(n)
-            }.build()
+            if ((it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class)) {
+              PropertySpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
+                .apply {
+                  initializer(it.simpleName.getShortName())
+                }.build()
+            } else {
+              val n = it.simpleName.getShortName()
+              val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
+              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              PropertySpec.builder(n, cn).apply {
+                initializer(n)
+              }.build()
+            }
           }
         }
         addProperty(prop)
@@ -171,10 +210,16 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           val param = when (it.type.isSupportedScalar()) {
             true -> it.toParameter()
             false -> {
-              val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus("Response")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
-              ParameterSpec.builder(n, cn).build()
+              val domain =
+                (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+              if (domain != null) {
+                ParameterSpec.builder(it.simpleName.getShortName(), domain.toResponseClass()).build()
+              } else {
+                val n = it.simpleName.getShortName()
+                val t = it.type.resolve().toClassName().simpleName.plus("Response")
+                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+                ParameterSpec.builder(n, cn).build()
+              }
             }
           }
           addParameter(param)
@@ -187,11 +232,19 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           true -> it.toProperty()
           false -> {
             val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus("Response")
-            val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
-            PropertySpec.builder(n, cn).apply {
-              initializer(n)
-            }.build()
+            val domain =
+              (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+            if (domain != null) {
+              PropertySpec.builder(n, domain.toResponseClass()).apply {
+                initializer(n)
+              }.build()
+            } else {
+              val t = it.type.resolve().toClassName().simpleName.plus("Response")
+              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              PropertySpec.builder(n, cn).apply {
+                initializer(n)
+              }.build()
+            }
           }
         }
         addProperty(prop)
