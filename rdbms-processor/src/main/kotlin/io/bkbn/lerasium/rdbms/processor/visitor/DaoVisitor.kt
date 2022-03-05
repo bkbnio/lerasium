@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.rdbms.processor
+package io.bkbn.lerasium.rdbms.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
@@ -21,7 +21,6 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.rdbms.OneToMany

@@ -8,7 +8,7 @@ import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Table
 
 @Domain("User")
-private sealed interface UserDomain {
+internal sealed interface UserDomain {
   val firstName: String
   val lastName: String
   val email: String
@@ -20,10 +20,10 @@ private sealed interface UserDomain {
 @Table
 @CompositeIndex(unique = false, "firstName", "lastName")
 @CompositeIndex(unique = false, "favoriteFood", "lastName")
-private interface UserTable : UserDomain {
+internal interface UserTable : UserDomain {
   @Index(true)
   override val email: String
 }
 
 @Api
-private interface UserApi: UserDomain
+internal interface UserApi: UserDomain
