@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.api.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -20,17 +22,21 @@ import io.bkbn.kompendium.core.metadata.method.GetInfo
 import io.bkbn.kompendium.core.metadata.method.PostInfo
 import io.bkbn.kompendium.core.metadata.method.PutInfo
 import io.bkbn.lerasium.api.model.GetByIdParams
+import io.bkbn.lerasium.api.model.PaginatedGetByIdQuery
 import io.bkbn.lerasium.api.model.PaginatedQuery
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.ktor.http.HttpStatusCode
 
-@OptIn(KotlinPoetKspPreview::class)
+@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -50,6 +56,7 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addUpdateInfo(domain)
       addDeleteInfo(domain)
       addGetAllInfo(domain)
+      addRelationalInfo(classDeclaration, domain)
     }.build())
   }
 
@@ -182,5 +189,37 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         }
       }.build())
     }.build())
+  }
+
+  private fun TypeSpec.Builder.addRelationalInfo(cd: KSClassDeclaration, domain: Domain) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+      val name = property.simpleName.getShortName()
+      val refDomain = property.type.getDomain()
+      val getRelationPropType = GetInfo::class.asClassName()
+        .parameterizedBy(
+          PaginatedGetByIdQuery::class.asTypeName(),
+          List::class.asClassName().parameterizedBy(refDomain.toResponseClass())
+        )
+      addProperty(PropertySpec.builder("get${domain.name}${refDomain.name}", getRelationPropType).apply {
+        initializer(CodeBlock.builder().apply {
+          addObjectInstantiation(getRelationPropType) {
+            addStatement("summary = %S,", "Get ${name.capitalized()}")
+            addStatement(
+              "description = %S,",
+              """
+                Retrieves a collection of ${refDomain.name} entities, broken up by specified
+                chunk and offset, referenced by the specified ${domain.name}
+              """.trimIndent()
+            )
+            add("responseInfo = ")
+            addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
+              addStatement("status = %T.OK,", HttpStatusCode::class)
+              addStatement("description = %S", "Successfully retrieved the collection of ${refDomain.name} entities")
+            }
+            addStatement("tags = setOf(%S)", domain.name)
+          }
+        }.build())
+      }.build())
+    }
   }
 }

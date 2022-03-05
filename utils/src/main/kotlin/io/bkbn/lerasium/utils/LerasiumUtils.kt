@@ -4,6 +4,7 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.validation.DomainValidation
 
@@ -17,6 +18,9 @@ object LerasiumUtils {
       it
     } ?: error("$this is not annotated with a valid domain!")
   }
+
+  fun KSTypeReference.getDomain(): Domain =
+    (resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
 
   fun KSClassDeclaration.findParentDomain(): Domain {
     val domainType = superTypes
