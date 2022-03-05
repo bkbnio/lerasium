@@ -21,6 +21,7 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.rdbms.OneToMany
@@ -30,6 +31,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -203,21 +205,11 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  /*
-  public fun getBooks(id: UUID, chunk: Int, offset: Int): List<BookResponse> = transaction {
-    val author = AuthorEntity[id]
-    author.books
-      .limit(chunk, offset.toLong()).toList()
-      .map { it.toResponse() }
-  }
-   */
-
   private fun TypeSpec.Builder.addRelations(cd: KSClassDeclaration, ec: ClassName) {
     val otmProps = cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }
     otmProps.forEach { prop ->
       val name = prop.simpleName.getShortName()
-      val refDomain =
-        (prop.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
+      val refDomain = prop.type.getDomain()
       addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
         returns(List::class.asClassName().parameterizedBy(refDomain.toResponseClass()))
         addParameter(ParameterSpec.builder("id", UUID::class).build())

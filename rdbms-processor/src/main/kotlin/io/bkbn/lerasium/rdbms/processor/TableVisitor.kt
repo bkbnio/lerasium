@@ -36,6 +36,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
 import kotlinx.datetime.LocalDateTime
@@ -172,11 +173,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     properties.forEach { prop ->
       val name = prop.simpleName.getShortName()
       val otm = prop.getAnnotationsByType(OneToMany::class).first()
-      val propClazz = prop.type.resolve().declaration as KSClassDeclaration
-      require(propClazz.isAnnotationPresent(Domain::class)) {
-        "You are trying to build a relation to $propClazz which is not annotated with @Domain"
-      }
-      val refDomain = propClazz.getAnnotationsByType(Domain::class).first()
+      val refDomain = prop.type.getDomain()
       addProperty(
         PropertySpec.builder(
           name,
