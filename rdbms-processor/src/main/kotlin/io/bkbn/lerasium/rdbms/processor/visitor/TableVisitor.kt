@@ -40,12 +40,10 @@ import org.jetbrains.exposed.sql.Column as ExposedColumn
 @OptIn(KspExperimental::class, KotlinPoetKspPreview::class)
 class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
-  companion object {
-    private const val DEFAULT_VARCHAR_SIZE = 128
+  private companion object {
+    const val DEFAULT_VARCHAR_SIZE = 128
     val exposedColumn = ClassName("org.jetbrains.exposed.sql", "Column")
     val exposedDateTime = MemberName("org.jetbrains.exposed.sql.kotlin.datetime", "datetime")
-    val memberProps = MemberName("kotlin.reflect.full", "memberProperties")
-    val valueParams = MemberName("kotlin.reflect.full", "valueParameters")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {

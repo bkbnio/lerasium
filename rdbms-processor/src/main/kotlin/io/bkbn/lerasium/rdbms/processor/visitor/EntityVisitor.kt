@@ -11,6 +11,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
@@ -38,6 +39,11 @@ import java.util.UUID
 
 @OptIn(KspExperimental::class, KotlinPoetKspPreview::class)
 class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
+
+  private companion object {
+    val memberProps = MemberName("kotlin.reflect.full", "memberProperties")
+    val valueParams = MemberName("kotlin.reflect.full", "valueParameters")
+  }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
     if (classDeclaration.classKind != ClassKind.INTERFACE) {
@@ -130,9 +136,9 @@ class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logge
           addStatement(
             "val propertiesByName = %T::class.%M.associateBy { it.name }",
             domain.toEntityClass(),
-            TableVisitor.memberProps
+            memberProps
           )
-          addControlFlow("val params = %M.associateWith", TableVisitor.valueParams) {
+          addControlFlow("val params = %M.associateWith", valueParams) {
             addControlFlow("when (it.name)") {
               addStatement("%T::id.name -> id.value", domain.toResponseClass())
               properties.filter {
