@@ -71,7 +71,7 @@ class KtorProcessorProviderTest : DescribeSpec({
       result.messages shouldInclude "Domain is invalid"
     }
   }
-  describe("API Crud Functionality") {
+  describe("API Routes") {
     it("Can build an API with simple CRUD functionality") {
       // arrange
       val compilation = KotlinCompilation().apply {
@@ -146,6 +146,129 @@ class KtorProcessorProviderTest : DescribeSpec({
               }
               route("/count") {
                 notarizedGet(countAllUser) {
+                  val result = dao.countAll()
+                  call.respond(result)
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can build a route to access a relational member") {
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.api.Api
+        import java.util.UUID
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.core.Relation
+
+        @Domain("Country")
+        interface Country {
+          val name: String
+          @Relation
+          val users: User
+        }
+
+        @Api
+        interface CountryApi : Country
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val country: Country
+        }
+
+        @Api
+        interface UserApi : User
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(KtorProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 4
+      result.kspGeneratedSources.first { it.name == "CountryApi.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.api
+
+        import io.bkbn.kompendium.core.Notarized.notarizedDelete
+        import io.bkbn.kompendium.core.Notarized.notarizedGet
+        import io.bkbn.kompendium.core.Notarized.notarizedPost
+        import io.bkbn.kompendium.core.Notarized.notarizedPut
+        import io.bkbn.lerasium.generated.api.CountryToC.countAllCountry
+        import io.bkbn.lerasium.generated.api.CountryToC.createCountry
+        import io.bkbn.lerasium.generated.api.CountryToC.deleteCountry
+        import io.bkbn.lerasium.generated.api.CountryToC.getAllCountry
+        import io.bkbn.lerasium.generated.api.CountryToC.getCountry
+        import io.bkbn.lerasium.generated.api.CountryToC.getCountryUser
+        import io.bkbn.lerasium.generated.api.CountryToC.updateCountry
+        import io.bkbn.lerasium.generated.entity.CountryDao
+        import io.bkbn.lerasium.generated.models.CountryCreateRequest
+        import io.bkbn.lerasium.generated.models.CountryUpdateRequest
+        import io.ktor.application.call
+        import io.ktor.http.HttpStatusCode
+        import io.ktor.request.receive
+        import io.ktor.response.respond
+        import io.ktor.routing.Route
+        import io.ktor.routing.route
+        import java.util.UUID
+        import kotlin.Unit
+
+        public object CountryApi {
+          public fun Route.countryController(dao: CountryDao): Unit {
+            route("/country") {
+              notarizedPost(createCountry) {
+                val request = call.receive<CountryCreateRequest>()
+                val result = dao.create(request)
+                call.respond(result)
+              }
+              notarizedGet(getAllCountry) {
+                val chunk = call.parameters["chunk"]?.toInt() ?: 100
+                val offset = call.parameters["offset"]?.toInt() ?: 0
+                val result = dao.getAll(chunk, offset)
+                call.respond(result)
+              }
+              route("/{id}") {
+                notarizedGet(getCountry) {
+                  val id = UUID.fromString(call.parameters["id"])
+                  val result = dao.read(id)
+                  call.respond(result)
+                }
+                notarizedPut(updateCountry) {
+                  val id = UUID.fromString(call.parameters["id"])
+                  val request = call.receive<CountryUpdateRequest>()
+                  val result = dao.update(id, request)
+                  call.respond(result)
+                }
+                notarizedDelete(deleteCountry) {
+                  val id = UUID.fromString(call.parameters["id"])
+                  dao.delete(id)
+                  call.respond(HttpStatusCode.NoContent)
+                }
+                route("/users") {
+                  notarizedGet(getCountryUser) {
+                    val id = UUID.fromString(call.parameters["id"])
+                    val chunk = call.parameters["chunk"]?.toInt() ?: 100
+                    val offset = call.parameters["offset"]?.toInt() ?: 0
+                    val result = dao.getAllUsers(id, chunk, offset)
+                    call.respond(result)
+                  }
+                }
+              }
+              route("/count") {
+                notarizedGet(countAllCountry) {
                   val result = dao.countAll()
                   call.respond(result)
                 }
@@ -264,6 +387,167 @@ class KtorProcessorProviderTest : DescribeSpec({
               description = "Successfully retrieved the collection of User entities"
             ),
             tags = setOf("User")
+          )
+
+        }
+        """.trimIndent()
+      )
+    }
+    it("Can generate a table of contents with relational members") {
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import io.bkbn.lerasium.api.Api
+        import java.util.UUID
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.core.Relation
+
+        @Domain("Country")
+        interface Country {
+          val name: String
+          @Relation
+          val users: User
+        }
+
+        @Api
+        interface CountryApi : Country
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val country: Country
+        }
+
+        @Api
+        interface UserApi : User
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(KtorProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 4
+      result.kspGeneratedSources.first { it.name == "CountryToC.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.api
+
+        import io.bkbn.kompendium.core.metadata.RequestInfo
+        import io.bkbn.kompendium.core.metadata.ResponseInfo
+        import io.bkbn.kompendium.core.metadata.method.DeleteInfo
+        import io.bkbn.kompendium.core.metadata.method.GetInfo
+        import io.bkbn.kompendium.core.metadata.method.PostInfo
+        import io.bkbn.kompendium.core.metadata.method.PutInfo
+        import io.bkbn.lerasium.api.model.GetByIdParams
+        import io.bkbn.lerasium.api.model.PaginatedGetByIdQuery
+        import io.bkbn.lerasium.api.model.PaginatedQuery
+        import io.bkbn.lerasium.core.model.CountResponse
+        import io.bkbn.lerasium.generated.models.CountryCreateRequest
+        import io.bkbn.lerasium.generated.models.CountryResponse
+        import io.bkbn.lerasium.generated.models.CountryUpdateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import io.ktor.http.HttpStatusCode
+        import kotlin.Unit
+        import kotlin.collections.List
+
+        public object CountryToC {
+          public val createCountry: PostInfo<Unit, CountryCreateRequest, CountryResponse> =
+              PostInfo<Unit, CountryCreateRequest, CountryResponse>(
+            summary = "Create Country",
+            description = "Creates a new Country",
+            requestInfo = RequestInfo(
+              description = "Details required to create a new Country",
+            ),
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.Created,
+              description = "The Country was retrieved successfully"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val countAllCountry: GetInfo<Unit, CountResponse> = GetInfo<Unit, CountResponse>(
+            summary = "Count Country",
+            description = "Counts total Country entities",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "Successfully retrieved the total Country entity count"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val getCountry: GetInfo<GetByIdParams, CountryResponse> =
+              GetInfo<GetByIdParams, CountryResponse>(
+            summary = "Get Country by ID",
+            description = "Retrieves a Country by id",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "The Country was retrieved successfully"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val updateCountry: PutInfo<GetByIdParams, CountryUpdateRequest, CountryResponse> =
+              PutInfo<GetByIdParams, CountryUpdateRequest, CountryResponse>(
+            summary = "Update Country",
+            description = "Updates an existing Country",
+            requestInfo = RequestInfo(
+              description = "Takes an provided fields and overrides the corresponding Country info",
+            ),
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.Created,
+              description = "The Country was updated successfully"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val deleteCountry: DeleteInfo<GetByIdParams, Unit> = DeleteInfo<GetByIdParams, Unit>(
+            summary = "Delete Country by ID",
+            description = "Deletes an existing Country",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.NoContent,
+              description = "Successfully deleted Country"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val getAllCountry: GetInfo<PaginatedQuery, List<CountryResponse>> =
+              GetInfo<PaginatedQuery, List<CountryResponse>>(
+            summary = "Get All Country",
+            description =
+                "Retrieves a collection of Country entities, broken up by specified chunk and offset",
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "Successfully retrieved the collection of Country entities"
+            ),
+            tags = setOf("Country")
+          )
+
+
+          public val getCountryUser: GetInfo<PaginatedGetByIdQuery, List<UserResponse>> =
+              GetInfo<PaginatedGetByIdQuery, List<UserResponse>>(
+            summary = "Get Users",
+            description = ""${'"'}
+                |Retrieves a collection of User entities, broken up by specified
+                |chunk and offset, referenced by the specified Country
+                ""${'"'}.trimMargin(),
+            responseInfo = ResponseInfo(
+              status = HttpStatusCode.OK,
+              description = "Successfully retrieved the collection of User entities"
+            ),
+            tags = setOf("Country")
           )
 
         }

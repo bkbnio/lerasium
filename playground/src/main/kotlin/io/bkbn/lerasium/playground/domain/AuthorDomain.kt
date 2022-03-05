@@ -13,8 +13,6 @@ internal sealed interface AuthorDomain {
   val books: BookDomain
 }
 
-// public val books: SizedIterable<BookEntity> by BookEntity referrersOn BookTable.author
-
 @Table
 internal interface AuthorTableSpec : AuthorDomain {
   @OneToMany("author")
