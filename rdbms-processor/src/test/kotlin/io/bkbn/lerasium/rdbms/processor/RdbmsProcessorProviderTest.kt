@@ -1081,6 +1081,109 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a table with a one-to-many reference") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import java.util.UUID
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.ForeignKey
+        import io.bkbn.lerasium.rdbms.OneToMany
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Country")
+        interface Country {
+          val name: String
+        }
+
+        @Table
+        interface CountryTable : Country {
+          @OneToMany("country")
+          val users: UserTable
+        }
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val country: Country
+        }
+
+        @Table
+        interface UserTable : User {
+          @ForeignKey("name")
+          override val country: Country
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 4
+      result.kspGeneratedSources.first { it.name == "CountryTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.CountryResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.SizedIterable
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object CountryTable : UUIDTable("country") {
+          public val name: Column<String> = varchar("name", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class CountryEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<CountryResponse> {
+          public var name: String by CountryTable.name
+
+          public var createdAt: LocalDateTime by CountryTable.createdAt
+
+          public var updatedAt: LocalDateTime by CountryTable.updatedAt
+
+          public val users: SizedIterable<UserEntity> by UserEntity referrersOn UserTable.country
+
+          public override fun toResponse(): CountryResponse = with(::CountryResponse) {
+            val propertiesByName = CountryEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                CountryResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@CountryEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<CountryEntity>(CountryTable)
+        }
+        """.trimIndent()
+      )
+    }
   }
   describe("Dao Generation") {
     it("Can create a simple dao") {
@@ -1181,6 +1284,132 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           }
         }
       """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
+    }
+    it("Can create a dao with a one-to-many reference ") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+        package test
+
+        import java.util.UUID
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.rdbms.ForeignKey
+        import io.bkbn.lerasium.rdbms.OneToMany
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("Country")
+        interface Country {
+          val name: String
+        }
+
+        @Table
+        interface CountryTable : Country {
+          @OneToMany("country")
+          val users: UserTable
+        }
+
+        @Domain("User")
+        interface User {
+          val name: String
+          val country: Country
+        }
+
+        @Table
+        interface UserTable : User {
+          @ForeignKey("name")
+          override val country: Country
+        }
+      """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 4
+      result.kspGeneratedSources.first { it.name == "CountryDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
+        import io.bkbn.lerasium.generated.models.CountryCreateRequest
+        import io.bkbn.lerasium.generated.models.CountryResponse
+        import io.bkbn.lerasium.generated.models.CountryUpdateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import java.util.UUID
+        import kotlin.Int
+        import kotlin.collections.List
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.jetbrains.exposed.sql.transactions.transaction
+
+        public class CountryDao :
+            Dao<CountryEntity, CountryResponse, CountryCreateRequest, CountryUpdateRequest> {
+          public override fun create(request: CountryCreateRequest): CountryResponse = transaction {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = transaction {
+              CountryEntity.new {
+                name = request.name
+                createdAt = now
+                updatedAt = now
+              }
+            }
+            entity.toResponse()
+          }
+
+          public override fun read(id: UUID): CountryResponse = transaction {
+            val entity = CountryEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: CountryUpdateRequest): CountryResponse =
+              transaction {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = CountryEntity.findById(id) ?: error("PLACEHOLDER")
+            request.name?.let {
+              entity.name = it
+            }
+            entity.updatedAt = now
+            entity.toResponse()
+          }
+
+          public override fun delete(id: UUID) = transaction {
+            val entity = CountryEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.delete()
+          }
+
+          public override fun countAll(): CountResponse = transaction {
+            val count = CountryEntity.count()
+            CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<CountryResponse> = transaction {
+            val entities = CountryEntity.all().limit(chunk, offset.toLong())
+            entities.map { entity ->
+              entity.toResponse()
+            }
+          }
+
+          public fun getAllUsers(
+            id: UUID,
+            chunk: Int,
+            offset: Int
+          ): List<UserResponse> = transaction {
+            val entity = CountryEntity[id]
+            entity.users.limit(chunk, offset.toLong()).toList().map { it.toResponse() }
+          }
+        }
+        """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
   }
