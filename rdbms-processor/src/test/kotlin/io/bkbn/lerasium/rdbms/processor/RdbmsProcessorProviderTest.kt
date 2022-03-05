@@ -1089,6 +1089,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         import java.util.UUID
         import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.core.Relation
         import io.bkbn.lerasium.rdbms.ForeignKey
         import io.bkbn.lerasium.rdbms.OneToMany
         import io.bkbn.lerasium.rdbms.Table
@@ -1096,12 +1097,14 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         @Domain("Country")
         interface Country {
           val name: String
+          @Relation
+          val users: User
         }
 
         @Table
         interface CountryTable : Country {
           @OneToMany("country")
-          val users: UserTable
+          override val users: User
         }
 
         @Domain("User")
@@ -1294,6 +1297,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         import java.util.UUID
         import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.core.Relation
         import io.bkbn.lerasium.rdbms.ForeignKey
         import io.bkbn.lerasium.rdbms.OneToMany
         import io.bkbn.lerasium.rdbms.Table
@@ -1301,12 +1305,14 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         @Domain("Country")
         interface Country {
           val name: String
+          @Relation
+          val users: User
         }
 
         @Table
         interface CountryTable : Country {
           @OneToMany("country")
-          val users: UserTable
+          override val users: User
         }
 
         @Domain("User")

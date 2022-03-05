@@ -25,6 +25,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.Request
 import io.bkbn.lerasium.core.model.Response
@@ -78,7 +79,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addCreateRequestModel(cd: KSClassDeclaration, name: String) {
-    val properties = cd.getAllProperties().toList()
+    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Relation::class) }
     addType(TypeSpec.classBuilder(name.plus("CreateRequest")).apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
@@ -134,7 +135,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addUpdateRequestModel(cd: KSClassDeclaration, name: String) {
-    val properties = cd.getAllProperties()
+    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Relation::class) }
     addType(TypeSpec.classBuilder(name.plus("UpdateRequest")).apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
@@ -203,7 +204,9 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addResponseModel(cd: KSClassDeclaration, name: String, isDomainModel: Boolean = false) {
-    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(Sensitive::class) }
+    val properties = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(Sensitive::class) }
+      .filterNot { it.isAnnotationPresent(Relation::class) }
     addType(TypeSpec.classBuilder(name.plus("Response")).apply {
       addOriginatingKSFile(containingFile)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())

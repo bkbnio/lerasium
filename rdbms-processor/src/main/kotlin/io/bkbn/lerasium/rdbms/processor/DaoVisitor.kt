@@ -216,7 +216,8 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val otmProps = cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }
     otmProps.forEach { prop ->
       val name = prop.simpleName.getShortName()
-      val refDomain = (prop.type.resolve().declaration as KSClassDeclaration).findParentDomain()
+      val refDomain =
+        (prop.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
       addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
         returns(List::class.asClassName().parameterizedBy(refDomain.toResponseClass()))
         addParameter(ParameterSpec.builder("id", UUID::class).build())

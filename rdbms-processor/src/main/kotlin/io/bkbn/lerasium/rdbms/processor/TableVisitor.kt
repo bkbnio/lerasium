@@ -30,9 +30,7 @@ import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Column
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.OneToMany
-import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.rdbms.VarChar
-import org.jetbrains.exposed.sql.Column as ExposedColumn
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -47,6 +45,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.SizedIterable
 import java.util.UUID
+import org.jetbrains.exposed.sql.Column as ExposedColumn
 
 @OptIn(KspExperimental::class, KotlinPoetKspPreview::class)
 class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
@@ -174,10 +173,10 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       val name = prop.simpleName.getShortName()
       val otm = prop.getAnnotationsByType(OneToMany::class).first()
       val propClazz = prop.type.resolve().declaration as KSClassDeclaration
-      require(propClazz.isAnnotationPresent(Table::class)) {
-        "You are trying to build a relation to $propClazz which is not annotated with @Table"
+      require(propClazz.isAnnotationPresent(Domain::class)) {
+        "You are trying to build a relation to $propClazz which is not annotated with @Domain"
       }
-      val refDomain = propClazz.findParentDomain()
+      val refDomain = propClazz.getAnnotationsByType(Domain::class).first()
       addProperty(
         PropertySpec.builder(
           name,
