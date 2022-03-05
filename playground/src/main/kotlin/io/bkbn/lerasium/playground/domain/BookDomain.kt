@@ -8,7 +8,7 @@ import io.bkbn.lerasium.rdbms.Table
 import java.util.UUID
 
 @Domain("Book")
-private sealed interface BookDomain {
+internal sealed interface BookDomain {
   val title: String
   val isbn: String
   val rating: Double
@@ -16,7 +16,7 @@ private sealed interface BookDomain {
 }
 
 @Table
-private interface BookTable : BookDomain {
+internal interface BookTable : BookDomain {
   @Index(unique = true)
   override val isbn: String
 
@@ -25,4 +25,4 @@ private interface BookTable : BookDomain {
 }
 
 @Api
-private interface BookApi : BookDomain
+internal interface BookApi : BookDomain

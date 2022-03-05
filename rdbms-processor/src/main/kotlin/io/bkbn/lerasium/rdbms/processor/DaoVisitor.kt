@@ -2,6 +2,7 @@ package io.bkbn.lerasium.rdbms.processor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -20,14 +21,18 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
+import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.StringUtils.capitalized
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.util.UUID
@@ -65,6 +70,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addDeleteFunction(ec)
       addCountAllFunction(ec)
       addGetAllFunction(ec, rc)
+      addRelations(cd, ec)
     }.build())
   }
 
@@ -74,7 +80,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     responseClass: ClassName,
     entityClass: ClassName
   ) {
-    val props = cd.getAllProperties().toList()
+    val props = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("request", requestClass)
@@ -156,7 +162,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     responseClass: ClassName,
     entityClass: ClassName
   ) {
-    val props = cd.getAllProperties().toList()
+    val props = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("id", UUID::class)
@@ -197,5 +203,25 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         }
       }.build())
     }.build())
+  }
+
+  private fun TypeSpec.Builder.addRelations(cd: KSClassDeclaration, ec: ClassName) {
+    val otmProps = cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }
+    otmProps.forEach { prop ->
+      val name = prop.simpleName.getShortName()
+      val refDomain = prop.type.getDomain()
+      addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
+        returns(List::class.asClassName().parameterizedBy(refDomain.toResponseClass()))
+        addParameter(ParameterSpec.builder("id", UUID::class).build())
+        addParameter(ParameterSpec.builder("chunk", Int::class).build())
+        addParameter(ParameterSpec.builder("offset", Int::class).build())
+        addCode(CodeBlock.builder().apply {
+          addControlFlow("return %M", Transaction) {
+            addStatement("val entity = %T[id]", ec)
+            addStatement("entity.$name.limit(chunk, offset.toLong()).toList().map { it.toResponse() }")
+          }
+        }.build())
+      }.build())
+    }
   }
 }

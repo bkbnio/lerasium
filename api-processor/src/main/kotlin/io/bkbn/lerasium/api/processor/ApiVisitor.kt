@@ -3,6 +3,7 @@
 package io.bkbn.lerasium.api.processor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -16,6 +17,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
@@ -23,6 +25,9 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTocClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.StringUtils.capitalized
+import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpStatusCode
 import io.ktor.routing.Route
 import java.util.Locale
@@ -50,16 +55,16 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
 
     val domain = classDeclaration.findParentDomain()
-    val controllerName = domain.name.plus("Controller").replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val apiObjectName = domain.name.plus("Api")
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
-      addController(domain, controllerName)
+      addController(classDeclaration, domain)
     }.build())
   }
 
-  private fun TypeSpec.Builder.addController(domain: Domain, controllerName: String) {
+  private fun TypeSpec.Builder.addController(cd: KSClassDeclaration, domain: Domain) {
+    val controllerName = domain.name.plus("Controller").replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val baseName = domain.name.replaceFirstChar { it.lowercase(Locale.getDefault()) }
     addFunction(FunSpec.builder(controllerName).apply {
       receiver(Route::class)
@@ -72,6 +77,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addReadRoute(domain)
             addUpdateRoute(domain)
             addDeleteRoute(domain)
+            addRelationalRoutes(cd, domain)
           }
           addControlFlow("%M(%S)", routeMember, "/count") {
             addCountRoute(domain)
@@ -146,5 +152,24 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addStatement("%M.%M(%T.NoContent)", callMember, respondMember, HttpStatusCode::class)
       }
     }.build())
+  }
+
+  private fun CodeBlock.Builder.addRelationalRoutes(cd: KSClassDeclaration, domain: Domain) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+      val name = property.simpleName.getShortName()
+      val refDomain = property.type.getDomain()
+      add(CodeBlock.builder().apply {
+        val toc = MemberName(domain.toTocClass(), "get${domain.name}${refDomain.name}")
+        addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
+          addControlFlow("%M(%M)", notarizedGetMember, toc) {
+            addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
+            addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
+            addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
+            addStatement("val result = dao.getAll${name.capitalized()}(id, chunk, offset)")
+            addStatement("%M.%M(result)", callMember, respondMember)
+          }
+        }
+      }.build())
+    }
   }
 }
