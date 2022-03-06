@@ -20,7 +20,7 @@ dependencies {
   implementation(projects.lerasiumCore)
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
   implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
-  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")
+  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.4")
 
   testFixturesApi("io.kotest:kotest-runner-junit5-jvm:5.1.0")
   testFixturesApi("io.kotest:kotest-assertions-core-jvm:5.1.0")

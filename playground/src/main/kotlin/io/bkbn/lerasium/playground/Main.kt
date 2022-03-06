@@ -11,11 +11,14 @@ import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
 import io.bkbn.kompendium.oas.server.Server
 import io.bkbn.lerasium.generated.api.AuthorApi.authorController
 import io.bkbn.lerasium.generated.api.BookApi.bookController
+import io.bkbn.lerasium.generated.api.BookReviewApi.bookReviewController
 import io.bkbn.lerasium.generated.api.ProfileApi.profileController
 import io.bkbn.lerasium.generated.api.UserApi.userController
 import io.bkbn.lerasium.generated.entity.AuthorDao
 import io.bkbn.lerasium.generated.entity.AuthorTable
 import io.bkbn.lerasium.generated.entity.BookDao
+import io.bkbn.lerasium.generated.entity.BookReviewDao
+import io.bkbn.lerasium.generated.entity.BookReviewTable
 import io.bkbn.lerasium.generated.entity.BookTable
 import io.bkbn.lerasium.generated.entity.ProfileDao
 import io.bkbn.lerasium.generated.entity.UserDao
@@ -47,7 +50,7 @@ fun main(args: Array<String>) {
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.relationalDatabase
   transaction {
-    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable)
+    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
     println("-------------")
     statements.forEach { println(it) }
     println("-------------")
@@ -97,6 +100,7 @@ fun Application.module() {
     route("/") {
       userController(UserDao())
       bookController(BookDao())
+      bookReviewController(BookReviewDao())
       authorController(AuthorDao())
       profileController(ProfileDao(DatabaseConfig.documentDatabase))
     }

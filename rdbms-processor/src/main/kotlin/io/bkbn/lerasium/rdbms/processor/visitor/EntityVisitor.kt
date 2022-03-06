@@ -6,6 +6,8 @@ import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -23,6 +25,7 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.model.Entity
 import io.bkbn.lerasium.rdbms.ForeignKey
+import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
@@ -30,6 +33,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import kotlin.reflect.full.findAnnotation
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -80,7 +84,9 @@ class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logge
   }
 
   private fun TypeSpec.Builder.addEntityProperties(cd: KSClassDeclaration, domain: Domain) {
-    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+    val properties = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+      .filterNot { it.isAnnotationPresent(ManyToMany::class) }.toList()
     properties.forEach { property ->
       val fieldName = property.simpleName.asString()
       val fieldType = property.type.toTypeName()
@@ -110,24 +116,44 @@ class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logge
   }
 
   private fun TypeSpec.Builder.addRelations(cd: KSClassDeclaration) {
-    val properties = cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }.toList()
-    properties.forEach { prop ->
-      val name = prop.simpleName.getShortName()
-      val otm = prop.getAnnotationsByType(OneToMany::class).first()
-      val refDomain = prop.type.getDomain()
-      addProperty(
-        PropertySpec.builder(
-          name,
-          SizedIterable::class.asClassName().parameterizedBy(refDomain.toEntityClass())
-        ).apply {
-          delegate("%T referrersOn %T.${otm.refColumn}", refDomain.toEntityClass(), refDomain.toTableClass())
-        }.build()
-      )
-    }
+    cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }.forEach { addOneToMany(it) }
+    cd.getAllProperties().filter { it.isAnnotationPresent(ManyToMany::class) }.forEach { addManyToMany(it) }
+  }
+
+  private fun TypeSpec.Builder.addOneToMany(prop: KSPropertyDeclaration) {
+    val name = prop.simpleName.getShortName()
+    val otm = prop.getAnnotationsByType(OneToMany::class).first()
+    val refDomain = prop.type.getDomain()
+    addProperty(
+      PropertySpec.builder(
+        name,
+        SizedIterable::class.asClassName().parameterizedBy(refDomain.toEntityClass())
+      ).apply {
+        delegate("%T referrersOn %T.${otm.refColumn}", refDomain.toEntityClass(), refDomain.toTableClass())
+      }.build()
+    )
+  }
+
+  // public val readers by UserEntity via BookReviewTable
+  private fun TypeSpec.Builder.addManyToMany(prop: KSPropertyDeclaration) {
+    val name = prop.simpleName.getShortName()
+    val mapDomain = (prop.annotations.toList().first().arguments.first().value as KSType)
+      .declaration.getAnnotationsByType(Domain::class).first()
+    val refDomain = prop.type.getDomain()
+    addProperty(
+      PropertySpec.builder(
+        name,
+        SizedIterable::class.asClassName().parameterizedBy(refDomain.toEntityClass())
+      ).apply {
+        delegate("%T via %T", refDomain.toEntityClass(), mapDomain.toTableClass())
+      }.build()
+    )
   }
 
   private fun TypeSpec.Builder.addResponseConverter(cd: KSClassDeclaration, domain: Domain) {
-    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+    val properties = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(OneToMany::class) }
+      .filterNot { it.isAnnotationPresent(ManyToMany::class) }
     addFunction(FunSpec.builder("toResponse").apply {
       addModifiers(KModifier.OVERRIDE)
       returns(domain.toResponseClass())

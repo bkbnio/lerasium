@@ -21,7 +21,7 @@ dependencies {
   implementation(projects.lerasiumUtils)
 
   // KSP
-  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.2")
+  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.4")
 
   // CodeGen
   implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")

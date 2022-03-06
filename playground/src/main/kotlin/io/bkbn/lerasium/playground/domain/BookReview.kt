@@ -2,35 +2,27 @@ package io.bkbn.lerasium.playground.domain
 
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.rdbms.ForeignKey
-import io.bkbn.lerasium.rdbms.PrimaryKey
 import io.bkbn.lerasium.rdbms.Table
 
-/*
-object BookReviews : Table("book_reviews") {
-  val reader = reference("reader", UserTable)
-  val book = reference("book", BookTable)
-  val rating = integer("rating")
-  val review = text("review")
-  override val primaryKey = PrimaryKey(reader, book)
-}
- */
 @Domain("BookReview")
 internal sealed interface BookReview {
-  val reader: UserDomain
-  val book: BookDomain
+  val reader: User
+  val book: Book
   val rating: Int
   val review: String
 }
 
 @Table
-@PrimaryKey("reader", "book")
+@CompositeIndex(true, "reader", "book")
 internal interface BookReviewTable : BookReview {
   @ForeignKey
-  override val reader: UserDomain
+  override val reader: User
+
   @ForeignKey
-  override val book: BookDomain
+  override val book: Book
 }
 
 @Api
-internal interface BookReviewApi: BookReview
+internal interface BookReviewApi : BookReview

@@ -25,6 +25,7 @@ import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Column
 import io.bkbn.lerasium.rdbms.ForeignKey
+import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
@@ -58,7 +59,9 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun FileSpec.Builder.addTable(cd: KSClassDeclaration, domain: Domain) {
-    val properties = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+    val properties = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(OneToMany::class) }
+      .filterNot { it.isAnnotationPresent(ManyToMany::class) }
     addType(TypeSpec.objectBuilder(domain.name.plus("Table")).apply {
       addOriginatingKSFile(cd.containingFile!!)
       superclass(UUIDTable::class)
@@ -186,11 +189,11 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun PropertySpec.Builder.handleForeignKey(property: KSPropertyDeclaration) {
-    val fk = property.getAnnotationsByType(ForeignKey::class).first()
+    val name = property.simpleName.getShortName()
     val domain = (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
     val format = StringBuilder()
     format.append("reference(%S, %T)")
     if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), fk.field, domain.toTableClass())
+    initializer(format.toString(), name, domain.toTableClass())
   }
 }

@@ -1187,6 +1187,187 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       )
     }
+    it("Can construct a table with a many-to-many reference") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt",
+        """
+
+        import io.bkbn.lerasium.core.Domain
+        import io.bkbn.lerasium.core.Relation
+        import io.bkbn.lerasium.rdbms.ForeignKey
+        import io.bkbn.lerasium.rdbms.ManyToMany
+        import io.bkbn.lerasium.rdbms.Table
+
+        @Domain("User")
+        sealed interface User {
+          val name: String
+          @Relation
+          val books: Book
+        }
+
+        @Table
+        interface UserTable : User {
+          @ManyToMany(BookReview::class)
+          override val books: Book
+        }
+
+        @Domain("Book")
+        sealed interface Book {
+          val title: String
+          @Relation
+          val readers: User
+        }
+
+        @Table
+        interface BookTable : Book {
+          @ManyToMany(BookReview::class)
+          override val readers: User
+        }
+
+        @Domain("BookReview")
+        sealed interface BookReview {
+          val reader: User
+          val book: Book
+          val rating: Int
+        }
+
+        @Table
+        interface BookReviewTable : BookReview {
+          @ForeignKey
+          override val reader: User
+          @ForeignKey
+          override val book: Book
+        }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 6
+      result.kspGeneratedSources.first { it.name == "BookTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.BookResponse
+        import java.util.UUID
+        import kotlin.String
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.SizedIterable
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object BookTable : UUIDTable("book") {
+          public val title: Column<String> = varchar("title", 128)
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class BookEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<BookResponse> {
+          public var title: String by BookTable.title
+
+          public var createdAt: LocalDateTime by BookTable.createdAt
+
+          public var updatedAt: LocalDateTime by BookTable.updatedAt
+
+          public val readers: SizedIterable<UserEntity> by UserEntity via BookReviewTable
+
+          public override fun toResponse(): BookResponse = with(::BookResponse) {
+            val propertiesByName = BookEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                BookResponse::id.name -> id.value
+                else -> propertiesByName[it.name]?.get(this@BookEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<BookEntity>(BookTable)
+        }
+        """.trimIndent()
+      )
+      result.kspGeneratedSources.first { it.name == "BookReviewTable.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.model.Entity
+        import io.bkbn.lerasium.generated.models.BookReviewResponse
+        import java.util.UUID
+        import kotlin.Int
+        import kotlin.reflect.full.memberProperties
+        import kotlin.reflect.full.valueParameters
+        import kotlinx.datetime.LocalDateTime
+        import org.jetbrains.exposed.dao.UUIDEntity
+        import org.jetbrains.exposed.dao.UUIDEntityClass
+        import org.jetbrains.exposed.dao.id.EntityID
+        import org.jetbrains.exposed.dao.id.UUIDTable
+        import org.jetbrains.exposed.sql.Column
+        import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+        public object BookReviewTable : UUIDTable("book_review") {
+          public val reader: Column<EntityID<UUID>> = reference("reader", UserTable)
+
+          public val book: Column<EntityID<UUID>> = reference("book", BookTable)
+
+          public val rating: Column<Int> = integer("rating")
+
+          public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+          public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+        }
+
+        public class BookReviewEntity(
+          id: EntityID<UUID>
+        ) : UUIDEntity(id), Entity<BookReviewResponse> {
+          public var reader: UserEntity by UserEntity referencedOn BookReviewTable.reader
+
+          public var book: BookEntity by BookEntity referencedOn BookReviewTable.book
+
+          public var rating: Int by BookReviewTable.rating
+
+          public var createdAt: LocalDateTime by BookReviewTable.createdAt
+
+          public var updatedAt: LocalDateTime by BookReviewTable.updatedAt
+
+          public override fun toResponse(): BookReviewResponse = with(::BookReviewResponse) {
+            val propertiesByName = BookReviewEntity::class.memberProperties.associateBy { it.name }
+            val params = valueParameters.associateWith {
+              when (it.name) {
+                BookReviewResponse::id.name -> id.value
+                BookReviewEntity::reader.name -> reader.toResponse()
+                BookReviewEntity::book.name -> book.toResponse()
+                else -> propertiesByName[it.name]?.get(this@BookReviewEntity)
+              }
+            }
+            callBy(params)
+          }
+
+          public companion object : UUIDEntityClass<BookReviewEntity>(BookReviewTable)
+        }
+        """.trimIndent()
+      )
+    }
   }
   describe("Dao Generation") {
     it("Can create a simple dao") {

@@ -7,17 +7,17 @@ import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.rdbms.Table
 
 @Domain("Author")
-internal sealed interface AuthorDomain {
+internal sealed interface Author {
   val name: String
   @Relation
-  val books: BookDomain
+  val books: Book
 }
 
 @Table
-internal interface AuthorTableSpec : AuthorDomain {
+internal interface AuthorTableSpec : Author {
   @OneToMany("author")
-  override val books: BookDomain
+  override val books: Book
 }
 
 @Api
-internal interface AuthorApiSpec : AuthorDomain
+internal interface AuthorApiSpec : Author
