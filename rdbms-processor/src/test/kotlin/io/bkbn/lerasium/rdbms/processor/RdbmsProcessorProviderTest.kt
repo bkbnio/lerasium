@@ -1007,7 +1007,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         @Table
         interface UserTable : User {
-          @ForeignKey("name")
+          @ForeignKey
           override val country: Country
         }
       """.trimIndent()
@@ -1044,7 +1044,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
         public object UserTable : UUIDTable("user") {
-          public val country: Column<EntityID<UUID>> = reference("name", CountryTable)
+          public val country: Column<EntityID<UUID>> = reference("country", CountryTable)
 
           public val name: Column<String> = varchar("name", 128)
 
@@ -1115,7 +1115,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         @Table
         interface UserTable : User {
-          @ForeignKey("name")
+          @ForeignKey
           override val country: Country
         }
       """.trimIndent()
@@ -1192,6 +1192,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       val sourceFile = SourceFile.kotlin(
         "Spec.kt",
         """
+        package test
 
         import io.bkbn.lerasium.core.Domain
         import io.bkbn.lerasium.core.Relation
@@ -1504,7 +1505,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         @Table
         interface UserTable : User {
-          @ForeignKey("name")
+          @ForeignKey
           override val country: Country
         }
       """.trimIndent()

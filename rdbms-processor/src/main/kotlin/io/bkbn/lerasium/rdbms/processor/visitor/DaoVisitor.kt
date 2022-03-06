@@ -6,6 +6,7 @@ import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -23,6 +24,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
+import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
@@ -79,7 +81,9 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     responseClass: ClassName,
     entityClass: ClassName
   ) {
-    val props = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+    val props = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(OneToMany::class) }
+      .filterNot { it.isAnnotationPresent(ManyToMany::class) }
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("request", requestClass)
@@ -161,7 +165,9 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     responseClass: ClassName,
     entityClass: ClassName
   ) {
-    val props = cd.getAllProperties().filterNot { it.isAnnotationPresent(OneToMany::class) }.toList()
+    val props = cd.getAllProperties()
+      .filterNot { it.isAnnotationPresent(OneToMany::class) }
+      .filterNot { it.isAnnotationPresent(ManyToMany::class) }
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.OVERRIDE)
       addParameter("id", UUID::class)
@@ -205,22 +211,24 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
   }
 
   private fun TypeSpec.Builder.addRelations(cd: KSClassDeclaration, ec: ClassName) {
-    val otmProps = cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }
-    otmProps.forEach { prop ->
-      val name = prop.simpleName.getShortName()
-      val refDomain = prop.type.getDomain()
-      addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
-        returns(List::class.asClassName().parameterizedBy(refDomain.toResponseClass()))
-        addParameter(ParameterSpec.builder("id", UUID::class).build())
-        addParameter(ParameterSpec.builder("chunk", Int::class).build())
-        addParameter(ParameterSpec.builder("offset", Int::class).build())
-        addCode(CodeBlock.builder().apply {
-          addControlFlow("return %M", Transaction) {
-            addStatement("val entity = %T[id]", ec)
-            addStatement("entity.$name.limit(chunk, offset.toLong()).toList().map { it.toResponse() }")
-          }
-        }.build())
+    cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }.forEach { addOneToManyRelation(it, ec) }
+    cd.getAllProperties().filter { it.isAnnotationPresent(ManyToMany::class) }.forEach { addOneToManyRelation(it, ec) }
+  }
+
+  private fun TypeSpec.Builder.addOneToManyRelation(prop: KSPropertyDeclaration, ec: ClassName) {
+    val name = prop.simpleName.getShortName()
+    val refDomain = prop.type.getDomain()
+    addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
+      returns(List::class.asClassName().parameterizedBy(refDomain.toResponseClass()))
+      addParameter(ParameterSpec.builder("id", UUID::class).build())
+      addParameter(ParameterSpec.builder("chunk", Int::class).build())
+      addParameter(ParameterSpec.builder("offset", Int::class).build())
+      addCode(CodeBlock.builder().apply {
+        addControlFlow("return %M", Transaction) {
+          addStatement("val entity = %T[id]", ec)
+          addStatement("entity.$name.limit(chunk, offset.toLong()).toList().map { it.toResponse() }")
+        }
       }.build())
-    }
+    }.build())
   }
 }
