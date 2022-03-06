@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
   transaction {
     val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
     println("-------------")
-    statements.forEach { println(it) }
+    statements.forEach { println(it.plus("\n")) }
     println("-------------")
   }
   DatabaseConfig.flyway.migrate()
