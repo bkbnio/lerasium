@@ -6,7 +6,7 @@ import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.persistence.CompositeIndex
 
 @Domain("Profile")
-private sealed interface ProfileDomain {
+private sealed interface Profile {
   val mood: String?
   val viewCount: Long
   val metadata: ProfileMetadata
@@ -19,7 +19,7 @@ private interface ProfileMetadata {
 
 @Document
 @CompositeIndex(fields = ["mood", "viewCount"])
-private interface ProfileDocument : ProfileDomain
+private interface ProfileDocument : Profile
 
 @Api
-private interface ProfileApi : ProfileDomain
+private interface ProfileApi : Profile

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Persistence Annotation Module
 - RDBMS foreign key support
 - One-to-many relation support
+- Many-to-many relation support
 
 ### Changed
 
