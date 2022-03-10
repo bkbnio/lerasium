@@ -125,14 +125,17 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
   ) {
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.OVERRIDE)
-      addParameter("request", requestClass)
-      returns(responseClass)
+      addParameter("requests", List::class.asClassName().parameterizedBy(requestClass))
+      returns(List::class.asClassName().parameterizedBy(responseClass))
       addCode(CodeBlock.builder().apply {
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
-        add("val entity = ")
-        convertToNewEntity(entityClass, cd, "request", true)
-        addStatement("collection.%M(entity)", Save)
-        addStatement("return entity.toResponse()")
+        addControlFlow("val entities = requests.map { request ->") {
+          add("val entity = ")
+          convertToNewEntity(entityClass, cd, "request", true)
+          addStatement("collection.%M(entity)", Save)
+          addStatement("entity")
+        }
+        addStatement("return entities.map { it.toResponse() }")
       }.build())
     }.build())
   }

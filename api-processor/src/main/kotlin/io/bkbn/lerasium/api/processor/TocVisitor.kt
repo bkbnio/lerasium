@@ -80,21 +80,23 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
   }
 
   private fun TypeSpec.Builder.addCreateInfo(domain: Domain) {
+    val requestClass = List::class.asClassName().parameterizedBy(domain.toCreateRequestClass())
+    val responseClass = List::class.asClassName().parameterizedBy(domain.toResponseClass())
     val createPropType = PostInfo::class.asClassName()
-      .parameterizedBy(Unit::class.asClassName(), domain.toCreateRequestClass(), domain.toResponseClass())
+      .parameterizedBy(Unit::class.asClassName(), requestClass, responseClass)
     addProperty(PropertySpec.builder("create${domain.name}", createPropType).apply {
       initializer(CodeBlock.builder().apply {
         addObjectInstantiation(createPropType) {
           addStatement("summary = %S,", "Create ${domain.name}")
-          addStatement("description = %S,", "Creates a new ${domain.name}")
+          addStatement("description = %S,", "Creates new ${domain.name} entities for the provided request objects")
           add("requestInfo = ")
           addObjectInstantiation(RequestInfo::class.asTypeName(), trailingComma = true) {
-            addStatement("description = %S,", "Details required to create a new ${domain.name}")
+            addStatement("description = %S,", "Details required to create new ${domain.name} entities")
           }
           add("responseInfo = ")
           addObjectInstantiation(ResponseInfo::class.asClassName(), trailingComma = true) {
             addStatement("status = %T.Created,", HttpStatusCode::class)
-            addStatement("description = %S", "The ${domain.name} was retrieved successfully")
+            addStatement("description = %S", "The ${domain.name} entities were created successfully")
           }
           addStatement("tags = setOf(%S)", domain.name)
         }

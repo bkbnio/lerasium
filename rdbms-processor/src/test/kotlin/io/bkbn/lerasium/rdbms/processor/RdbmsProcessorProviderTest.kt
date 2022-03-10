@@ -1420,17 +1420,19 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import org.jetbrains.exposed.sql.transactions.transaction
 
         public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
-          public override fun create(request: UserCreateRequest): UserResponse = transaction {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> = transaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = transaction {
-              UserEntity.new {
-                firstName = request.firstName
-                lastName = request.lastName
-                createdAt = now
-                updatedAt = now
+            val entities = requests.map { request ->
+              transaction {
+                UserEntity.new {
+                  firstName = request.firstName
+                  lastName = request.lastName
+                  createdAt = now
+                  updatedAt = now
+                }
               }
             }
-            entity.toResponse()
+            entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse = transaction {
@@ -1543,16 +1545,19 @@ class RdbmsProcessorProviderTest : DescribeSpec({
 
         public class CountryDao :
             Dao<CountryEntity, CountryResponse, CountryCreateRequest, CountryUpdateRequest> {
-          public override fun create(request: CountryCreateRequest): CountryResponse = transaction {
+          public override fun create(requests: List<CountryCreateRequest>): List<CountryResponse> =
+              transaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = transaction {
-              CountryEntity.new {
-                name = request.name
-                createdAt = now
-                updatedAt = now
+            val entities = requests.map { request ->
+              transaction {
+                CountryEntity.new {
+                  name = request.name
+                  createdAt = now
+                  updatedAt = now
+                }
               }
             }
-            entity.toResponse()
+            entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): CountryResponse = transaction {

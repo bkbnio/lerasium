@@ -284,16 +284,19 @@ class KMongoProcessorProviderTest : DescribeSpec({
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
-          public override fun create(request: UserCreateRequest): UserResponse {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = UserEntity(
-              id = UUID.randomUUID(),
-              createdAt = now,
-              updatedAt = now,
-              name = request.name,
-            )
-            collection.save(entity)
-            return entity.toResponse()
+            val entities = requests.map { request ->
+              val entity = UserEntity(
+                id = UUID.randomUUID(),
+                createdAt = now,
+                updatedAt = now,
+                name = request.name,
+              )
+              collection.save(entity)
+              entity
+            }
+            return entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse {
@@ -399,16 +402,19 @@ class KMongoProcessorProviderTest : DescribeSpec({
             collection.ensureUniqueIndex(UserEntity::name)
           }
 
-          public override fun create(request: UserCreateRequest): UserResponse {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = UserEntity(
-              id = UUID.randomUUID(),
-              createdAt = now,
-              updatedAt = now,
-              name = request.name,
-            )
-            collection.save(entity)
-            return entity.toResponse()
+            val entities = requests.map { request ->
+              val entity = UserEntity(
+                id = UUID.randomUUID(),
+                createdAt = now,
+                updatedAt = now,
+                name = request.name,
+              )
+              collection.save(entity)
+              entity
+            }
+            return entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse {
@@ -513,17 +519,20 @@ class KMongoProcessorProviderTest : DescribeSpec({
             collection.ensureIndex(UserEntity::name, UserEntity::favoriteFood)
           }
 
-          public override fun create(request: UserCreateRequest): UserResponse {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = UserEntity(
-              id = UUID.randomUUID(),
-              createdAt = now,
-              updatedAt = now,
-              name = request.name,
-              favoriteFood = request.favoriteFood,
-            )
-            collection.save(entity)
-            return entity.toResponse()
+            val entities = requests.map { request ->
+              val entity = UserEntity(
+                id = UUID.randomUUID(),
+                createdAt = now,
+                updatedAt = now,
+                name = request.name,
+                favoriteFood = request.favoriteFood,
+              )
+              collection.save(entity)
+              entity
+            }
+            return entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse {
@@ -606,23 +615,26 @@ class KMongoProcessorProviderTest : DescribeSpec({
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
-          public override fun create(request: UserCreateRequest): UserResponse {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = UserEntity(
-              id = UUID.randomUUID(),
-              createdAt = now,
-              updatedAt = now,
-              name = request.name,
-              age = request.age,
-              preferences = request.preferences.let { preferences ->
-                UserPreferencesEntity(
-                  status = preferences.status,
-                  subscribed = preferences.subscribed,
-                )
-              }
-            )
-            collection.save(entity)
-            return entity.toResponse()
+            val entities = requests.map { request ->
+              val entity = UserEntity(
+                id = UUID.randomUUID(),
+                createdAt = now,
+                updatedAt = now,
+                name = request.name,
+                age = request.age,
+                preferences = request.preferences.let { preferences ->
+                  UserPreferencesEntity(
+                    status = preferences.status,
+                    subscribed = preferences.subscribed,
+                  )
+                }
+              )
+              collection.save(entity)
+              entity
+            }
+            return entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse {
@@ -715,28 +727,31 @@ class KMongoProcessorProviderTest : DescribeSpec({
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
-          public override fun create(request: UserCreateRequest): UserResponse {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val entity = UserEntity(
-              id = UUID.randomUUID(),
-              createdAt = now,
-              updatedAt = now,
-              preferences = request.preferences.let { preferences ->
-                UserPreferencesEntity(
-                  stuff = preferences.stuff.let { stuff ->
-                    UserStuffEntity(
-                      info = stuff.info.let { info ->
-                        UserInfoEntity(
-                          isCool = info.isCool,
-                        )
-                      }
-                    )
-                  }
-                )
-              }
-            )
-            collection.save(entity)
-            return entity.toResponse()
+            val entities = requests.map { request ->
+              val entity = UserEntity(
+                id = UUID.randomUUID(),
+                createdAt = now,
+                updatedAt = now,
+                preferences = request.preferences.let { preferences ->
+                  UserPreferencesEntity(
+                    stuff = preferences.stuff.let { stuff ->
+                      UserStuffEntity(
+                        info = stuff.info.let { info ->
+                          UserInfoEntity(
+                            isCool = info.isCool,
+                          )
+                        }
+                      )
+                    }
+                  )
+                }
+              )
+              collection.save(entity)
+              entity
+            }
+            return entities.map { it.toResponse() }
           }
 
           public override fun read(id: UUID): UserResponse {

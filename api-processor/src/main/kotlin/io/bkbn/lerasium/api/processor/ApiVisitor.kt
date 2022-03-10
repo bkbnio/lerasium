@@ -13,7 +13,9 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Domain
@@ -91,7 +93,12 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     add(CodeBlock.builder().apply {
       val toc = MemberName(domain.toTocClass(), "create${domain.name}")
       addControlFlow("%M(%M)", notarizedPostMember, toc) {
-        addStatement("val request = %M.%M<%T>()", callMember, receiveMember, domain.toCreateRequestClass())
+        addStatement(
+          "val request = %M.%M<%T>()",
+          callMember,
+          receiveMember,
+          List::class.asClassName().parameterizedBy(domain.toCreateRequestClass())
+        )
         addStatement("val result = dao.create(request)")
         addStatement("%M.%M(result)", callMember, respondMember)
       }
