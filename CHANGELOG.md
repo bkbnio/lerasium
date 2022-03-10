@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.2.1] - March 10th, 2022
+### Change
+- Attempt to fix bug in package publishing pipeline
+
 ## [0.2.0] - March 10th, 2022
 ### Added
 - Support for nullable table columns
