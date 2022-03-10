@@ -86,29 +86,31 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       .filterNot { it.isAnnotationPresent(ManyToMany::class) }
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.OVERRIDE)
-      addParameter("request", requestClass)
-      returns(responseClass)
+      addParameter("requests", List::class.asClassName().parameterizedBy(requestClass))
+      returns(List::class.asClassName().parameterizedBy(responseClass))
       addCode(CodeBlock.builder().apply {
         addControlFlow("return %M", Transaction) {
           addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
-          addControlFlow("val entity = %M", Transaction) {
-            addControlFlow("%T.new", entityClass) {
-              props.forEach { property ->
-                val propName = property.simpleName.getShortName()
-                val domain =
-                  (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class)
-                    .firstOrNull()
-                if (domain != null) {
-                  addStatement("$propName = %T[request.$propName]", domain.toEntityClass())
-                } else {
-                  addStatement("$propName = request.$propName")
+          addControlFlow("val entities = requests.map { request ->") {
+            addControlFlow("%M", Transaction) {
+              addControlFlow("%T.new", entityClass) {
+                props.forEach { property ->
+                  val propName = property.simpleName.getShortName()
+                  val domain =
+                    (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class)
+                      .firstOrNull()
+                  if (domain != null) {
+                    addStatement("$propName = %T[request.$propName]", domain.toEntityClass())
+                  } else {
+                    addStatement("$propName = request.$propName")
+                  }
                 }
+                addStatement("createdAt = now")
+                addStatement("updatedAt = now")
               }
-              addStatement("createdAt = now")
-              addStatement("updatedAt = now")
             }
           }
-          addStatement("entity.toResponse()")
+          addStatement("entities.map { it.toResponse() }")
         }
       }.build())
     }.build())

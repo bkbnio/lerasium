@@ -11,7 +11,7 @@ interface Dao<ENT, RESP, CRE, UPT>
         ENT : Entity<RESP>,
         CRE : Request.Create,
         UPT : Request.Update {
-  fun create(request: CRE): RESP
+  fun create(requests: List<CRE>): List<RESP>
   fun read(id: UUID): RESP
   fun update(id: UUID, request: UPT): RESP
   fun delete(id: UUID)

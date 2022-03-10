@@ -111,12 +111,13 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.ktor.routing.route
         import java.util.UUID
         import kotlin.Unit
+        import kotlin.collections.List
 
         public object UserApi {
           public fun Route.userController(dao: UserDao): Unit {
             route("/user") {
               notarizedPost(createUser) {
-                val request = call.receive<UserCreateRequest>()
+                val request = call.receive<List<UserCreateRequest>>()
                 val result = dao.create(request)
                 call.respond(result)
               }
@@ -225,12 +226,13 @@ class KtorProcessorProviderTest : DescribeSpec({
         import io.ktor.routing.route
         import java.util.UUID
         import kotlin.Unit
+        import kotlin.collections.List
 
         public object CountryApi {
           public fun Route.countryController(dao: CountryDao): Unit {
             route("/country") {
               notarizedPost(createCountry) {
-                val request = call.receive<CountryCreateRequest>()
+                val request = call.receive<List<CountryCreateRequest>>()
                 val result = dao.create(request)
                 call.respond(result)
               }
@@ -314,16 +316,16 @@ class KtorProcessorProviderTest : DescribeSpec({
         import kotlin.collections.List
 
         public object UserToC {
-          public val createUser: PostInfo<Unit, UserCreateRequest, UserResponse> =
-              PostInfo<Unit, UserCreateRequest, UserResponse>(
+          public val createUser: PostInfo<Unit, List<UserCreateRequest>, List<UserResponse>> =
+              PostInfo<Unit, List<UserCreateRequest>, List<UserResponse>>(
             summary = "Create User",
-            description = "Creates a new User",
+            description = "Creates new User entities for the provided request objects",
             requestInfo = RequestInfo(
-              description = "Details required to create a new User",
+              description = "Details required to create new User entities",
             ),
             responseInfo = ResponseInfo(
               status = HttpStatusCode.Created,
-              description = "The User was retrieved successfully"
+              description = "The User entities were created successfully"
             ),
             tags = setOf("User")
           )
@@ -459,16 +461,16 @@ class KtorProcessorProviderTest : DescribeSpec({
         import kotlin.collections.List
 
         public object CountryToC {
-          public val createCountry: PostInfo<Unit, CountryCreateRequest, CountryResponse> =
-              PostInfo<Unit, CountryCreateRequest, CountryResponse>(
+          public val createCountry: PostInfo<Unit, List<CountryCreateRequest>, List<CountryResponse>> =
+              PostInfo<Unit, List<CountryCreateRequest>, List<CountryResponse>>(
             summary = "Create Country",
-            description = "Creates a new Country",
+            description = "Creates new Country entities for the provided request objects",
             requestInfo = RequestInfo(
-              description = "Details required to create a new Country",
+              description = "Details required to create new Country entities",
             ),
             responseInfo = ResponseInfo(
               status = HttpStatusCode.Created,
-              description = "The Country was retrieved successfully"
+              description = "The Country entities were created successfully"
             ),
             tags = setOf("Country")
           )
