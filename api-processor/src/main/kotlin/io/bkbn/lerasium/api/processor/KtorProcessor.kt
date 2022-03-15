@@ -49,6 +49,16 @@ class KtorProcessor(
       fs.writeTo(codeGenerator, false)
     }
 
+    symbols.forEach {
+      val domain = it.findParentDomain()
+      val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("Queries"))
+      it.accept(QueryModelVisitor(fb, logger), Unit)
+      val fs = fb.build()
+      if (fs.members.isNotEmpty()) {
+        fs.writeTo(codeGenerator, false)
+      }
+    }
+
     return symbols.filterNot { it.validate() }.toList()
   }
 }

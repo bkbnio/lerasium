@@ -1,15 +1,18 @@
 package io.bkbn.lerasium.api.processor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
@@ -21,12 +24,14 @@ import io.bkbn.kompendium.core.metadata.method.DeleteInfo
 import io.bkbn.kompendium.core.metadata.method.GetInfo
 import io.bkbn.kompendium.core.metadata.method.PostInfo
 import io.bkbn.kompendium.core.metadata.method.PutInfo
+import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.api.model.GetByIdParams
 import io.bkbn.lerasium.api.model.PaginatedGetByIdQuery
 import io.bkbn.lerasium.api.model.PaginatedQuery
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.CountResponse
+import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_API_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
@@ -57,6 +62,7 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addDeleteInfo(domain)
       addGetAllInfo(domain)
       addRelationalInfo(classDeclaration, domain)
+      addQueries(classDeclaration, domain)
     }.build())
   }
 
@@ -217,6 +223,41 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
               addStatement("status = %T.OK,", HttpStatusCode::class)
               addStatement("description = %S", "Successfully retrieved the collection of ${refDomain.name} entities")
+            }
+            addStatement("tags = setOf(%S)", domain.name)
+          }
+        }.build())
+      }.build())
+    }
+  }
+
+  private fun TypeSpec.Builder.addQueries(cd: KSClassDeclaration, domain: Domain) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+      val name = prop.simpleName.getShortName()
+      val getBy = prop.getAnnotationsByType(GetBy::class).first()
+      val queryDetailType = ClassName(BASE_API_PACKAGE_NAME, "Get${domain.name}By${name.capitalized()}Query")
+      val returnType = when (getBy.unique) {
+        true -> domain.toResponseClass()
+        false -> List::class.asClassName().parameterizedBy(domain.toResponseClass())
+      }
+      val queryPropType = GetInfo::class.asClassName()
+        .parameterizedBy(queryDetailType, returnType)
+      addProperty(PropertySpec.builder("getBy${name.capitalized()}", queryPropType).apply {
+        initializer(CodeBlock.builder().apply {
+          addObjectInstantiation(queryPropType) {
+            addStatement("summary = %S,", "Get ${domain.name} by ${name.capitalized()}")
+            val description = when (getBy.unique) {
+              true -> "Retrieves a ${domain.name} entity by its $name"
+              false -> """
+                Retrieves a collection of ${domain.name} entities queried by ${name}, broken up by specified
+                chunk and offset, referenced by the specified ${domain.name}
+              """.trimIndent()
+            }
+            addStatement("description = %S,", description)
+            add("responseInfo = ")
+            addObjectInstantiation(ResponseInfo::class.asTypeName(), trailingComma = true) {
+              addStatement("status = %T.OK,", HttpStatusCode::class)
+              addStatement("description = %S", "Successfully query")
             }
             addStatement("tags = setOf(%S)", domain.name)
           }

@@ -1,6 +1,7 @@
 package io.bkbn.lerasium.playground.domain
 
 import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.persistence.CompositeIndex
@@ -13,6 +14,7 @@ internal sealed interface User {
   val lastName: String
   val email: String
   val favoriteFood: String?
+
   @Sensitive
   val password: String
 }
@@ -23,7 +25,16 @@ internal sealed interface User {
 internal interface UserTable : User {
   @Index(true)
   override val email: String
+
+  @Index
+  override val favoriteFood: String?
 }
 
 @Api
-internal interface UserApi: User
+internal interface UserApi : User {
+  @GetBy(true)
+  override val email: String
+
+  @GetBy
+  override val favoriteFood: String?
+}
