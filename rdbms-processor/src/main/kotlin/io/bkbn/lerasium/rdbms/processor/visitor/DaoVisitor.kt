@@ -21,15 +21,18 @@ import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
+import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
@@ -61,7 +64,8 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val crc = domain.toCreateRequestClass()
     val urc = domain.toUpdateRequestClass()
     val rc = domain.toResponseClass()
-    val ec = ClassName(this.packageName, domain.name.plus("Entity"))
+    val ec = domain.toEntityClass()
+    val tc = domain.toTableClass()
     addType(TypeSpec.classBuilder(domain.name.plus("Dao")).apply {
       addOriginatingKSFile(cd.containingFile!!)
       addSuperinterface(Dao::class.asTypeName().parameterizedBy(ec, rc, crc, urc))
@@ -72,6 +76,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCountAllFunction(ec)
       addGetAllFunction(ec, rc)
       addRelations(cd, ec)
+      addIndices(cd, ec, tc, rc)
     }.build())
   }
 
@@ -213,11 +218,11 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
   }
 
   private fun TypeSpec.Builder.addRelations(cd: KSClassDeclaration, ec: ClassName) {
-    cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }.forEach { addOneToManyRelation(it, ec) }
-    cd.getAllProperties().filter { it.isAnnotationPresent(ManyToMany::class) }.forEach { addOneToManyRelation(it, ec) }
+    cd.getAllProperties().filter { it.isAnnotationPresent(OneToMany::class) }.forEach { addRelation(it, ec) }
+    cd.getAllProperties().filter { it.isAnnotationPresent(ManyToMany::class) }.forEach { addRelation(it, ec) }
   }
 
-  private fun TypeSpec.Builder.addOneToManyRelation(prop: KSPropertyDeclaration, ec: ClassName) {
+  private fun TypeSpec.Builder.addRelation(prop: KSPropertyDeclaration, ec: ClassName) {
     val name = prop.simpleName.getShortName()
     val refDomain = prop.type.getDomain()
     addFunction(FunSpec.builder("getAll${name.capitalized()}").apply {
@@ -231,6 +236,57 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addStatement("entity.$name.limit(chunk, offset.toLong()).toList().map { it.toResponse() }")
         }
       }.build())
+    }.build())
+  }
+
+  // UserEntity.find { UserTable.email eq email }.first()
+  private fun TypeSpec.Builder.addIndices(cd: KSClassDeclaration, ec: ClassName, tc: ClassName, rc: ClassName) {
+    // TODO Composite indices?
+    cd.getAllProperties().filter { it.isAnnotationPresent(Index::class) }.forEach { prop ->
+      val name = prop.simpleName.getShortName()
+      val index = prop.getAnnotationsByType(Index::class).first()
+      addFunction(FunSpec.builder("getBy${name.capitalized()}").apply {
+        when (index.unique) {
+          true -> addUniqueIndexQuery(prop, ec, tc, rc)
+          false -> addNonUniqueIndexQuery(prop, ec, tc, rc)
+        }
+      }.build())
+    }
+  }
+
+  private fun FunSpec.Builder.addUniqueIndexQuery(
+    prop: KSPropertyDeclaration,
+    ec: ClassName,
+    tc: ClassName,
+    rc: ClassName
+  ) {
+    val name = prop.simpleName.getShortName()
+    val type = prop.type.toTypeName()
+    returns(rc)
+    addParameter(name, type)
+    addCode(CodeBlock.builder().apply {
+      addControlFlow("return %M", Transaction) {
+        addStatement("%T.find { %T.$name eq $name }.first().toResponse()", ec, tc)
+      }
+    }.build())
+  }
+
+  private fun FunSpec.Builder.addNonUniqueIndexQuery(
+    prop: KSPropertyDeclaration,
+    ec: ClassName,
+    tc: ClassName,
+    rc: ClassName
+  ) {
+    val name = prop.simpleName.getShortName()
+    val type = prop.type.toTypeName()
+    returns(List::class.asClassName().parameterizedBy(rc))
+    addParameter(name, type)
+    addParameter("chunk", Int::class)
+    addParameter("offset", Int::class)
+    addCode(CodeBlock.builder().apply {
+      addControlFlow("return %M", Transaction) {
+        addStatement("%T.find { %T.$name eq $name }.limit(chunk, offset.toLong()).map { it.toResponse() }", ec, tc)
+      }
     }.build())
   }
 }

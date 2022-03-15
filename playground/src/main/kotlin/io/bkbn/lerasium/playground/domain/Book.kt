@@ -1,6 +1,7 @@
 package io.bkbn.lerasium.playground.domain
 
 import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.persistence.Index
@@ -31,4 +32,7 @@ internal interface BookTable : Book {
 }
 
 @Api
-internal interface BookApi : Book
+internal interface BookApi : Book {
+  @GetBy(true)
+  override val isbn: String
+}

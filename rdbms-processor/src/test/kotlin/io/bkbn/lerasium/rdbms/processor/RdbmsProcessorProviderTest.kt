@@ -1605,6 +1605,134 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
+    it("Builds the correct index accessors") {
+      // arrange
+      val sourceFile = SourceFile.kotlin(
+        "Spec.kt", """
+          package test
+
+          import io.bkbn.lerasium.core.Domain
+          import io.bkbn.lerasium.persistence.Index
+          import io.bkbn.lerasium.rdbms.Table
+
+          @Domain("User")
+          interface User {
+            val email: String
+            val firstName: String
+          }
+
+          @Table
+          internal interface UserTable : User {
+            @Index(true)
+            override val email: String
+
+            @Index
+            override val favoriteFood: String?
+          }
+        """.trimIndent()
+      )
+
+      val compilation = KotlinCompilation().apply {
+        sources = listOf(sourceFile)
+        symbolProcessorProviders = listOf(RdbmsProcessorProvider())
+        inheritClassPath = true
+      }
+
+      // act
+      val result = compilation.compile()
+
+      // assert
+      result shouldNotBe null
+      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
+        """
+        package io.bkbn.lerasium.generated.entity
+
+        import io.bkbn.lerasium.core.dao.Dao
+        import io.bkbn.lerasium.core.model.CountResponse
+        import io.bkbn.lerasium.generated.models.UserCreateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
+        import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import java.util.UUID
+        import kotlin.Int
+        import kotlin.String
+        import kotlin.collections.List
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.jetbrains.exposed.sql.transactions.transaction
+
+        public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+          public override fun create(requests: List<UserCreateRequest>): List<UserResponse> = transaction {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entities = requests.map { request ->
+              transaction {
+                UserEntity.new {
+                  email = request.email
+                  favoriteFood = request.favoriteFood
+                  firstName = request.firstName
+                  createdAt = now
+                  updatedAt = now
+                }
+              }
+            }
+            entities.map { it.toResponse() }
+          }
+
+          public override fun read(id: UUID): UserResponse = transaction {
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.toResponse()
+          }
+
+          public override fun update(id: UUID, request: UserUpdateRequest): UserResponse = transaction {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            request.email?.let {
+              entity.email = it
+            }
+            request.favoriteFood?.let {
+              entity.favoriteFood = it
+            }
+            request.firstName?.let {
+              entity.firstName = it
+            }
+            entity.updatedAt = now
+            entity.toResponse()
+          }
+
+          public override fun delete(id: UUID) = transaction {
+            val entity = UserEntity.findById(id) ?: error("PLACEHOLDER")
+            entity.delete()
+          }
+
+          public override fun countAll(): CountResponse = transaction {
+            val count = UserEntity.count()
+            CountResponse(count)
+          }
+
+          public override fun getAll(chunk: Int, offset: Int): List<UserResponse> = transaction {
+            val entities = UserEntity.all().limit(chunk, offset.toLong())
+            entities.map { entity ->
+              entity.toResponse()
+            }
+          }
+
+          public fun getByEmail(email: String): UserResponse = transaction {
+            UserEntity.find { UserTable.email eq email }.first().toResponse()
+          }
+
+          public fun getByFavoriteFood(
+            favoriteFood: String?,
+            chunk: Int,
+            offset: Int
+          ): List<UserResponse> = transaction {
+            UserEntity.find { UserTable.favoriteFood eq favoriteFood }.limit(chunk, offset.toLong()).map {
+                it.toResponse() }
+          }
+        }
+        """.trimIndent()
+      ) { it.replace("PLACEHOLDER", errorMessage) }
+    }
   }
   describe("File Creation") {
     it("Can construct multiple tables in a single source set") {

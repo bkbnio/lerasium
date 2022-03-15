@@ -3,10 +3,12 @@
 package io.bkbn.lerasium.api.processor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -18,6 +20,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
@@ -84,6 +87,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addControlFlow("%M(%S)", routeMember, "/count") {
             addCountRoute(domain)
           }
+          addQueries(domain, cd)
         }
       }
     }.build())
@@ -177,6 +181,42 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           }
         }
       }.build())
+    }
+  }
+
+  private fun CodeBlock.Builder.addQueries(domain: Domain, cd: KSClassDeclaration) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+      val getBy = prop.getAnnotationsByType(GetBy::class).first()
+      when (getBy.unique) {
+        true -> addUniqueQuery(domain, prop)
+        false -> addNonUniqueQuery(domain, prop)
+      }
+    }
+  }
+
+  private fun CodeBlock.Builder.addUniqueQuery(domain: Domain, prop: KSPropertyDeclaration) {
+    val name = prop.simpleName.getShortName()
+    val toc = MemberName(domain.toTocClass(), "getBy${name.capitalized()}")
+    addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
+      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+        addStatement("val $name = call.parameters[%S]!!", name)
+        addStatement("val result = dao.getBy${name.capitalized()}($name)")
+        addStatement("%M.%M(result)", callMember, respondMember)
+      }
+    }
+  }
+
+  private fun CodeBlock.Builder.addNonUniqueQuery(domain: Domain, prop: KSPropertyDeclaration) {
+    val name = prop.simpleName.getShortName()
+    val toc = MemberName(domain.toTocClass(), "getBy${name.capitalized()}")
+    addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
+      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+        addStatement("val $name = call.parameters[%S]!!", name)
+        addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
+        addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
+        addStatement("val result = dao.getBy${name.capitalized()}($name, chunk, offset)")
+        addStatement("%M.%M(result)", callMember, respondMember)
+      }
     }
   }
 }
