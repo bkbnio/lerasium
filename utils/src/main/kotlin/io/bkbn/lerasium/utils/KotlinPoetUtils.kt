@@ -9,14 +9,12 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.serialization.Serializers
 import kotlinx.serialization.Serializable
 
-@OptIn(KotlinPoetKspPreview::class)
 object KotlinPoetUtils {
 
   private const val BASE_PACKAGE_NAME = "io.bkbn.lerasium.generated"

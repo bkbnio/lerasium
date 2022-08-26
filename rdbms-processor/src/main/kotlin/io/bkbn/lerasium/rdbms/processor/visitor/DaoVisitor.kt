@@ -19,7 +19,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
@@ -41,7 +40,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
+@OptIn(KspExperimental::class)
 class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {

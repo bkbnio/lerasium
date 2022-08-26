@@ -15,16 +15,12 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
-import io.bkbn.kompendium.annotations.Param
-import io.bkbn.kompendium.annotations.ParamType
 import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 
-@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class QueryModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -38,6 +34,7 @@ class QueryModelVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }
   }
 
+  @OptIn(KspExperimental::class)
   @Suppress("MagicNumber")
   private fun FileSpec.Builder.addGetByQueries(cd: KSClassDeclaration) {
     val domain = cd.findParentDomain()
@@ -59,22 +56,13 @@ class QueryModelVisitor(private val fileBuilder: FileSpec.Builder, private val l
           }
         }.build())
         addProperty(PropertySpec.builder(name, prop.type.toTypeName()).apply {
-          addAnnotation(AnnotationSpec.builder(Param::class).apply {
-            addMember(CodeBlock.of("%T.PATH", ParamType::class))
-          }.build())
           initializer(name)
         }.build())
         if (!getBy.unique) {
           addProperty(PropertySpec.builder("chunk", Int::class).apply {
-            addAnnotation(AnnotationSpec.builder(Param::class).apply {
-              addMember(CodeBlock.of("%T.QUERY", ParamType::class))
-            }.build())
             initializer(CodeBlock.of("chunk"))
           }.build())
           addProperty(PropertySpec.builder("offset", Int::class).apply {
-            addAnnotation(AnnotationSpec.builder(Param::class).apply {
-              addMember(CodeBlock.of("%T.QUERY", ParamType::class))
-            }.build())
             initializer(CodeBlock.of("offset"))
           }.build())
         }

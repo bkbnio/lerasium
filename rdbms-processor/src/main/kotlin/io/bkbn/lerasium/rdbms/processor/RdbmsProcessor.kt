@@ -1,6 +1,5 @@
 package io.bkbn.lerasium.rdbms.processor
 
-import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -9,7 +8,6 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.rdbms.processor.visitor.DaoVisitor
@@ -18,7 +16,6 @@ import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 
-@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class RdbmsProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,

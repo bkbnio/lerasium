@@ -18,7 +18,6 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
@@ -34,11 +33,10 @@ import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpStatusCode
-import io.ktor.routing.Route
+import io.ktor.server.routing.Route
 import java.util.Locale
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class)
 class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {
@@ -50,7 +48,6 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val callMember = MemberName("io.ktor.application", "call")
     val receiveMember = MemberName("io.ktor.request", "receive")
     val respondMember = MemberName("io.ktor.response", "respond")
-    val respondText = MemberName("io.ktor.response", "respondText")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {

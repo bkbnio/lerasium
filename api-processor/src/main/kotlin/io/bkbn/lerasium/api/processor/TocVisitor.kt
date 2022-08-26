@@ -1,47 +1,13 @@
 package io.bkbn.lerasium.api.processor
 
-import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
-import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
-import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
-import io.bkbn.kompendium.core.metadata.RequestInfo
-import io.bkbn.kompendium.core.metadata.ResponseInfo
-import io.bkbn.kompendium.core.metadata.method.DeleteInfo
-import io.bkbn.kompendium.core.metadata.method.GetInfo
-import io.bkbn.kompendium.core.metadata.method.PostInfo
-import io.bkbn.kompendium.core.metadata.method.PutInfo
-import io.bkbn.lerasium.api.GetBy
-import io.bkbn.lerasium.api.model.GetByIdParams
-import io.bkbn.lerasium.api.model.PaginatedGetByIdQuery
-import io.bkbn.lerasium.api.model.PaginatedQuery
-import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.core.Relation
-import io.bkbn.lerasium.core.model.CountResponse
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_API_PACKAGE_NAME
-import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
-import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
-import io.bkbn.lerasium.utils.StringUtils.capitalized
-import io.ktor.http.HttpStatusCode
 
-@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
 class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -54,18 +20,18 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val tocName = domain.name.plus("ToC")
 
     fileBuilder.addType(TypeSpec.objectBuilder(tocName).apply {
-      addOriginatingKSFile(classDeclaration.containingFile!!)
-      addCreateInfo(domain)
-      addCountInfo(domain)
-      addReadInfo(domain)
-      addUpdateInfo(domain)
-      addDeleteInfo(domain)
-      addGetAllInfo(domain)
-      addRelationalInfo(classDeclaration, domain)
-      addQueries(classDeclaration, domain)
+//      addOriginatingKSFile(classDeclaration.containingFile!!)
+//      addCreateInfo(domain)
+//      addCountInfo(domain)
+//      addReadInfo(domain)
+//      addUpdateInfo(domain)
+//      addDeleteInfo(domain)
+//      addGetAllInfo(domain)
+//      addRelationalInfo(classDeclaration, domain)
+//      addQueries(classDeclaration, domain)
     }.build())
   }
-
+/*
   private fun TypeSpec.Builder.addReadInfo(domain: Domain) {
     val readPropType = GetInfo::class.asClassName()
       .parameterizedBy(GetByIdParams::class.asClassName(), domain.name.toResponseClass())
@@ -265,4 +231,6 @@ class TocVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       }.build())
     }
   }
+
+ */
 }

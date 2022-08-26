@@ -17,7 +17,6 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
@@ -38,7 +37,7 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 import java.util.UUID
 import org.jetbrains.exposed.sql.Column as ExposedColumn
 
-@OptIn(KspExperimental::class, KotlinPoetKspPreview::class)
+@OptIn(KspExperimental::class)
 class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   private companion object {
