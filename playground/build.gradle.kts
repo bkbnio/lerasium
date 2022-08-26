@@ -6,11 +6,19 @@ plugins {
   application
 }
 
-sourdough {
+sourdoughApp {
   compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 dependencies {
+  // Versions
+  val flywayVersion: String by project
+  val hikariCPVersion: String by project
+  val postgresVersion: String by project
+  val kotlinxDatetimeVersion: String by project
+  val kotlinxSerializationVersion: String by project
+
+  // Lerasium
   ksp(projects.lerasiumCoreProcessor)
   implementation(projects.lerasiumCore)
 
@@ -24,21 +32,21 @@ dependencies {
   implementation(projects.lerasiumMongo)
 
   // Database
-  implementation(group = "org.flywaydb", name = "flyway-core", version = "8.2.3")
-  implementation(group = "com.zaxxer", name = "HikariCP", version = "5.0.0")
-  implementation(group = "org.postgresql", name = "postgresql", version = "42.3.1")
+  implementation("org.flywaydb:flyway-core:$flywayVersion")
+  implementation("com.zaxxer:HikariCP:$hikariCPVersion")
+  implementation("org.postgresql:postgresql:$postgresVersion")
 
   // Date
-  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.3.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
   // Serialization
-  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.3.2")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
 
-  // Logging
-  implementation(group = "org.apache.logging.log4j", name = "log4j-api-kotlin", version = "1.1.0")
-  implementation(group = "org.apache.logging.log4j", name = "log4j-api", version = "2.17.1")
-  implementation(group = "org.apache.logging.log4j", name = "log4j-core", version = "2.17.1")
-  implementation(group = "org.apache.logging.log4j", name = "log4j-slf4j-impl", version = "2.17.1")
+  // Logging (TODO Replace w/ Kermit!)
+  implementation("org.apache.logging.log4j:log4j-api-kotlin:1.1.0")
+  implementation("org.apache.logging.log4j:log4j-api:2.17.1")
+  implementation("org.apache.logging.log4j:log4j-core:2.17.1")
+  implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 }
 
 kotlin {

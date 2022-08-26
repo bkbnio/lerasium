@@ -10,14 +10,18 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium Core")
   libraryDescription.set("The absolute essence of Lerasium")
 }
 
 dependencies {
-  api(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.3.2")
-  api(group = "io.konform", name = "konform-jvm", version = "0.3.0")
+  // Versions
+  val kotlinxSerializationVersion: String by project
+  val konformVersion: String by project
+
+  api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
+  api("io.konform:konform-jvm:$konformVersion")
 }
 
 testing {

@@ -9,14 +9,7 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium Persistence")
   libraryDescription.set("Collection of annotations useful across persistence mechanisms")
-}
-
-dependencies {
-  // IMPLEMENTATION
-
-  // KMongo
-  api(group = "org.litote.kmongo", name = "kmongo-serialization", version = "4.4.0")
 }

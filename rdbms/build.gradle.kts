@@ -9,7 +9,7 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium RDBMS Core")
   libraryDescription.set("Collection of annotations for driving RDBMS table generation️")
 }
@@ -18,12 +18,15 @@ sourdough {
 dependencies {
   // IMPLEMENTATION
 
+  // Versions
+  val exposedVersion: String by project
+
   // Lerasium
   api(projects.lerasiumPersistence)
 
   // Exposed
-  api(group = "org.jetbrains.exposed", name = "exposed-core", version = "0.37.3")
-  api(group = "org.jetbrains.exposed", name = "exposed-dao", version = "0.37.3")
-  api(group = "org.jetbrains.exposed", name = "exposed-jdbc", version = "0.37.3")
-  api(group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version = "0.37.3")
+  api("org.jetbrains.exposed:exposed-core:$exposedVersion")
+  api("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+  api("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+  api("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 }

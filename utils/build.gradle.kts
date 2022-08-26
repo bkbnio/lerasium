@@ -10,19 +10,38 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium Utils")
   libraryDescription.set("Collection of utilities for use across all modules️")
   compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
 }
 
 dependencies {
-  implementation(projects.lerasiumCore)
-  implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
-  implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
-  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.4")
+  // IMPLEMENTATION
 
-  testFixturesApi("io.kotest:kotest-runner-junit5-jvm:5.1.0")
-  testFixturesApi("io.kotest:kotest-assertions-core-jvm:5.1.0")
-  testFixturesApi("com.github.tschuchortdev:kotlin-compile-testing-ksp:1.4.7")
+  // Versions
+  val kotlinPoetVersion: String by project
+  val kspVersion: String by project
+
+  // Lerasium
+  implementation(projects.lerasiumCore)
+
+  // CodeGen
+  implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
+  implementation("com.squareup:kotlinpoet-ksp:$kotlinPoetVersion")
+
+  // Symbol Processing
+  implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
+
+  // TESTING
+
+  // Versions
+  val kotestVersion: String by project
+  val kotlinCompileTestingKspVersion: String by project
+
+  // Fixture Libraries
+
+  testFixturesApi("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
+  testFixturesApi("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+  testFixturesApi("com.github.tschuchortdev:kotlin-compile-testing-ksp:$kotlinCompileTestingKspVersion")
 }

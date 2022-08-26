@@ -9,17 +9,18 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium Mongo Core")
   libraryDescription.set("Collection of annotations for driving Mongo document persistence")
 }
 
 dependencies {
   // IMPLEMENTATION
+  val kmongoVersion: String by project
 
   // Lerasium
   api(projects.lerasiumPersistence)
 
   // KMongo
-  api(group = "org.litote.kmongo", name = "kmongo-serialization", version = "4.4.0")
+  api("org.litote.kmongo:kmongo-serialization:$kmongoVersion")
 }

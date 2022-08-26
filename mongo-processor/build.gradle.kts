@@ -9,7 +9,7 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium Mongo Processor")
   libraryDescription.set("Annotation processor for Mongo")
   compilerArgs.set(listOf("-opt-in=kotlin.RequiresOptIn"))
@@ -18,20 +18,25 @@ sourdough {
 dependencies {
   // IMPLEMENTATION
 
+  // Versions
+  val kspVersion: String by project
+  val kotlinPoetVersion: String by project
+  val kotlinxDatetimeVersion: String by project
+
   // Lerasium
   implementation(projects.lerasiumMongo)
   implementation(projects.lerasiumUtils)
   implementation(projects.lerasiumCore)
 
   // KSP
-  implementation(group = "com.google.devtools.ksp", name = "symbol-processing-api", version = "1.6.10-1.0.4")
+  implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
 
   // CodeGen
-  implementation(group = "com.squareup", name = "kotlinpoet", version = "1.10.2")
-  implementation(group = "com.squareup", name = "kotlinpoet-ksp", version = "1.10.2")
+  implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
+  implementation("com.squareup:kotlinpoet-ksp:$kotlinPoetVersion")
 
   // Date
-  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.3.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
   // Test Utils
   testImplementation(testFixtures(projects.lerasiumUtils))

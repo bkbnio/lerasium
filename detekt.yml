@@ -4,27 +4,19 @@ complexity:
   LongParameterList:
     active: true
     functionThreshold: 10
-    constructorThreshold: 10
+    constructorThreshold: 15
   ComplexMethod:
     threshold: 20
   LargeClass:
-    excludes: ["**/test/**/*"]
-formatting:
-  Indentation:
-    active: false
-  ParameterListWrapping:
-    active: false
-  ImportOrdering:
-    active: false
-  MaximumLineLength:
-    excludes: ["**/test/**/*"]
+    excludes: ['**/test/**/*']
 style:
   MaxLineLength:
     excludes: ['**/test/**/*']
     active: true
     maxLineLength: 120
+    excludeCommentStatements: true
   MagicNumber:
-    excludes: ['**/playground/**/*', '**/test/**/*']
+    excludes: ['**/kompendium-playground/**/*', '**/test/**/*']
 naming:
   ConstructorParameterNaming:
     active: false
