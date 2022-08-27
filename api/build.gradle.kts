@@ -23,8 +23,10 @@ dependencies {
 
   // Ktor
   api("io.ktor:ktor-server-core:$ktorVersion")
-  api("io.ktor:ktor-server-netty:$ktorVersion")
-  api("io.ktor:ktor-serialization:$ktorVersion")
+  api("io.ktor:ktor-server-cio:$ktorVersion")
+  api("io.ktor:ktor-server-html-builder:$ktorVersion")
+  api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+  api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
   // Kompendium
   api("io.bkbn:kompendium-core:$kompendiumVersion")

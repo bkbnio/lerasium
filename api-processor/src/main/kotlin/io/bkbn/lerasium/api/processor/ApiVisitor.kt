@@ -40,14 +40,14 @@ import java.util.UUID
 class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {
-    val routeMember = MemberName("io.ktor.routing", "route")
-    val notarizedGetMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedGet")
-    val notarizedPostMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedPost")
-    val notarizedPutMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedPut")
-    val notarizedDeleteMember = MemberName("io.bkbn.kompendium.core.Notarized", "notarizedDelete")
-    val callMember = MemberName("io.ktor.application", "call")
-    val receiveMember = MemberName("io.ktor.request", "receive")
-    val respondMember = MemberName("io.ktor.response", "respond")
+    val routeMember = MemberName("io.ktor.server.routing", "route")
+    val getMember = MemberName("io.ktor.server.routing", "get")
+    val postMember = MemberName("io.ktor.server.routing", "post")
+    val putMember = MemberName("io.ktor.server.routing", "put")
+    val deleteMember = MemberName("io.ktor.server.routing", "delete")
+    val callMember = MemberName("io.ktor.server.application", "call")
+    val receiveMember = MemberName("io.ktor.server.request", "receive")
+    val respondMember = MemberName("io.ktor.server.response", "respond")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -74,17 +74,17 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
           addCreateRoute(domain)
-          addGetAllRoute(domain)
+          addGetAllRoute()
           addControlFlow("%M(%S)", routeMember, "/{id}") {
-            addReadRoute(domain)
+            addReadRoute()
             addUpdateRoute(domain)
-            addDeleteRoute(domain)
-            addRelationalRoutes(cd, domain)
+            addDeleteRoute()
+            addRelationalRoutes(cd)
           }
           addControlFlow("%M(%S)", routeMember, "/count") {
-            addCountRoute(domain)
+            addCountRoute()
           }
-          addQueries(domain, cd)
+          addQueries(cd)
         }
       }
     }.build())
@@ -92,8 +92,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   private fun CodeBlock.Builder.addCreateRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "create${domain.name}")
-      addControlFlow("%M(%M)", notarizedPostMember, toc) {
+      addControlFlow("%M", postMember) {
         addStatement(
           "val request = %M.%M<%T>()",
           callMember,
@@ -106,20 +105,18 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addCountRoute(domain: Domain) {
+  private fun CodeBlock.Builder.addCountRoute() {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "countAll${domain.name}")
-      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+      addControlFlow("%M", getMember) {
         addStatement("val result = dao.countAll()")
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
   }
 
-  private fun CodeBlock.Builder.addGetAllRoute(domain: Domain) {
+  private fun CodeBlock.Builder.addGetAllRoute() {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "getAll${domain.name}")
-      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+      addControlFlow("%M", getMember) {
         addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
         addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
         addStatement("val result = dao.getAll(chunk, offset)")
@@ -128,10 +125,9 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addReadRoute(domain: Domain) {
+  private fun CodeBlock.Builder.addReadRoute() {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "get${domain.name}")
-      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+      addControlFlow("%M", getMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("val result = dao.read(id)")
         addStatement("%M.%M(result)", callMember, respondMember)
@@ -141,8 +137,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   private fun CodeBlock.Builder.addUpdateRoute(domain: Domain) {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "update${domain.name}")
-      addControlFlow("%M(%M)", notarizedPutMember, toc) {
+      addControlFlow("%M", putMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("val request = %M.%M<%T>()", callMember, receiveMember, domain.toUpdateRequestClass())
         addStatement("val result = dao.update(id, request)")
@@ -151,10 +146,9 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addDeleteRoute(domain: Domain) {
+  private fun CodeBlock.Builder.addDeleteRoute() {
     add(CodeBlock.builder().apply {
-      val toc = MemberName(domain.toTocClass(), "delete${domain.name}")
-      addControlFlow("%M(%M)", notarizedDeleteMember, toc) {
+      addControlFlow("%M", deleteMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("dao.delete(id)")
         addStatement("%M.%M(%T.NoContent)", callMember, respondMember, HttpStatusCode::class)
@@ -162,14 +156,12 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addRelationalRoutes(cd: KSClassDeclaration, domain: Domain) {
+  private fun CodeBlock.Builder.addRelationalRoutes(cd: KSClassDeclaration) {
     cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
-      val refDomain = property.type.getDomain()
       add(CodeBlock.builder().apply {
-        val toc = MemberName(domain.toTocClass(), "get${domain.name}${refDomain.name}")
         addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
-          addControlFlow("%M(%M)", notarizedGetMember, toc) {
+          addControlFlow("%M", getMember) {
             addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
             addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
             addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
@@ -181,21 +173,20 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun CodeBlock.Builder.addQueries(domain: Domain, cd: KSClassDeclaration) {
+  private fun CodeBlock.Builder.addQueries(cd: KSClassDeclaration) {
     cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
-        true -> addUniqueQuery(domain, prop)
-        false -> addNonUniqueQuery(domain, prop)
+        true -> addUniqueQuery(prop)
+        false -> addNonUniqueQuery(prop)
       }
     }
   }
 
-  private fun CodeBlock.Builder.addUniqueQuery(domain: Domain, prop: KSPropertyDeclaration) {
+  private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration) {
     val name = prop.simpleName.getShortName()
-    val toc = MemberName(domain.toTocClass(), "getBy${name.capitalized()}")
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
-      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+      addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val result = dao.getBy${name.capitalized()}($name)")
         addStatement("%M.%M(result)", callMember, respondMember)
@@ -203,11 +194,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun CodeBlock.Builder.addNonUniqueQuery(domain: Domain, prop: KSPropertyDeclaration) {
+  private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration) {
     val name = prop.simpleName.getShortName()
-    val toc = MemberName(domain.toTocClass(), "getBy${name.capitalized()}")
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
-      addControlFlow("%M(%M)", notarizedGetMember, toc) {
+      addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
         addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")

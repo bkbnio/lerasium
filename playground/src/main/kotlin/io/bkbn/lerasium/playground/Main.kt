@@ -1,12 +1,12 @@
 package io.bkbn.lerasium.playground
 
-import io.bkbn.kompendium.core.Kompendium
+import io.bkbn.kompendium.core.plugin.NotarizedApplication
 import io.bkbn.kompendium.core.routes.redoc
+import io.bkbn.kompendium.json.schema.definition.TypeDefinition
 import io.bkbn.kompendium.oas.OpenApiSpec
 import io.bkbn.kompendium.oas.info.Contact
 import io.bkbn.kompendium.oas.info.Info
 import io.bkbn.kompendium.oas.info.License
-import io.bkbn.kompendium.oas.schema.FormattedSchema
 import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
 import io.bkbn.kompendium.oas.server.Server
 import io.bkbn.lerasium.generated.api.AuthorApi.authorController
@@ -25,13 +25,14 @@ import io.bkbn.lerasium.generated.entity.UserDao
 import io.bkbn.lerasium.generated.entity.UserEntity
 import io.bkbn.lerasium.generated.entity.UserTable
 import io.bkbn.lerasium.playground.config.DatabaseConfig
-import io.ktor.application.Application
-import io.ktor.application.install
-import io.ktor.features.ContentNegotiation
-import io.ktor.routing.route
-import io.ktor.routing.routing
-import io.ktor.serialization.json
-import io.ktor.server.netty.EngineMain
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.cio.EngineMain
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
+import kotlin.reflect.typeOf
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -69,8 +70,10 @@ fun Application.module() {
       explicitNulls = false
     })
   }
-  install(Kompendium) {
-    addCustomTypeSchema(LocalDateTime::class, FormattedSchema(type = "string", format = "date-time"))
+  install(NotarizedApplication()) {
+    customTypes = mapOf(
+      typeOf<LocalDateTime>() to TypeDefinition(type = "string", format = "date-time")
+    )
     spec = OpenApiSpec(
       info = Info(
         title = "Lerasium Playground API",
