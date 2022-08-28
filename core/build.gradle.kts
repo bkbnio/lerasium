@@ -29,8 +29,11 @@ testing {
     named("test", JvmTestSuite::class) {
       useJUnitJupiter()
       dependencies {
-        implementation("io.kotest:kotest-runner-junit5-jvm:5.0.3")
-        implementation("io.kotest:kotest-assertions-core-jvm:5.0.3")
+        // Versions
+        val kotestVersion: String by project
+
+        implementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
+        implementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
         implementation("io.kotest.extensions:kotest-assertions-konform-jvm:1.0.0")
       }
     }

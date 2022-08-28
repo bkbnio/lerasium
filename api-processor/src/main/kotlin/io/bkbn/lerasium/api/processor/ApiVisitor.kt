@@ -13,12 +13,19 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import io.bkbn.kompendium.core.metadata.GetInfo
+import io.bkbn.kompendium.core.metadata.PostInfo
+import io.bkbn.kompendium.core.plugin.NotarizedRoute
+import io.bkbn.kompendium.json.schema.definition.TypeDefinition
+import io.bkbn.kompendium.oas.payload.Parameter
 import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
@@ -26,6 +33,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTocClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
@@ -48,6 +56,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val callMember = MemberName("io.ktor.server.application", "call")
     val receiveMember = MemberName("io.ktor.server.request", "receive")
     val respondMember = MemberName("io.ktor.server.response", "respond")
+    val installMember = MemberName("io.ktor.server.application", "install")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -62,6 +71,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
       addController(classDeclaration, domain)
+      addDocumentation(domain)
     }.build())
   }
 
@@ -73,6 +83,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addParameter(ParameterSpec.builder("dao", domain.toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
+          addStatement("rootDocumentation()")
           addCreateRoute(domain)
           addGetAllRoute()
           addControlFlow("%M(%S)", routeMember, "/{id}") {
@@ -85,6 +96,40 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addCountRoute()
           }
           addQueries(cd)
+        }
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addDocumentation(domain: Domain) {
+    addRootDocumentation(domain)
+  }
+
+  // TODO Refactor this
+  private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
+    addFunction(FunSpec.builder("rootDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", domain.name)
+          addControlFlow("get = %T.builder", GetInfo::class) {
+            addStatement(
+              "parameters(Parameter(name = %S, `in` = %T.query, schema = %T.INT))",
+              "chunk",
+              Parameter.Location::class,
+              TypeDefinition::class
+            )
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
+              addStatement("summary(%S)", "Get All ${domain.name} Entities")
+              addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} entities")
+            }
+          }
+          addControlFlow("post = %T.builder", PostInfo::class) {
+
+          }
         }
       }
     }.build())
