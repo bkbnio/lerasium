@@ -57,6 +57,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val receiveMember = MemberName("io.ktor.server.request", "receive")
     val respondMember = MemberName("io.ktor.server.response", "respond")
     val installMember = MemberName("io.ktor.server.application", "install")
+    val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -114,21 +115,27 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
           addStatement("tags = setOf(%S)", domain.name)
           addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement(
-              "parameters(Parameter(name = %S, `in` = %T.query, schema = %T.INT))",
-              "chunk",
-              Parameter.Location::class,
-              TypeDefinition::class
-            )
+            addStatement("summary(%S)", "Get All ${domain.name} Entities")
+            addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} Entities")
+            addStatement("parameters(*%M().toTypedArray())", getAllParametersMember)
             addControlFlow("response") {
               addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("summary(%S)", "Get All ${domain.name} Entities")
-              addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} entities")
+              addStatement("description(%S)", "Paginated list of ${domain.name} entities")
             }
           }
           addControlFlow("post = %T.builder", PostInfo::class) {
-
+            addStatement("summary(%S)", "Create New ${domain.name} Entity")
+            addStatement("description(%S)", "Persists a new ${domain.name} entity in the database")
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseCode(%T.Created)", HttpStatusCode::class)
+              addStatement("description(%S)", "${domain.name} entities saved successfully")
+            }
+            addControlFlow("request") {
+              addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(domain.toCreateRequestClass()))
+              addStatement("description(%S)", "Collection of ${domain.name} entities the user wishes to persist")
+            }
           }
         }
       }
