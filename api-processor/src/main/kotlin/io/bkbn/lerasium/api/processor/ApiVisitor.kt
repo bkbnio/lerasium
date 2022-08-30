@@ -21,11 +21,11 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import io.bkbn.kompendium.core.metadata.DeleteInfo
 import io.bkbn.kompendium.core.metadata.GetInfo
 import io.bkbn.kompendium.core.metadata.PostInfo
+import io.bkbn.kompendium.core.metadata.PutInfo
 import io.bkbn.kompendium.core.plugin.NotarizedRoute
-import io.bkbn.kompendium.json.schema.definition.TypeDefinition
-import io.bkbn.kompendium.oas.payload.Parameter
 import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
@@ -34,10 +34,8 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toTocClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
-import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpStatusCode
@@ -58,6 +56,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val respondMember = MemberName("io.ktor.server.response", "respond")
     val installMember = MemberName("io.ktor.server.application", "install")
     val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
+    val idParameterMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "idParameter")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -88,6 +87,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addCreateRoute(domain)
           addGetAllRoute()
           addControlFlow("%M(%S)", routeMember, "/{id}") {
+            addStatement("idDocumentation()")
             addReadRoute()
             addUpdateRoute(domain)
             addDeleteRoute()
@@ -104,6 +104,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
   private fun TypeSpec.Builder.addDocumentation(domain: Domain) {
     addRootDocumentation(domain)
+    addIdDocumentation(domain)
   }
 
   // TODO Refactor this
@@ -135,6 +136,50 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addControlFlow("request") {
               addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(domain.toCreateRequestClass()))
               addStatement("description(%S)", "Collection of ${domain.name} entities the user wishes to persist")
+            }
+          }
+        }
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addIdDocumentation(domain: Domain) {
+    addFunction(FunSpec.builder("idDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", domain.name)
+          addStatement("parameters = %M()", idParameterMember)
+          addControlFlow("get = %T.builder", GetInfo::class) {
+            addStatement("summary(%S)", "Get ${domain.name} by ID")
+            addStatement("description(%S)", "Retrieves the specified ${domain.name} entity by its ID")
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
+              addStatement("description(%S)", "The ${domain.name} entity with the specified ID")
+            }
+          }
+          addControlFlow("put = %T.builder", PutInfo::class) {
+            addStatement("summary(%S)", "Update ${domain.name} by ID")
+            addStatement("description(%S)", "Updates the specified ${domain.name} entity by its ID")
+            addControlFlow("request") {
+              addStatement("requestType<%T>()", domain.toUpdateRequestClass())
+              addStatement("description(%S)", "Fields that can be updated on the ${domain.name} entity")
+            }
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseCode(%T.Created)", HttpStatusCode::class)
+              addStatement("description(%S)", "Indicates that the ${domain.name} entity was updated successfully")
+            }
+          }
+          addControlFlow("delete = %T.builder", DeleteInfo::class) {
+            addStatement("summary(%S)", "Delete ${domain.name} by ID")
+            addStatement("description(%S)", "Deletes the specified ${domain.name} entity by its ID")
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", Unit::class)
+              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
+              addStatement("description(%S)", "Indicates that the ${domain.name} entity was deleted successfully")
             }
           }
         }

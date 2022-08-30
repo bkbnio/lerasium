@@ -16,4 +16,12 @@ object ApiDocumentationUtils {
       schema = TypeDefinition.INT
     )
   )
+
+  fun idParameter() = listOf(
+    Parameter(
+      name = "id",
+      `in` = Parameter.Location.path,
+      schema = TypeDefinition.UUID
+    )
+  )
 }
