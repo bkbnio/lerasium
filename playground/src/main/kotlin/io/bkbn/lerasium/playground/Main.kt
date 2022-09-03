@@ -68,6 +68,7 @@ fun Application.module() {
       serializersModule = KompendiumSerializersModule.module
       encodeDefaults = true
       explicitNulls = false
+      prettyPrint = true
     })
   }
   install(NotarizedApplication()) {

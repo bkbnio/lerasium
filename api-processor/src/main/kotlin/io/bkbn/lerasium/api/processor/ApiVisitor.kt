@@ -71,7 +71,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
       addController(classDeclaration, domain)
-      addDocumentation(domain)
+      addDocumentation(classDeclaration, domain)
     }.build())
   }
 
@@ -93,21 +93,18 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addDeleteRoute()
             addRelationalRoutes(cd)
           }
-          addControlFlow("%M(%S)", routeMember, "/count") {
-            addCountRoute()
-          }
           addQueries(cd)
         }
       }
     }.build())
   }
 
-  private fun TypeSpec.Builder.addDocumentation(domain: Domain) {
+  private fun TypeSpec.Builder.addDocumentation(classDeclaration: KSClassDeclaration, domain: Domain) {
     addRootDocumentation(domain)
     addIdDocumentation(domain)
+    addRelationalDocumentation(classDeclaration, domain)
   }
 
-  // TODO Refactor this
   private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
     addFunction(FunSpec.builder("rootDocumentation").apply {
       receiver(Route::class)
@@ -202,15 +199,6 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addCountRoute() {
-    add(CodeBlock.builder().apply {
-      addControlFlow("%M", getMember) {
-        addStatement("val result = dao.countAll()")
-        addStatement("%M.%M(result)", callMember, respondMember)
-      }
-    }.build())
-  }
-
   private fun CodeBlock.Builder.addGetAllRoute() {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", getMember) {
@@ -258,12 +246,44 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       val name = property.simpleName.getShortName()
       add(CodeBlock.builder().apply {
         addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
+          addStatement("install${name.capitalized()}Documentation()")
           addControlFlow("%M", getMember) {
             addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
             addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
             addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
             addStatement("val result = dao.getAll${name.capitalized()}(id, chunk, offset)")
             addStatement("%M.%M(result)", callMember, respondMember)
+          }
+        }
+      }.build())
+    }
+  }
+
+  private fun TypeSpec.Builder.addRelationalDocumentation(cd: KSClassDeclaration, domain: Domain) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+      val name = property.simpleName.getShortName()
+      addFunction(FunSpec.builder("install${name.capitalized()}Documentation").apply {
+        receiver(Route::class)
+        addModifiers(KModifier.PRIVATE)
+        addCodeBlock {
+          addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+            addStatement("tags = setOf(%S)", domain.name)
+            addControlFlow("get = %T.builder", GetInfo::class) {
+              addStatement("summary(%S)", "Get All ${domain.name} ${name.capitalized()}")
+              addStatement(
+                "description(%S)",
+                """
+                  Retrieves a paginated list of ${name.capitalized()} entities associated
+                  with the provided ${domain.name}
+                """.trimIndent()
+              )
+              addStatement("parameters(*%M().toTypedArray().plus(%M()))", getAllParametersMember, idParameterMember)
+              addControlFlow("response") {
+                addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+                addStatement("responseCode(%T.OK)", HttpStatusCode::class)
+                addStatement("description(%S)", "Paginated list of ${domain.name} entities")
+              }
+            }
           }
         }
       }.build())

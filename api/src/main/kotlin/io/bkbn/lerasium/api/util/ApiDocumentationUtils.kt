@@ -8,12 +8,14 @@ object ApiDocumentationUtils {
     Parameter(
       name = "chunk",
       `in` = Parameter.Location.query,
-      schema = TypeDefinition.INT
+      schema = TypeDefinition.INT,
+      description = "The maximum number of entities that can be considered a page",
     ),
     Parameter(
       name = "offset",
       `in` = Parameter.Location.query,
-      schema = TypeDefinition.INT
+      schema = TypeDefinition.INT,
+      description = "The page you wish to return"
     )
   )
 
@@ -21,7 +23,8 @@ object ApiDocumentationUtils {
     Parameter(
       name = "id",
       `in` = Parameter.Location.path,
-      schema = TypeDefinition.UUID
+      schema = TypeDefinition.UUID,
+      description = "The ID of the entity"
     )
   )
 }
