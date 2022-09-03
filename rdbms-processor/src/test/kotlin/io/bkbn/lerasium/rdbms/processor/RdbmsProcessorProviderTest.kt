@@ -73,7 +73,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class UserEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<UserResponse> {
           public var name: String by UserTable.name
 
@@ -155,7 +155,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class CounterEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<CounterResponse> {
           public var count: Int by CounterTable.count
 
@@ -241,7 +241,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class UserEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<UserResponse> {
           public var userInfo: String by UserTable.userInfo
 
@@ -324,7 +324,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class FactsEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<FactsResponse> {
           public var isFact: Boolean by FactsTable.isFact
 
@@ -407,7 +407,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class BigNumEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<BigNumResponse> {
           public var size: Long by BigNumTable.size
 
@@ -490,7 +490,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class FloatyEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<FloatyResponse> {
           public var pointyNum: Float by FloatyTable.pointyNum
 
@@ -576,7 +576,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class WordsEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<WordsResponse> {
           public var word: String by WordsTable.word
 
@@ -678,7 +678,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class LettersEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<LettersResponse> {
           public var s: String? by LettersTable.s
 
@@ -774,7 +774,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class WordsEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<WordsResponse> {
           public var word: String by WordsTable.word
 
@@ -860,7 +860,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class WordsEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<WordsResponse> {
           public var word: String by WordsTable.word
 
@@ -954,7 +954,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class WordsEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<WordsResponse> {
           public var word: String by WordsTable.word
 
@@ -1054,7 +1054,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class UserEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<UserResponse> {
           public var country: CountryEntity by CountryEntity referencedOn UserTable.country
 
@@ -1161,7 +1161,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class CountryEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<CountryResponse> {
           public var name: String by CountryTable.name
 
@@ -1283,7 +1283,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class BookEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<BookResponse> {
           public var title: String by BookTable.title
 
@@ -1339,7 +1339,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         }
 
         public class BookReviewEntity(
-          id: EntityID<UUID>
+          id: EntityID<UUID>,
         ) : UUIDEntity(id), Entity<BookReviewResponse> {
           public var reader: UserEntity by UserEntity referencedOn BookReviewTable.reader
 
@@ -1596,7 +1596,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           public fun getAllUsers(
             id: UUID,
             chunk: Int,
-            offset: Int
+            offset: Int,
           ): List<UserResponse> = transaction {
             val entity = CountryEntity[id]
             entity.users.limit(chunk, offset.toLong()).toList().map { it.toResponse() }
@@ -1724,7 +1724,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
           public fun getByFavoriteFood(
             favoriteFood: String?,
             chunk: Int,
-            offset: Int
+            offset: Int,
           ): List<UserResponse> = transaction {
             UserEntity.find { UserTable.favoriteFood eq favoriteFood }.limit(chunk, offset.toLong()).map {
                 it.toResponse() }

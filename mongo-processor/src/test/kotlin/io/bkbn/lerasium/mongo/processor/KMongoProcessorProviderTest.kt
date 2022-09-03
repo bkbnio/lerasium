@@ -50,7 +50,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public val id: UUID,
           public var name: String,
           public var createdAt: LocalDateTime,
-          public var updatedAt: LocalDateTime
+          public var updatedAt: LocalDateTime,
         ) : Entity<UserResponse> {
           public override fun toResponse(): UserResponse = with(::UserResponse) {
             val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
@@ -106,7 +106,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public var age: Int,
           public var preferences: UserPreferencesEntity,
           public var createdAt: LocalDateTime,
-          public var updatedAt: LocalDateTime
+          public var updatedAt: LocalDateTime,
         ) : Entity<UserResponse> {
           public override fun toResponse(): UserResponse = with(::UserResponse) {
             val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
@@ -123,7 +123,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         @Serializable
         public data class UserPreferencesEntity(
           public var status: String,
-          public var subscribed: Boolean
+          public var subscribed: Boolean,
         ) : Entity<UserPreferencesResponse> {
           public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
             val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
@@ -177,7 +177,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
           public val id: UUID,
           public var preferences: UserPreferencesEntity,
           public var createdAt: LocalDateTime,
-          public var updatedAt: LocalDateTime
+          public var updatedAt: LocalDateTime,
         ) : Entity<UserResponse> {
           public override fun toResponse(): UserResponse = with(::UserResponse) {
             val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
@@ -193,7 +193,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
         @Serializable
         public data class UserPreferencesEntity(
-          public var stuff: UserStuffEntity
+          public var stuff: UserStuffEntity,
         ) : Entity<UserPreferencesResponse> {
           public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
             val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
@@ -209,7 +209,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
         @Serializable
         public data class UserStuffEntity(
-          public var info: UserInfoEntity
+          public var info: UserInfoEntity,
         ) : Entity<UserStuffResponse> {
           public override fun toResponse(): UserStuffResponse = with(::UserStuffResponse) {
             val propertiesByName = UserStuffEntity::class.memberProperties.associateBy { it.name }
@@ -225,7 +225,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
 
         @Serializable
         public data class UserInfoEntity(
-          public var isCool: Boolean
+          public var isCool: Boolean,
         ) : Entity<UserInfoResponse> {
           public override fun toResponse(): UserInfoResponse = with(::UserInfoResponse) {
             val propertiesByName = UserInfoEntity::class.memberProperties.associateBy { it.name }
@@ -280,7 +280,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import org.litote.kmongo.save
 
         public class UserDao(
-          db: MongoDatabase
+          db: MongoDatabase,
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
@@ -394,7 +394,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import org.litote.kmongo.save
 
         public class UserDao(
-          db: MongoDatabase
+          db: MongoDatabase,
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
@@ -511,7 +511,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import org.litote.kmongo.save
 
         public class UserDao(
-          db: MongoDatabase
+          db: MongoDatabase,
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
@@ -611,7 +611,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import org.litote.kmongo.save
 
         public class UserDao(
-          db: MongoDatabase
+          db: MongoDatabase,
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 
@@ -723,7 +723,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import org.litote.kmongo.save
 
         public class UserDao(
-          db: MongoDatabase
+          db: MongoDatabase,
         ) : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           private val collection: MongoCollection<UserEntity> = db.getCollection()
 

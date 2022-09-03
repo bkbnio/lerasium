@@ -85,30 +85,33 @@ class ApiVisitorTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 2
+      result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first { it.name == "UserApi.kt" }.readTrimmed() shouldBe TestUtils.kotlinCode(
         """
         package io.bkbn.lerasium.generated.api
 
-        import io.bkbn.kompendium.core.Notarized.notarizedDelete
-        import io.bkbn.kompendium.core.Notarized.notarizedGet
-        import io.bkbn.kompendium.core.Notarized.notarizedPost
-        import io.bkbn.kompendium.core.Notarized.notarizedPut
-        import io.bkbn.lerasium.generated.api.UserToC.countAllUser
-        import io.bkbn.lerasium.generated.api.UserToC.createUser
-        import io.bkbn.lerasium.generated.api.UserToC.deleteUser
-        import io.bkbn.lerasium.generated.api.UserToC.getAllUser
-        import io.bkbn.lerasium.generated.api.UserToC.getUser
-        import io.bkbn.lerasium.generated.api.UserToC.updateUser
+        import io.bkbn.kompendium.core.metadata.DeleteInfo
+        import io.bkbn.kompendium.core.metadata.GetInfo
+        import io.bkbn.kompendium.core.metadata.PostInfo
+        import io.bkbn.kompendium.core.metadata.PutInfo
+        import io.bkbn.kompendium.core.plugin.NotarizedRoute
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.getAllParameters
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.idParameter
         import io.bkbn.lerasium.generated.entity.UserDao
         import io.bkbn.lerasium.generated.models.UserCreateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
-        import io.ktor.application.call
         import io.ktor.http.HttpStatusCode
-        import io.ktor.request.receive
-        import io.ktor.response.respond
-        import io.ktor.routing.Route
-        import io.ktor.routing.route
+        import io.ktor.server.application.call
+        import io.ktor.server.application.install
+        import io.ktor.server.request.receive
+        import io.ktor.server.response.respond
+        import io.ktor.server.routing.Route
+        import io.ktor.server.routing.`get`
+        import io.ktor.server.routing.delete
+        import io.ktor.server.routing.post
+        import io.ktor.server.routing.put
+        import io.ktor.server.routing.route
         import java.util.UUID
         import kotlin.Unit
         import kotlin.collections.List
@@ -116,39 +119,102 @@ class ApiVisitorTest : DescribeSpec({
         public object UserApi {
           public fun Route.userController(dao: UserDao): Unit {
             route("/user") {
-              notarizedPost(createUser) {
+              rootDocumentation()
+              post {
                 val request = call.receive<List<UserCreateRequest>>()
                 val result = dao.create(request)
                 call.respond(result)
               }
-              notarizedGet(getAllUser) {
+              `get` {
                 val chunk = call.parameters["chunk"]?.toInt() ?: 100
                 val offset = call.parameters["offset"]?.toInt() ?: 0
                 val result = dao.getAll(chunk, offset)
                 call.respond(result)
               }
               route("/{id}") {
-                notarizedGet(getUser) {
+                idDocumentation()
+                `get` {
                   val id = UUID.fromString(call.parameters["id"])
                   val result = dao.read(id)
                   call.respond(result)
                 }
-                notarizedPut(updateUser) {
+                put {
                   val id = UUID.fromString(call.parameters["id"])
                   val request = call.receive<UserUpdateRequest>()
                   val result = dao.update(id, request)
                   call.respond(result)
                 }
-                notarizedDelete(deleteUser) {
+                delete {
                   val id = UUID.fromString(call.parameters["id"])
                   dao.delete(id)
                   call.respond(HttpStatusCode.NoContent)
                 }
               }
-              route("/count") {
-                notarizedGet(countAllUser) {
-                  val result = dao.countAll()
-                  call.respond(result)
+            }
+          }
+
+          private fun Route.rootDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              get = GetInfo.builder {
+                summary("Get All User Entities")
+                description("Retrieves a paginated list of User Entities")
+                parameters(*getAllParameters().toTypedArray())
+                response {
+                  responseType<List<UserResponse>>()
+                  responseCode(HttpStatusCode.OK)
+                  description("Paginated list of User entities")
+                }
+              }
+              post = PostInfo.builder {
+                summary("Create New User Entity")
+                description("Persists a new User entity in the database")
+                response {
+                  responseType<List<UserResponse>>()
+                  responseCode(HttpStatusCode.Created)
+                  description("User entities saved successfully")
+                }
+                request {
+                  requestType<List<UserCreateRequest>>()
+                  description("Collection of User entities the user wishes to persist")
+                }
+              }
+            }
+          }
+
+          private fun Route.idDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              parameters = idParameter()
+              get = GetInfo.builder {
+                summary("Get User by ID")
+                description("Retrieves the specified User entity by its ID")
+                response {
+                  responseType<UserResponse>()
+                  responseCode(HttpStatusCode.OK)
+                  description("The User entity with the specified ID")
+                }
+              }
+              put = PutInfo.builder {
+                summary("Update User by ID")
+                description("Updates the specified User entity by its ID")
+                request {
+                  requestType<UserUpdateRequest>()
+                  description("Fields that can be updated on the User entity")
+                }
+                response {
+                  responseType<UserResponse>()
+                  responseCode(HttpStatusCode.Created)
+                  description("Indicates that the User entity was updated successfully")
+                }
+              }
+              delete = DeleteInfo.builder {
+                summary("Delete User by ID")
+                description("Deletes the specified User entity by its ID")
+                response {
+                  responseType<Unit>()
+                  responseCode(HttpStatusCode.NoContent)
+                  description("Indicates that the User entity was deleted successfully")
                 }
               }
             }
@@ -199,31 +265,33 @@ class ApiVisitorTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 4
+      result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "CountryApi.kt" }.readTrimmed() shouldBe TestUtils.kotlinCode(
         """
         package io.bkbn.lerasium.generated.api
 
-        import io.bkbn.kompendium.core.Notarized.notarizedDelete
-        import io.bkbn.kompendium.core.Notarized.notarizedGet
-        import io.bkbn.kompendium.core.Notarized.notarizedPost
-        import io.bkbn.kompendium.core.Notarized.notarizedPut
-        import io.bkbn.lerasium.generated.api.CountryToC.countAllCountry
-        import io.bkbn.lerasium.generated.api.CountryToC.createCountry
-        import io.bkbn.lerasium.generated.api.CountryToC.deleteCountry
-        import io.bkbn.lerasium.generated.api.CountryToC.getAllCountry
-        import io.bkbn.lerasium.generated.api.CountryToC.getCountry
-        import io.bkbn.lerasium.generated.api.CountryToC.getCountryUser
-        import io.bkbn.lerasium.generated.api.CountryToC.updateCountry
+        import io.bkbn.kompendium.core.metadata.DeleteInfo
+        import io.bkbn.kompendium.core.metadata.GetInfo
+        import io.bkbn.kompendium.core.metadata.PostInfo
+        import io.bkbn.kompendium.core.metadata.PutInfo
+        import io.bkbn.kompendium.core.plugin.NotarizedRoute
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.getAllParameters
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.idParameter
         import io.bkbn.lerasium.generated.entity.CountryDao
         import io.bkbn.lerasium.generated.models.CountryCreateRequest
+        import io.bkbn.lerasium.generated.models.CountryResponse
         import io.bkbn.lerasium.generated.models.CountryUpdateRequest
-        import io.ktor.application.call
         import io.ktor.http.HttpStatusCode
-        import io.ktor.request.receive
-        import io.ktor.response.respond
-        import io.ktor.routing.Route
-        import io.ktor.routing.route
+        import io.ktor.server.application.call
+        import io.ktor.server.application.install
+        import io.ktor.server.request.receive
+        import io.ktor.server.response.respond
+        import io.ktor.server.routing.Route
+        import io.ktor.server.routing.`get`
+        import io.ktor.server.routing.delete
+        import io.ktor.server.routing.post
+        import io.ktor.server.routing.put
+        import io.ktor.server.routing.route
         import java.util.UUID
         import kotlin.Unit
         import kotlin.collections.List
@@ -231,36 +299,39 @@ class ApiVisitorTest : DescribeSpec({
         public object CountryApi {
           public fun Route.countryController(dao: CountryDao): Unit {
             route("/country") {
-              notarizedPost(createCountry) {
+              rootDocumentation()
+              post {
                 val request = call.receive<List<CountryCreateRequest>>()
                 val result = dao.create(request)
                 call.respond(result)
               }
-              notarizedGet(getAllCountry) {
+              `get` {
                 val chunk = call.parameters["chunk"]?.toInt() ?: 100
                 val offset = call.parameters["offset"]?.toInt() ?: 0
                 val result = dao.getAll(chunk, offset)
                 call.respond(result)
               }
               route("/{id}") {
-                notarizedGet(getCountry) {
+                idDocumentation()
+                `get` {
                   val id = UUID.fromString(call.parameters["id"])
                   val result = dao.read(id)
                   call.respond(result)
                 }
-                notarizedPut(updateCountry) {
+                put {
                   val id = UUID.fromString(call.parameters["id"])
                   val request = call.receive<CountryUpdateRequest>()
                   val result = dao.update(id, request)
                   call.respond(result)
                 }
-                notarizedDelete(deleteCountry) {
+                delete {
                   val id = UUID.fromString(call.parameters["id"])
                   dao.delete(id)
                   call.respond(HttpStatusCode.NoContent)
                 }
                 route("/users") {
-                  notarizedGet(getCountryUser) {
+                  installUsersDocumentation()
+                  `get` {
                     val id = UUID.fromString(call.parameters["id"])
                     val chunk = call.parameters["chunk"]?.toInt() ?: 100
                     val offset = call.parameters["offset"]?.toInt() ?: 0
@@ -269,10 +340,90 @@ class ApiVisitorTest : DescribeSpec({
                   }
                 }
               }
-              route("/count") {
-                notarizedGet(countAllCountry) {
-                  val result = dao.countAll()
-                  call.respond(result)
+            }
+          }
+
+          private fun Route.rootDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("Country")
+              get = GetInfo.builder {
+                summary("Get All Country Entities")
+                description("Retrieves a paginated list of Country Entities")
+                parameters(*getAllParameters().toTypedArray())
+                response {
+                  responseType<List<CountryResponse>>()
+                  responseCode(HttpStatusCode.OK)
+                  description("Paginated list of Country entities")
+                }
+              }
+              post = PostInfo.builder {
+                summary("Create New Country Entity")
+                description("Persists a new Country entity in the database")
+                response {
+                  responseType<List<CountryResponse>>()
+                  responseCode(HttpStatusCode.Created)
+                  description("Country entities saved successfully")
+                }
+                request {
+                  requestType<List<CountryCreateRequest>>()
+                  description("Collection of Country entities the user wishes to persist")
+                }
+              }
+            }
+          }
+
+          private fun Route.idDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("Country")
+              parameters = idParameter()
+              get = GetInfo.builder {
+                summary("Get Country by ID")
+                description("Retrieves the specified Country entity by its ID")
+                response {
+                  responseType<CountryResponse>()
+                  responseCode(HttpStatusCode.OK)
+                  description("The Country entity with the specified ID")
+                }
+              }
+              put = PutInfo.builder {
+                summary("Update Country by ID")
+                description("Updates the specified Country entity by its ID")
+                request {
+                  requestType<CountryUpdateRequest>()
+                  description("Fields that can be updated on the Country entity")
+                }
+                response {
+                  responseType<CountryResponse>()
+                  responseCode(HttpStatusCode.Created)
+                  description("Indicates that the Country entity was updated successfully")
+                }
+              }
+              delete = DeleteInfo.builder {
+                summary("Delete Country by ID")
+                description("Deletes the specified Country entity by its ID")
+                response {
+                  responseType<Unit>()
+                  responseCode(HttpStatusCode.NoContent)
+                  description("Indicates that the Country entity was deleted successfully")
+                }
+              }
+            }
+          }
+
+          private fun Route.installUsersDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("Country")
+              get = GetInfo.builder {
+                summary("Get All Country Users")
+                description(""${'"'}
+                    |Retrieves a paginated list of Users entities associated
+                    |with the provided Country
+                    ""${'"'}.trimMargin())
+                parameters(*getAllParameters().toTypedArray().plus(idParameter()))
+                response {
+                  responseType<List<CountryResponse>>()
+                  responseCode(HttpStatusCode.OK)
+                  description("Paginated list of Country entities")
                 }
               }
             }
@@ -319,32 +470,33 @@ class ApiVisitorTest : DescribeSpec({
 
       // assert
       result shouldNotBe null
-      result.kspGeneratedSources shouldHaveSize 3
+      result.kspGeneratedSources shouldHaveSize 1
       result.kspGeneratedSources.first { it.name == "UserApi.kt" }.readTrimmed() shouldBe TestUtils.kotlinCode(
         """
         package io.bkbn.lerasium.generated.api
 
-        import io.bkbn.kompendium.core.Notarized.notarizedDelete
-        import io.bkbn.kompendium.core.Notarized.notarizedGet
-        import io.bkbn.kompendium.core.Notarized.notarizedPost
-        import io.bkbn.kompendium.core.Notarized.notarizedPut
-        import io.bkbn.lerasium.generated.api.UserToC.countAllUser
-        import io.bkbn.lerasium.generated.api.UserToC.createUser
-        import io.bkbn.lerasium.generated.api.UserToC.deleteUser
-        import io.bkbn.lerasium.generated.api.UserToC.getAllUser
-        import io.bkbn.lerasium.generated.api.UserToC.getByEmail
-        import io.bkbn.lerasium.generated.api.UserToC.getByFirstName
-        import io.bkbn.lerasium.generated.api.UserToC.getUser
-        import io.bkbn.lerasium.generated.api.UserToC.updateUser
+        import io.bkbn.kompendium.core.metadata.DeleteInfo
+        import io.bkbn.kompendium.core.metadata.GetInfo
+        import io.bkbn.kompendium.core.metadata.PostInfo
+        import io.bkbn.kompendium.core.metadata.PutInfo
+        import io.bkbn.kompendium.core.plugin.NotarizedRoute
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.getAllParameters
+        import io.bkbn.lerasium.api.util.ApiDocumentationUtils.idParameter
         import io.bkbn.lerasium.generated.entity.UserDao
         import io.bkbn.lerasium.generated.models.UserCreateRequest
+        import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
-        import io.ktor.application.call
         import io.ktor.http.HttpStatusCode
-        import io.ktor.request.receive
-        import io.ktor.response.respond
-        import io.ktor.routing.Route
-        import io.ktor.routing.route
+        import io.ktor.server.application.call
+        import io.ktor.server.application.install
+        import io.ktor.server.request.receive
+        import io.ktor.server.response.respond
+        import io.ktor.server.routing.Route
+        import io.ktor.server.routing.`get`
+        import io.ktor.server.routing.delete
+        import io.ktor.server.routing.post
+        import io.ktor.server.routing.put
+        import io.ktor.server.routing.route
         import java.util.UUID
         import kotlin.Unit
         import kotlin.collections.List
@@ -352,55 +504,158 @@ class ApiVisitorTest : DescribeSpec({
         public object UserApi {
           public fun Route.userController(dao: UserDao): Unit {
             route("/user") {
-              notarizedPost(createUser) {
+              rootDocumentation()
+              post {
                 val request = call.receive<List<UserCreateRequest>>()
                 val result = dao.create(request)
                 call.respond(result)
               }
-              notarizedGet(getAllUser) {
+              `get` {
                 val chunk = call.parameters["chunk"]?.toInt() ?: 100
                 val offset = call.parameters["offset"]?.toInt() ?: 0
                 val result = dao.getAll(chunk, offset)
                 call.respond(result)
               }
               route("/{id}") {
-                notarizedGet(getUser) {
+                idDocumentation()
+                `get` {
                   val id = UUID.fromString(call.parameters["id"])
                   val result = dao.read(id)
                   call.respond(result)
                 }
-                notarizedPut(updateUser) {
+                put {
                   val id = UUID.fromString(call.parameters["id"])
                   val request = call.receive<UserUpdateRequest>()
                   val result = dao.update(id, request)
                   call.respond(result)
                 }
-                notarizedDelete(deleteUser) {
+                delete {
                   val id = UUID.fromString(call.parameters["id"])
                   dao.delete(id)
                   call.respond(HttpStatusCode.NoContent)
                 }
               }
-              route("/count") {
-                notarizedGet(countAllUser) {
-                  val result = dao.countAll()
-                  call.respond(result)
-                }
-              }
               route("/email/{email}") {
-                notarizedGet(getByEmail) {
+                installEmailQueryDocumentation()
+                `get` {
                   val email = call.parameters["email"]!!
                   val result = dao.getByEmail(email)
                   call.respond(result)
                 }
               }
               route("/firstName/{firstName}") {
-                notarizedGet(getByFirstName) {
+                installFirstNameQueryDocumentation()
+                `get` {
                   val firstName = call.parameters["firstName"]!!
                   val chunk = call.parameters["chunk"]?.toInt() ?: 100
                   val offset = call.parameters["offset"]?.toInt() ?: 0
                   val result = dao.getByFirstName(firstName, chunk, offset)
                   call.respond(result)
+                }
+              }
+            }
+          }
+
+          private fun Route.rootDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              get = GetInfo.builder {
+                summary("Get All User Entities")
+                description("Retrieves a paginated list of User Entities")
+                parameters(*getAllParameters().toTypedArray())
+                response {
+                  responseType<List<UserResponse>>()
+                  responseCode(HttpStatusCode.OK)
+                  description("Paginated list of User entities")
+                }
+              }
+              post = PostInfo.builder {
+                summary("Create New User Entity")
+                description("Persists a new User entity in the database")
+                response {
+                  responseType<List<UserResponse>>()
+                  responseCode(HttpStatusCode.Created)
+                  description("User entities saved successfully")
+                }
+                request {
+                  requestType<List<UserCreateRequest>>()
+                  description("Collection of User entities the user wishes to persist")
+                }
+              }
+            }
+          }
+
+          private fun Route.idDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              parameters = idParameter()
+              get = GetInfo.builder {
+                summary("Get User by ID")
+                description("Retrieves the specified User entity by its ID")
+                response {
+                  responseType<UserResponse>()
+                  responseCode(HttpStatusCode.OK)
+                  description("The User entity with the specified ID")
+                }
+              }
+              put = PutInfo.builder {
+                summary("Update User by ID")
+                description("Updates the specified User entity by its ID")
+                request {
+                  requestType<UserUpdateRequest>()
+                  description("Fields that can be updated on the User entity")
+                }
+                response {
+                  responseType<UserResponse>()
+                  responseCode(HttpStatusCode.Created)
+                  description("Indicates that the User entity was updated successfully")
+                }
+              }
+              delete = DeleteInfo.builder {
+                summary("Delete User by ID")
+                description("Deletes the specified User entity by its ID")
+                response {
+                  responseType<Unit>()
+                  responseCode(HttpStatusCode.NoContent)
+                  description("Indicates that the User entity was deleted successfully")
+                }
+              }
+            }
+          }
+
+          private fun Route.installEmailQueryDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              get = GetInfo.builder {
+                summary("Get User by Email")
+                description(""${'"'}
+                    |Attempts to find a User entity associated
+                    |with the provided Email id
+                    ""${'"'}.trimMargin())
+                parameters(*idParameter().toTypedArray())
+                response {
+                  responseType<UserResponse>()
+                  responseCode(HttpStatusCode.OK)
+                  description("User entity associated with the specified email")
+                }
+              }
+            }
+          }
+
+          private fun Route.installFirstNameQueryDocumentation(): Unit {
+            install(NotarizedRoute()) {
+              tags = setOf("User")
+              get = GetInfo.builder {
+                summary("Get All User by FirstName")
+                description(""${'"'}
+                    |Attempts to find all User entities associated
+                    |with the provided FirstName id
+                    ""${'"'}.trimMargin())
+                parameters(*getAllParameters().toTypedArray().plus(idParameter()))
+                response {
+                  responseType<List<UserResponse>>()
+                  responseCode(HttpStatusCode.OK)
+                  description("User entities associated with the specified firstName")
                 }
               }
             }

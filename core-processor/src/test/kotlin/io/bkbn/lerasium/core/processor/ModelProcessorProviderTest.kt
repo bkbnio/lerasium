@@ -68,7 +68,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String,
           public val email: String,
           public val password: String,
-          public val age: Int?
+          public val age: Int?,
         ) : Request.Create
 
         @Serializable
@@ -77,7 +77,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String?,
           public val email: String?,
           public val password: String?,
-          public val age: Int?
+          public val age: Int?,
         ) : Request.Update
 
         @Serializable
@@ -90,7 +90,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val password: String,
           public val age: Int?,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
         """.trimIndent()
       )
@@ -144,13 +144,13 @@ class ModelProcessorProviderTest : DescribeSpec({
         @Serializable
         public data class UserCreateRequest(
           public val email: String,
-          public val metadata: UserMetadataCreateRequest
+          public val metadata: UserMetadataCreateRequest,
         ) : Request.Create
 
         @Serializable
         public data class UserUpdateRequest(
           public val email: String?,
-          public val metadata: UserMetadataUpdateRequest?
+          public val metadata: UserMetadataUpdateRequest?,
         ) : Request.Update
 
         @Serializable
@@ -160,25 +160,25 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val email: String,
           public val metadata: UserMetadataResponse,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
 
         @Serializable
         public data class UserMetadataCreateRequest(
           public val firstName: String,
-          public val lastName: String
+          public val lastName: String,
         ) : Request.Create
 
         @Serializable
         public data class UserMetadataUpdateRequest(
           public val firstName: String?,
-          public val lastName: String?
+          public val lastName: String?,
         ) : Request.Update
 
         @Serializable
         public data class UserMetadataResponse(
           public val firstName: String,
-          public val lastName: String
+          public val lastName: String,
         ) : Response
         """.trimIndent()
       )
@@ -236,13 +236,13 @@ class ModelProcessorProviderTest : DescribeSpec({
         @Serializable
         public data class UserCreateRequest(
           public val email: String,
-          public val metadata: UserMetadataCreateRequest
+          public val metadata: UserMetadataCreateRequest,
         ) : Request.Create
 
         @Serializable
         public data class UserUpdateRequest(
           public val email: String?,
-          public val metadata: UserMetadataUpdateRequest?
+          public val metadata: UserMetadataUpdateRequest?,
         ) : Request.Update
 
         @Serializable
@@ -252,43 +252,43 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val email: String,
           public val metadata: UserMetadataResponse,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
 
         @Serializable
         public data class OhBoiWeDeepInItNowCreateRequest(
-          public val otherInfo: String
+          public val otherInfo: String,
         ) : Request.Create
 
         @Serializable
         public data class OhBoiWeDeepInItNowUpdateRequest(
-          public val otherInfo: String?
+          public val otherInfo: String?,
         ) : Request.Update
 
         @Serializable
         public data class OhBoiWeDeepInItNowResponse(
-          public val otherInfo: String
+          public val otherInfo: String,
         ) : Response
 
         @Serializable
         public data class UserMetadataCreateRequest(
           public val firstName: String,
           public val lastName: String,
-          public val otherStuffs: OhBoiWeDeepInItNowCreateRequest
+          public val otherStuffs: OhBoiWeDeepInItNowCreateRequest,
         ) : Request.Create
 
         @Serializable
         public data class UserMetadataUpdateRequest(
           public val firstName: String?,
           public val lastName: String?,
-          public val otherStuffs: OhBoiWeDeepInItNowUpdateRequest?
+          public val otherStuffs: OhBoiWeDeepInItNowUpdateRequest?,
         ) : Request.Update
 
         @Serializable
         public data class UserMetadataResponse(
           public val firstName: String,
           public val lastName: String,
-          public val otherStuffs: OhBoiWeDeepInItNowResponse
+          public val otherStuffs: OhBoiWeDeepInItNowResponse,
         ) : Response
         """.trimIndent()
       )
@@ -342,7 +342,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val firstName: String,
           public val lastName: String,
           public val email: String,
-          public val password: String
+          public val password: String,
         ) : Request.Create
 
         @Serializable
@@ -350,7 +350,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val firstName: String?,
           public val lastName: String?,
           public val email: String?,
-          public val password: String?
+          public val password: String?,
         ) : Request.Update
 
         @Serializable
@@ -361,7 +361,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String,
           public val email: String,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
         """.trimIndent()
       )
@@ -381,7 +381,7 @@ class ModelProcessorProviderTest : DescribeSpec({
             val firstName: String
             val lastName: String
             val email: String
-            val favoriteUuid: UUID
+            val favoriteUuid: UUID,
           }
         """.trimIndent()
       )
@@ -416,7 +416,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String,
           public val email: String,
           @Serializable(with = Serializers.Uuid::class)
-          public val favoriteUuid: UUID
+          public val favoriteUuid: UUID,
         ) : Request.Create
 
         @Serializable
@@ -425,7 +425,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String?,
           public val email: String?,
           @Serializable(with = Serializers.Uuid::class)
-          public val favoriteUuid: UUID?
+          public val favoriteUuid: UUID?,
         ) : Request.Update
 
         @Serializable
@@ -438,7 +438,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           @Serializable(with = Serializers.Uuid::class)
           public val favoriteUuid: UUID,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
         """.trimIndent()
       )
@@ -498,7 +498,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String,
           public val email: String,
           @Serializable(with = Serializers.Uuid::class)
-          public val country: UUID
+          public val country: UUID,
         ) : Request.Create
 
         @Serializable
@@ -507,7 +507,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val lastName: String?,
           public val email: String?,
           @Serializable(with = Serializers.Uuid::class)
-          public val country: UUID?
+          public val country: UUID?,
         ) : Request.Update
 
         @Serializable
@@ -519,7 +519,7 @@ class ModelProcessorProviderTest : DescribeSpec({
           public val email: String,
           public val country: CountryResponse,
           public val createdAt: LocalDateTime,
-          public val updatedAt: LocalDateTime
+          public val updatedAt: LocalDateTime,
         ) : Response
         """.trimIndent()
       )
