@@ -103,6 +103,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     addRootDocumentation(domain)
     addIdDocumentation(domain)
     addRelationalDocumentation(classDeclaration, domain)
+    addQueryDocumentation(classDeclaration, domain)
   }
 
   private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
@@ -300,9 +301,20 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
+  private fun TypeSpec.Builder.addQueryDocumentation(cd: KSClassDeclaration, domain: Domain) {
+    cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+      val getBy = prop.getAnnotationsByType(GetBy::class).first()
+      when (getBy.unique) {
+        true -> addUniqueQueryDocumentation(prop, domain)
+        false -> addNonUniqueQueryDocumentation(prop, domain)
+      }
+    }
+  }
+
   private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
+      addStatement("install${name.capitalized()}QueryDocumentation()")
       addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val result = dao.getBy${name.capitalized()}($name)")
@@ -311,9 +323,39 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
+  private fun TypeSpec.Builder.addUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
+    val name = prop.simpleName.getShortName()
+    addFunction(FunSpec.builder("install${name.capitalized()}QueryDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", domain.name)
+          addControlFlow("get = %T.builder", GetInfo::class) {
+            addStatement("summary(%S)", "Get ${domain.name} by ${name.capitalized()}")
+            addStatement(
+              "description(%S)",
+              """
+              Attempts to find a ${domain.name} entity associated
+              with the provided ${name.capitalized()} id
+              """.trimIndent()
+            )
+            addStatement("parameters(*%M().toTypedArray())", idParameterMember)
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
+              addStatement("description(%S)", "${domain.name} entity associated with the specified $name")
+            }
+          }
+        }
+      }
+    }.build())
+  }
+
   private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
+      addStatement("install${name.capitalized()}QueryDocumentation()")
       addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
@@ -322,5 +364,34 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }
+  }
+
+  private fun TypeSpec.Builder.addNonUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
+    val name = prop.simpleName.getShortName()
+    addFunction(FunSpec.builder("install${name.capitalized()}QueryDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", domain.name)
+          addControlFlow("get = %T.builder", GetInfo::class) {
+            addStatement("summary(%S)", "Get All ${domain.name} by ${name.capitalized()}")
+            addStatement(
+              "description(%S)",
+              """
+              Attempts to find all ${domain.name} entities associated
+              with the provided ${name.capitalized()} id
+              """.trimIndent()
+            )
+            addStatement("parameters(*%M().toTypedArray().plus(%M()))", getAllParametersMember, idParameterMember)
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
+              addStatement("description(%S)", "${domain.name} entities associated with the specified $name")
+            }
+          }
+        }
+      }
+    }.build())
   }
 }
