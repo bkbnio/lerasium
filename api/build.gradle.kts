@@ -9,7 +9,7 @@ plugins {
   id("signing")
 }
 
-sourdough {
+sourdoughLibrary {
   libraryName.set("Lerasium API Core")
   libraryDescription.set("Collection of annotations for driving API generation️")
 }
@@ -17,11 +17,17 @@ sourdough {
 dependencies {
   // IMPLEMENTATION
 
+  // Versions
+  val ktorVersion: String by project
+  val kompendiumVersion: String by project
+
   // Ktor
-  api(group = "io.ktor", name = "ktor-server-core", version = "1.6.7")
-  api(group = "io.ktor", name = "ktor-server-netty", version = "1.6.7")
-  api(group = "io.ktor", name = "ktor-serialization", version = "1.6.7")
+  api("io.ktor:ktor-server-core:$ktorVersion")
+  api("io.ktor:ktor-server-cio:$ktorVersion")
+  api("io.ktor:ktor-server-html-builder:$ktorVersion")
+  api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+  api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
   // Kompendium
-  api(group = "io.bkbn", name = "kompendium-core", version = "2.1.1")
+  api("io.bkbn:kompendium-core:$kompendiumVersion")
 }

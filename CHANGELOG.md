@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.3.0] - September 3rd, 2022
+### Added
+
+- GetBy queries 
+
+### Change
+
+- Ktor 2 + Kompendium Upgrades
+
 ## [0.2.1] - March 10th, 2022
 ### Change
 - Attempt to fix bug in package publishing pipeline

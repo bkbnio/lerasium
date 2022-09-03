@@ -20,7 +20,6 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
@@ -40,7 +39,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
-@OptIn(KotlinPoetKspPreview::class, KspExperimental::class)
+@OptIn(KspExperimental::class)
 class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   private lateinit var containingFile: KSFile
