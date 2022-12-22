@@ -5,7 +5,6 @@
 ## Table of Contents
 
 - [What Is Lerasium](#what-is-lerasium)
-- [Library Details](#library-details)
 - [Local Development](#local-development)
 - [The Playground](#the-playground)
 
@@ -14,11 +13,6 @@
 In a sentence, Lerasium is a highly opinionated service generator for Kotlin. It takes in a domain definition, and
 generates
 the boilerplate for your ORM, DAO, and API.
-
-# Library Details
-
-Library documentation lives alongside the source code, and is generated into a static site via Dokka. Can be
-viewed [here](https://bkbnio.github.io/lerasium)
 
 ## Local Development
 
