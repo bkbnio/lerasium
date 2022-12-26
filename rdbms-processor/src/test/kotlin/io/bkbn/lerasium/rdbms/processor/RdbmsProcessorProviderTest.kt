@@ -48,7 +48,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserResponse
@@ -130,7 +130,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "CounterTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.CounterResponse
@@ -216,7 +216,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserResponse
@@ -299,7 +299,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "FactsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.FactsResponse
@@ -382,7 +382,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "BigNumTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.BigNumResponse
@@ -465,7 +465,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "FloatyTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.FloatyResponse
@@ -551,7 +551,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.WordsResponse
@@ -638,7 +638,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "LettersTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.LettersResponse
@@ -749,7 +749,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.WordsResponse
@@ -835,7 +835,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.WordsResponse
@@ -923,7 +923,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "WordsTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.WordsResponse
@@ -1027,7 +1027,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 4
       result.kspGeneratedSources.first { it.name == "UserTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserResponse
@@ -1135,7 +1135,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 4
       result.kspGeneratedSources.first { it.name == "CountryTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.CountryResponse
@@ -1257,7 +1257,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 6
       result.kspGeneratedSources.first { it.name == "BookTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.BookResponse
@@ -1310,7 +1310,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       )
       result.kspGeneratedSources.first { it.name == "BookReviewTable.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.BookReviewResponse
@@ -1404,13 +1404,14 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import io.bkbn.lerasium.core.dao.Dao
         import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.collections.List
@@ -1419,7 +1420,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import kotlinx.datetime.toLocalDateTime
         import org.jetbrains.exposed.sql.transactions.transaction
 
-        public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+        public object UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           public override fun create(requests: List<UserCreateRequest>): List<UserResponse> = transaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val entities = requests.map { request ->
@@ -1470,7 +1471,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
             }
           }
         }
-      """.trimIndent()
+        """.trimIndent()
       ) { it.replace("PLACEHOLDER", errorMessage) }
     }
     it("Can create a dao with a one-to-many reference ") {
@@ -1527,7 +1528,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 4
       result.kspGeneratedSources.first { it.name == "CountryDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import io.bkbn.lerasium.core.dao.Dao
         import io.bkbn.lerasium.core.model.CountResponse
@@ -1535,6 +1536,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.CountryResponse
         import io.bkbn.lerasium.generated.models.CountryUpdateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
+        import io.bkbn.lerasium.generated.persistence.entity.CountryEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.collections.List
@@ -1543,7 +1545,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import kotlinx.datetime.toLocalDateTime
         import org.jetbrains.exposed.sql.transactions.transaction
 
-        public class CountryDao :
+        public object CountryDao :
             Dao<CountryEntity, CountryResponse, CountryCreateRequest, CountryUpdateRequest> {
           public override fun create(requests: List<CountryCreateRequest>): List<CountryResponse> =
               transaction {
@@ -1646,13 +1648,15 @@ class RdbmsProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import io.bkbn.lerasium.core.dao.Dao
         import io.bkbn.lerasium.core.model.CountResponse
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
+        import io.bkbn.lerasium.generated.persistence.entity.UserTable
         import java.util.UUID
         import kotlin.Int
         import kotlin.String
@@ -1662,7 +1666,7 @@ class RdbmsProcessorProviderTest : DescribeSpec({
         import kotlinx.datetime.toLocalDateTime
         import org.jetbrains.exposed.sql.transactions.transaction
 
-        public class UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
+        public object UserDao : Dao<UserEntity, UserResponse, UserCreateRequest, UserUpdateRequest> {
           public override fun create(requests: List<UserCreateRequest>): List<UserResponse> = transaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val entities = requests.map { request ->

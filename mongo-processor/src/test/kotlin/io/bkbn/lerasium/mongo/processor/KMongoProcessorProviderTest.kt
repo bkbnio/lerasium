@@ -30,7 +30,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDocument.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserResponse
@@ -81,7 +81,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDocument.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserPreferencesResponse
@@ -154,7 +154,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDocument.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.entity
 
         import io.bkbn.lerasium.core.model.Entity
         import io.bkbn.lerasium.generated.models.UserInfoResponse
@@ -258,7 +258,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
@@ -267,6 +267,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.Unit
@@ -371,7 +372,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
@@ -380,6 +381,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.Unit
@@ -488,7 +490,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
@@ -497,6 +499,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.Unit
@@ -589,7 +592,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
@@ -598,6 +601,8 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
+        import io.bkbn.lerasium.generated.persistence.entity.UserPreferencesEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.Unit
@@ -701,7 +706,7 @@ class KMongoProcessorProviderTest : DescribeSpec({
       result.kspGeneratedSources shouldHaveSize 2
       result.kspGeneratedSources.first { it.name == "UserDao.kt" }.readTrimmed() shouldBe kotlinCode(
         """
-        package io.bkbn.lerasium.generated.entity
+        package io.bkbn.lerasium.generated.persistence.dao
 
         import com.mongodb.client.MongoCollection
         import com.mongodb.client.MongoDatabase
@@ -710,6 +715,10 @@ class KMongoProcessorProviderTest : DescribeSpec({
         import io.bkbn.lerasium.generated.models.UserCreateRequest
         import io.bkbn.lerasium.generated.models.UserResponse
         import io.bkbn.lerasium.generated.models.UserUpdateRequest
+        import io.bkbn.lerasium.generated.persistence.entity.UserEntity
+        import io.bkbn.lerasium.generated.persistence.entity.UserInfoEntity
+        import io.bkbn.lerasium.generated.persistence.entity.UserPreferencesEntity
+        import io.bkbn.lerasium.generated.persistence.entity.UserStuffEntity
         import java.util.UUID
         import kotlin.Int
         import kotlin.Unit
