@@ -4,7 +4,7 @@ import com.squareup.kotlinpoet.MemberName
 
 object Members {
 
-  val authenticationMember = MemberName("io.ktor.server.auth", "authenticate")
+  val authenticateMember = MemberName("io.ktor.server.auth", "authenticate")
   val routeMember = MemberName("io.ktor.server.routing", "route")
   val getMember = MemberName("io.ktor.server.routing", "get")
   val postMember = MemberName("io.ktor.server.routing", "post")
@@ -17,4 +17,9 @@ object Members {
   val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
   val idParameterMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "idParameter")
   val hmac256Member = MemberName("com.auth0.jwt.algorithms.Algorithm", "HMAC256")
+  val jwtMember = MemberName("io.ktor.server.auth.jwt", "jwt")
+  val contentNegotiationMember = MemberName("io.ktor.server.plugins.contentnegotiation", "ContentNegotiation")
+  val ktorJsonMember = MemberName("io.ktor.serialization.kotlinx.json", "json")
+  val kotlinxJsonMember = MemberName("kotlinx.serialization.json", "Json")
+  val authenticationMember = MemberName("io.ktor.server.auth", "authentication")
 }

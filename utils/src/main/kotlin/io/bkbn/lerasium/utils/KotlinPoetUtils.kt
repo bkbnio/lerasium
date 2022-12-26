@@ -26,6 +26,7 @@ object KotlinPoetUtils {
   const val API_DOCS_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.docs"
   const val API_CONTROLLER_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.controller"
   const val API_SERVICE_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.service"
+  const val API_CONFIG_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.config"
 
   // Models
   const val MODEL_PACKAGE_NAME = "$BASE_PACKAGE_NAME.models"
@@ -72,7 +73,6 @@ object KotlinPoetUtils {
   fun Domain.toTableClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toDaoClass(): ClassName = ClassName(DAO_PACKAGE_NAME, name.plus("Dao"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
-  fun Domain.toAuthTag(): String = "jwt_auth_${name.camelToSnakeCase()}"
 
   fun String.toResponseClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, this.plus("Response"))
   fun String.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, this.plus("Entity"))

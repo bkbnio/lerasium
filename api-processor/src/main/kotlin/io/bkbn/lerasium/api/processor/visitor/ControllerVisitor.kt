@@ -21,7 +21,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.GetBy
-import io.bkbn.lerasium.api.processor.Members.authenticationMember
+import io.bkbn.lerasium.api.processor.Members.authenticateMember
 import io.bkbn.lerasium.api.processor.Members.callMember
 import io.bkbn.lerasium.api.processor.Members.deleteMember
 import io.bkbn.lerasium.api.processor.Members.getMember
@@ -30,13 +30,13 @@ import io.bkbn.lerasium.api.processor.Members.putMember
 import io.bkbn.lerasium.api.processor.Members.receiveMember
 import io.bkbn.lerasium.api.processor.Members.respondMember
 import io.bkbn.lerasium.api.processor.Members.routeMember
+import io.bkbn.lerasium.api.processor.authSlug
 import io.bkbn.lerasium.api.processor.hasQueries
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toAuthTag
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
@@ -146,7 +146,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
               addStatement("%M.%M(%T.OK)", callMember, respondMember, HttpStatusCode::class)
             }
           }
-          addControlFlow("%M(%S)", authenticationMember, charter.domain.toAuthTag()) {
+          addControlFlow("%M(%S)", authenticateMember, charter.authSlug) {
             addControlFlow("%M(%S)", routeMember, "/validate") {
               addStatement("%M()", charter.documentationMemberName("authValidationDocumentation"))
               addControlFlow("%M", getMember) {
