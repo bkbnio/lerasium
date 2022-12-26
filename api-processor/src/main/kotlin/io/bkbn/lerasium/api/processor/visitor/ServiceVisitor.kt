@@ -55,19 +55,4 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       }
     }.build())
   }
-
-  /*
-    @Suppress("MagicNumber")
-  fun authenticate(email: String, password: String): String {
-    val user = UserRepository.authenticate(email, password)
-    val unsignedToken = JWT.create().apply {
-      withAudience("http://0.0.0.0:8080/hello")
-      withIssuer("http://0.0.0.0:8080/")
-      withClaim("username", user.email)
-      withExpiresAt(Date(System.currentTimeMillis() + 60000))
-    }
-
-    return unsignedToken.sign(Algorithm.HMAC256("secret"))
-  }
-   */
 }
