@@ -32,6 +32,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
+import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.ktor.http.HttpStatusCode
@@ -47,7 +48,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
 
     val domain = classDeclaration.findParentDomain()
     val apiObjectName = domain.name.plus("ApiDocs")
-    val charter = ApiCharter(domain, classDeclaration)
+    val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
@@ -139,7 +140,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
   }
 
   @OptIn(KspExperimental::class)
-  private fun TypeSpec.Builder.addRelationalDocumentation(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addRelationalDocumentation(charter: LerasiumCharter) {
     charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
       addFunction(FunSpec.builder("${name}RelationDocumentation").apply {
@@ -174,7 +175,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
   }
 
   @OptIn(KspExperimental::class)
-  private fun TypeSpec.Builder.addQueryDocumentation(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addQueryDocumentation(charter: LerasiumCharter) {
     charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
@@ -242,12 +243,12 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     }.build())
   }
 
-  private fun TypeSpec.Builder.addAuthDocumentation(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addAuthDocumentation(charter: LerasiumCharter) {
     addLoginDocumentation(charter)
     addAuthValidationDocumentation(charter)
   }
 
-  private fun TypeSpec.Builder.addLoginDocumentation(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addLoginDocumentation(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("loginDocumentation").apply {
       receiver(Route::class)
       addModifiers(KModifier.INTERNAL)
@@ -272,7 +273,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     }.build())
   }
 
-  private fun TypeSpec.Builder.addAuthValidationDocumentation(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addAuthValidationDocumentation(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("authValidationDocumentation").apply {
       receiver(Route::class)
       addModifiers(KModifier.INTERNAL)

@@ -31,6 +31,7 @@ import io.bkbn.lerasium.api.processor.Members.receiveMember
 import io.bkbn.lerasium.api.processor.Members.respondMember
 import io.bkbn.lerasium.api.processor.Members.routeMember
 import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
@@ -38,9 +39,11 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toAuthTag
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
+import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.routing.Route
 import java.util.Locale
@@ -56,7 +59,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
 
     val domain = classDeclaration.findParentDomain()
     val apiObjectName = domain.name.plus("Api")
-    val charter = ApiCharter(domain, classDeclaration)
+    val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
@@ -68,7 +71,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun TypeSpec.Builder.addController(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addController(charter: LerasiumCharter) {
     val controllerName = charter.domain.name.plus("Controller")
       .replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val baseName = charter.domain.name.replaceFirstChar { it.lowercase(Locale.getDefault()) }
@@ -86,7 +89,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun TypeSpec.Builder.addRootRouteFunction(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addRootRouteFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("rootRoute").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
@@ -99,7 +102,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun TypeSpec.Builder.addIdRouteFunction(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addIdRouteFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("idRoute").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
@@ -116,7 +119,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun TypeSpec.Builder.addQueryRoutesFunction(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addQueryRoutesFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("queryRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
@@ -127,7 +130,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun TypeSpec.Builder.addAuthRoutesFunction(charter: ApiCharter) {
+  private fun TypeSpec.Builder.addAuthRoutesFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("authRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
@@ -137,7 +140,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addControlFlow("%M(%S)", routeMember, "/login") {
             addStatement("%M()", charter.documentationMemberName("loginDocumentation"))
             addControlFlow("%M", postMember) {
-              addStatement("call.respond(HttpStatusCode.NotImplemented)")
+              addStatement("val request = %M.%M<%T>()", callMember, receiveMember, LoginRequest::class)
+              addStatement("val token = dao.authenticate(request.username, request.password)")
+              addStatement("%M.response.headers.append(%T.Authorization, token)", callMember, HttpHeaders::class)
+              addStatement("%M.%M(%T.OK)", callMember, respondMember, HttpStatusCode::class)
             }
           }
           addControlFlow("%M(%S)", authenticationMember, charter.domain.toAuthTag()) {
@@ -148,13 +154,12 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
               }
             }
           }
-          // todo validate
         }
       }
     }.build())
   }
 
-  private fun CodeBlock.Builder.addCreateRoute(charter: ApiCharter) {
+  private fun CodeBlock.Builder.addCreateRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", postMember) {
         addStatement(
@@ -190,7 +195,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addUpdateRoute(charter: ApiCharter) {
+  private fun CodeBlock.Builder.addUpdateRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", putMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
@@ -211,7 +216,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 
-  private fun CodeBlock.Builder.addRelationalRoutes(charter: ApiCharter) {
+  private fun CodeBlock.Builder.addRelationalRoutes(charter: LerasiumCharter) {
     charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
       add(CodeBlock.builder().apply {
@@ -229,7 +234,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun CodeBlock.Builder.addQueries(charter: ApiCharter) {
+  private fun CodeBlock.Builder.addQueries(charter: LerasiumCharter) {
     charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
@@ -239,7 +244,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration, charter: ApiCharter) {
+  private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration, charter: LerasiumCharter) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
       addStatement("%M()", charter.documentationMemberName("${name}QueryDocumentation"))
@@ -251,7 +256,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration, charter: ApiCharter) {
+  private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration, charter: LerasiumCharter) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
       addStatement("%M()", charter.documentationMemberName("${name}QueryDocumentation"))
@@ -265,6 +270,6 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun ApiCharter.documentationMemberName(methodName: String) =
+  private fun LerasiumCharter.documentationMemberName(methodName: String) =
     MemberName(domain.toApiDocumentationClass(), methodName)
 }

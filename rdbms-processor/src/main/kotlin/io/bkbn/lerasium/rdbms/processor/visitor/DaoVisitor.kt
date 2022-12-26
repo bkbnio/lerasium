@@ -22,17 +22,22 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.auth.Password
+import io.bkbn.lerasium.core.auth.Username
 import io.bkbn.lerasium.core.dao.Dao
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
+import io.bkbn.lerasium.utils.LerasiumCharter
+import io.bkbn.lerasium.utils.LerasiumUtils.findParent
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
@@ -55,27 +60,29 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
 
     val domain = classDeclaration.findParentDomain()
+    val charter = LerasiumCharter(domain, classDeclaration)
 
-    fileBuilder.addDao(classDeclaration, domain)
+    fileBuilder.addDao(charter)
   }
 
-  private fun FileSpec.Builder.addDao(cd: KSClassDeclaration, domain: Domain) {
-    val crc = domain.toCreateRequestClass()
-    val urc = domain.toUpdateRequestClass()
-    val rc = domain.toResponseClass()
-    val ec = domain.toEntityClass()
-    val tc = domain.toTableClass()
-    addType(TypeSpec.classBuilder(domain.name.plus("Dao")).apply {
-      addOriginatingKSFile(cd.containingFile!!)
+  private fun FileSpec.Builder.addDao(charter: LerasiumCharter) {
+    val crc = charter.domain.toCreateRequestClass()
+    val urc = charter.domain.toUpdateRequestClass()
+    val rc = charter.domain.toResponseClass()
+    val ec = charter.domain.toEntityClass()
+    val tc = charter.domain.toTableClass()
+    addType(TypeSpec.classBuilder(charter.domain.name.plus("Dao")).apply {
+      addOriginatingKSFile(charter.cd.containingFile!!)
       addSuperinterface(Dao::class.asTypeName().parameterizedBy(ec, rc, crc, urc))
-      addCreateFunction(cd, crc, rc, ec)
+      addCreateFunction(charter.cd, crc, rc, ec)
       addReadFunction(rc, ec)
-      addUpdateFunction(cd, urc, rc, ec)
+      addUpdateFunction(charter.cd, urc, rc, ec)
       addDeleteFunction(ec)
       addCountAllFunction(ec)
       addGetAllFunction(ec, rc)
-      addRelations(cd, ec)
-      addIndices(cd, ec, tc, rc)
+      addRelations(charter.cd, ec)
+      addIndices(charter.cd, ec, tc, rc)
+      if (charter.isActor) addAuthenticationFunction(charter, ec, tc, rc)
     }.build())
   }
 
@@ -285,6 +292,44 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     addCode(CodeBlock.builder().apply {
       addControlFlow("return %M", Transaction) {
         addStatement("%T.find { %T.$name eq $name }.limit(chunk, offset.toLong()).map { it.toResponse() }", ec, tc)
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addAuthenticationFunction(
+    charter: LerasiumCharter,
+    entityClass: ClassName,
+    tableClass: ClassName,
+    responseClass: ClassName
+  ) {
+    val parent = charter.cd.findParent()
+    val usernameProp = parent.getAllProperties().find { it.isAnnotationPresent(Username::class) }
+      ?: error("No username property found for ${charter.cd.qualifiedName}")
+    val passwordProp = parent.getAllProperties().find { it.isAnnotationPresent(Password::class) }
+      ?: error("No password property found for ${charter.cd.qualifiedName}")
+    addFunction(FunSpec.builder("authenticate").apply {
+      addParameter("username", String::class)
+      addParameter("password", String::class)
+      returns(responseClass)
+      addCodeBlock {
+        addControlFlow("return %M", Transaction) {
+          addStatement(
+            "val entity = %T.find { %T.${usernameProp.simpleName.getShortName()} eq username }.firstOrNull()",
+            entityClass,
+            tableClass,
+          )
+          indent()
+          addStatement(
+            "?: error(%P)",
+            "No ${charter.domain.name} found with username: \$username"
+          )
+          unindent()
+          addStatement(
+            "if (entity.${passwordProp.simpleName.getShortName()} != password) error(%S)",
+            "Invalid password"
+          )
+          addStatement("entity.toResponse()")
+        }
       }
     }.build())
   }
