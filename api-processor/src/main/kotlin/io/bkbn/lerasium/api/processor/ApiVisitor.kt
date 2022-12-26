@@ -19,26 +19,25 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
-import io.bkbn.kompendium.core.metadata.DeleteInfo
-import io.bkbn.kompendium.core.metadata.GetInfo
-import io.bkbn.kompendium.core.metadata.PostInfo
-import io.bkbn.kompendium.core.metadata.PutInfo
-import io.bkbn.kompendium.core.plugin.NotarizedRoute
 import io.bkbn.lerasium.api.GetBy
-import io.bkbn.lerasium.core.Actor
-import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.api.processor.Members.authenticationMember
+import io.bkbn.lerasium.api.processor.Members.callMember
+import io.bkbn.lerasium.api.processor.Members.deleteMember
+import io.bkbn.lerasium.api.processor.Members.getMember
+import io.bkbn.lerasium.api.processor.Members.postMember
+import io.bkbn.lerasium.api.processor.Members.putMember
+import io.bkbn.lerasium.api.processor.Members.receiveMember
+import io.bkbn.lerasium.api.processor.Members.respondMember
+import io.bkbn.lerasium.api.processor.Members.routeMember
 import io.bkbn.lerasium.core.Relation
-import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toAuthTag
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParent
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
@@ -48,21 +47,6 @@ import java.util.Locale
 import java.util.UUID
 
 class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
-
-  companion object {
-    val authenticationMember = MemberName("io.ktor.server.auth", "authenticate")
-    val routeMember = MemberName("io.ktor.server.routing", "route")
-    val getMember = MemberName("io.ktor.server.routing", "get")
-    val postMember = MemberName("io.ktor.server.routing", "post")
-    val putMember = MemberName("io.ktor.server.routing", "put")
-    val deleteMember = MemberName("io.ktor.server.routing", "delete")
-    val callMember = MemberName("io.ktor.server.application", "call")
-    val receiveMember = MemberName("io.ktor.server.request", "receive")
-    val respondMember = MemberName("io.ktor.server.response", "respond")
-    val installMember = MemberName("io.ktor.server.application", "install")
-    val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
-    val idParameterMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "idParameter")
-  }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
     if (classDeclaration.classKind != ClassKind.INTERFACE) {
@@ -81,7 +65,6 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addIdRouteFunction(charter)
       if (charter.hasQueries) addQueryRoutesFunction(charter)
       if (charter.isActor) addAuthRoutesFunction(charter)
-      addDocumentation(charter)
     }.build())
   }
 
@@ -109,7 +92,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addModifiers(KModifier.PRIVATE)
       addParameter(ParameterSpec.builder("dao", charter.domain.toDaoClass()).build())
       addCodeBlock {
-        addStatement("rootDocumentation()")
+        addStatement("%M()", charter.documentationMemberName("rootDocumentation"))
         addCreateRoute(charter)
         addGetAllRoute()
       }
@@ -123,7 +106,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addParameter(ParameterSpec.builder("dao", charter.domain.toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/{id}") {
-          addStatement("idDocumentation()")
+          addStatement("%M()", charter.documentationMemberName("idDocumentation"))
           addReadRoute()
           addUpdateRoute(charter)
           addDeleteRoute()
@@ -152,107 +135,20 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/auth") {
           addControlFlow("%M(%S)", routeMember, "/login") {
-            addStatement("loginDocumentation()")
+            addStatement("%M()", charter.documentationMemberName("loginDocumentation"))
             addControlFlow("%M", postMember) {
               addStatement("call.respond(HttpStatusCode.NotImplemented)")
             }
           }
           addControlFlow("%M(%S)", authenticationMember, charter.domain.toAuthTag()) {
             addControlFlow("%M(%S)", routeMember, "/validate") {
-              addStatement("authValidationDocumentation()")
+              addStatement("%M()", charter.documentationMemberName("authValidationDocumentation"))
               addControlFlow("%M", getMember) {
                 addStatement("call.respond(HttpStatusCode.NoContent)")
               }
             }
           }
           // todo validate
-        }
-      }
-    }.build())
-  }
-
-  private fun TypeSpec.Builder.addDocumentation(charter: ApiCharter) {
-    addRootDocumentation(charter.domain)
-    addIdDocumentation(charter.domain)
-    addRelationalDocumentation(charter)
-    addQueryDocumentation(charter)
-    if (charter.isActor) addAuthDocumentation(charter)
-  }
-
-  private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
-    addFunction(FunSpec.builder("rootDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", domain.name)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Get All ${domain.name} Entities")
-            addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} Entities")
-            addStatement("parameters(*%M().toTypedArray())", getAllParametersMember)
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
-              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "Paginated list of ${domain.name} entities")
-            }
-          }
-          addControlFlow("post = %T.builder", PostInfo::class) {
-            addStatement("summary(%S)", "Create New ${domain.name} Entity")
-            addStatement("description(%S)", "Persists a new ${domain.name} entity in the database")
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
-              addStatement("responseCode(%T.Created)", HttpStatusCode::class)
-              addStatement("description(%S)", "${domain.name} entities saved successfully")
-            }
-            addControlFlow("request") {
-              addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(domain.toCreateRequestClass()))
-              addStatement("description(%S)", "Collection of ${domain.name} entities the user wishes to persist")
-            }
-          }
-        }
-      }
-    }.build())
-  }
-
-  private fun TypeSpec.Builder.addIdDocumentation(domain: Domain) {
-    addFunction(FunSpec.builder("idDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", domain.name)
-          addStatement("parameters = %M()", idParameterMember)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Get ${domain.name} by ID")
-            addStatement("description(%S)", "Retrieves the specified ${domain.name} entity by its ID")
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
-              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "The ${domain.name} entity with the specified ID")
-            }
-          }
-          addControlFlow("put = %T.builder", PutInfo::class) {
-            addStatement("summary(%S)", "Update ${domain.name} by ID")
-            addStatement("description(%S)", "Updates the specified ${domain.name} entity by its ID")
-            addControlFlow("request") {
-              addStatement("requestType<%T>()", domain.toUpdateRequestClass())
-              addStatement("description(%S)", "Fields that can be updated on the ${domain.name} entity")
-            }
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
-              addStatement("responseCode(%T.Created)", HttpStatusCode::class)
-              addStatement("description(%S)", "Indicates that the ${domain.name} entity was updated successfully")
-            }
-          }
-          addControlFlow("delete = %T.builder", DeleteInfo::class) {
-            addStatement("summary(%S)", "Delete ${domain.name} by ID")
-            addStatement("description(%S)", "Deletes the specified ${domain.name} entity by its ID")
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", Unit::class)
-              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
-              addStatement("description(%S)", "Indicates that the ${domain.name} entity was deleted successfully")
-            }
-          }
         }
       }
     }.build())
@@ -320,7 +216,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       val name = property.simpleName.getShortName()
       add(CodeBlock.builder().apply {
         addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
-          addStatement("install${name.capitalized()}Documentation()")
+          addStatement("%M()", charter.documentationMemberName("${name}RelationDocumentation"))
           addControlFlow("%M", getMember) {
             addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
             addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
@@ -333,120 +229,20 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun TypeSpec.Builder.addRelationalDocumentation(charter: ApiCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
-      val name = property.simpleName.getShortName()
-      addFunction(FunSpec.builder("install${name.capitalized()}Documentation").apply {
-        receiver(Route::class)
-        addModifiers(KModifier.PRIVATE)
-        addCodeBlock {
-          addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-            addStatement("tags = setOf(%S)", charter.domain.name)
-            addControlFlow("get = %T.builder", GetInfo::class) {
-              addStatement("summary(%S)", "Get All ${charter.domain.name} ${name.capitalized()}")
-              addStatement(
-                "description(%S)",
-                """
-                  Retrieves a paginated list of ${name.capitalized()} entities associated
-                  with the provided ${charter.domain.name}
-                """.trimIndent()
-              )
-              addStatement("parameters(*%M().toTypedArray().plus(%M()))", getAllParametersMember, idParameterMember)
-              addControlFlow("response") {
-                addStatement(
-                  "responseType<%T>()",
-                  List::class.asTypeName().parameterizedBy(charter.domain.toResponseClass())
-                )
-                addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-                addStatement("description(%S)", "Paginated list of ${charter.domain.name} entities")
-              }
-            }
-          }
-        }
-      }.build())
-    }
-  }
-
   private fun CodeBlock.Builder.addQueries(charter: ApiCharter) {
     charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
-        true -> addUniqueQuery(prop)
-        false -> addNonUniqueQuery(prop)
+        true -> addUniqueQuery(prop, charter)
+        false -> addNonUniqueQuery(prop, charter)
       }
     }
   }
 
-  private fun TypeSpec.Builder.addQueryDocumentation(charter: ApiCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
-      val getBy = prop.getAnnotationsByType(GetBy::class).first()
-      when (getBy.unique) {
-        true -> addUniqueQueryDocumentation(prop, charter.domain)
-        false -> addNonUniqueQueryDocumentation(prop, charter.domain)
-      }
-    }
-  }
-
-  private fun TypeSpec.Builder.addAuthDocumentation(charter: ApiCharter) {
-    addLoginDocumentation(charter)
-    addAuthValidationDocumentation(charter)
-  }
-
-  private fun TypeSpec.Builder.addLoginDocumentation(charter: ApiCharter) {
-    addFunction(FunSpec.builder("loginDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", charter.domain.name)
-          addControlFlow("post = %T.builder", PostInfo::class) {
-            addStatement("summary(%S)", "Login")
-            addStatement("description(%S)", "Authenticates the ${charter.domain.name}")
-            addControlFlow("request") {
-              addStatement("requestType<%T>()", LoginRequest::class)
-              addStatement("description(%S)", "The username and password of the ${charter.domain.name}")
-            }
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", Unit::class)
-              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
-              addStatement("description(%S)", "Indicates successful authentication, token is returned in header")
-            }
-          }
-        }
-      }
-    }.build())
-  }
-
-  private fun TypeSpec.Builder.addAuthValidationDocumentation(charter: ApiCharter) {
-    addFunction(FunSpec.builder("authValidationDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", charter.domain.name)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Auth Validation")
-            addStatement("description(%S)", "Validate the current auth token")
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", Unit::class)
-              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
-              addStatement("description(%S)", "Auth validation response")
-            }
-            addControlFlow("canRespond") {
-              addStatement("responseType<%T>()", Unit::class)
-              addStatement("responseCode(%T.Unauthorized)", HttpStatusCode::class)
-              addStatement("description(%S)", "Token is invalid")
-            }
-          }
-        }
-      }
-    }.build())
-  }
-
-  private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration) {
+  private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration, charter: ApiCharter) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
-      addStatement("install${name.capitalized()}QueryDocumentation()")
+      addStatement("%M()", charter.documentationMemberName("${name}QueryDocumentation"))
       addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val result = dao.getBy${name.capitalized()}($name)")
@@ -455,39 +251,10 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun TypeSpec.Builder.addUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
-    val name = prop.simpleName.getShortName()
-    addFunction(FunSpec.builder("install${name.capitalized()}QueryDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", domain.name)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Get ${domain.name} by ${name.capitalized()}")
-            addStatement(
-              "description(%S)",
-              """
-              Attempts to find a ${domain.name} entity associated
-              with the provided ${name.capitalized()} id
-              """.trimIndent()
-            )
-            addStatement("parameters(*%M().toTypedArray())", idParameterMember)
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
-              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "${domain.name} entity associated with the specified $name")
-            }
-          }
-        }
-      }
-    }.build())
-  }
-
-  private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration) {
+  private fun CodeBlock.Builder.addNonUniqueQuery(prop: KSPropertyDeclaration, charter: ApiCharter) {
     val name = prop.simpleName.getShortName()
     addControlFlow("%M(%S)", routeMember, "/$name/{$name}") {
-      addStatement("install${name.capitalized()}QueryDocumentation()")
+      addStatement("%M()", charter.documentationMemberName("${name}QueryDocumentation"))
       addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
@@ -498,37 +265,6 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
   }
 
-  private fun TypeSpec.Builder.addNonUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
-    val name = prop.simpleName.getShortName()
-    addFunction(FunSpec.builder("install${name.capitalized()}QueryDocumentation").apply {
-      receiver(Route::class)
-      addModifiers(KModifier.PRIVATE)
-      addCodeBlock {
-        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
-          addStatement("tags = setOf(%S)", domain.name)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Get All ${domain.name} by ${name.capitalized()}")
-            addStatement(
-              "description(%S)",
-              """
-              Attempts to find all ${domain.name} entities associated
-              with the provided ${name.capitalized()} id
-              """.trimIndent()
-            )
-            addStatement("parameters(*%M().toTypedArray().plus(%M()))", getAllParametersMember, idParameterMember)
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
-              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "${domain.name} entities associated with the specified $name")
-            }
-          }
-        }
-      }
-    }.build())
-  }
-
-  private class ApiCharter(val domain: Domain, val cd: KSClassDeclaration) {
-    val isActor: Boolean = cd.findParent().isAnnotationPresent(Actor::class)
-    val hasQueries: Boolean = cd.getAllProperties().any { it.isAnnotationPresent(GetBy::class) }
-  }
+  private fun ApiCharter.documentationMemberName(methodName: String) =
+    MemberName(domain.toApiDocumentationClass(), methodName)
 }

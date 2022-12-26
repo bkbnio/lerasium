@@ -30,14 +30,26 @@ class KtorProcessor(
 
     if (!symbols.iterator().hasNext()) return emptyList()
 
-    symbols.forEach {
-      val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("Api"))
-      it.accept(ApiVisitor(fb, logger), Unit)
-      val fs = fb.build()
-      fs.writeTo(codeGenerator, false)
-    }
+    symbols.forEach { it.writeApiFile() }
+
+    symbols.forEach { it.writeDocFile() }
 
     return symbols.filterNot { it.validate() }.toList()
+  }
+
+  private fun KSClassDeclaration.writeApiFile() {
+    val domain = this.findParentDomain()
+    val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("Api"))
+    this.accept(ApiVisitor(fb, logger), Unit)
+    val fs = fb.build()
+    fs.writeTo(codeGenerator, false)
+  }
+
+  private fun KSClassDeclaration.writeDocFile() {
+    val domain = this.findParentDomain()
+    val fb = FileSpec.builder(BASE_API_PACKAGE_NAME, domain.name.plus("ApiDocs"))
+    this.accept(DocumentationVisitor(fb, logger), Unit)
+    val fs = fb.build()
+    fs.writeTo(codeGenerator, false)
   }
 }

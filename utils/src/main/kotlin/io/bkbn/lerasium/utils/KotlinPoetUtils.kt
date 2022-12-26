@@ -61,6 +61,7 @@ object KotlinPoetUtils {
   fun Domain.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toTableClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toDaoClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Dao"))
+  fun Domain.toApiDocumentationClass(): ClassName = ClassName(BASE_API_PACKAGE_NAME, name.plus("ApiDocs"))
   fun Domain.toAuthTag(): String = "jwt_auth_${name.camelToSnakeCase()}"
 
   fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
