@@ -30,6 +30,7 @@ import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.core.Actor
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toAuthTag
@@ -175,6 +176,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     addIdDocumentation(charter.domain)
     addRelationalDocumentation(charter)
     addQueryDocumentation(charter)
+    if (charter.isActor) addAuthDocumentation(charter)
   }
 
   private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
@@ -383,6 +385,62 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
         false -> addNonUniqueQueryDocumentation(prop, charter.domain)
       }
     }
+  }
+
+  private fun TypeSpec.Builder.addAuthDocumentation(charter: ApiCharter) {
+    addLoginDocumentation(charter)
+    addAuthValidationDocumentation(charter)
+  }
+
+  private fun TypeSpec.Builder.addLoginDocumentation(charter: ApiCharter) {
+    addFunction(FunSpec.builder("loginDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", charter.domain.name)
+          addControlFlow("post = %T.builder", PostInfo::class) {
+            addStatement("summary(%S)", "Login")
+            addStatement("description(%S)", "Authenticates the ${charter.domain.name}")
+            addControlFlow("request") {
+              addStatement("requestType<%T>()", LoginRequest::class)
+              addStatement("description(%S)", "The username and password of the ${charter.domain.name}")
+            }
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", Unit::class)
+              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
+              addStatement("description(%S)", "Indicates successful authentication, token is returned in header")
+            }
+          }
+        }
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addAuthValidationDocumentation(charter: ApiCharter) {
+    addFunction(FunSpec.builder("authValidationDocumentation").apply {
+      receiver(Route::class)
+      addModifiers(KModifier.PRIVATE)
+      addCodeBlock {
+        addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
+          addStatement("tags = setOf(%S)", charter.domain.name)
+          addControlFlow("get = %T.builder", GetInfo::class) {
+            addStatement("summary(%S)", "Auth Validation")
+            addStatement("description(%S)", "Validate the current auth token")
+            addControlFlow("response") {
+              addStatement("responseType<%T>()", Unit::class)
+              addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
+              addStatement("description(%S)", "Auth validation response")
+            }
+            addControlFlow("canRespond") {
+              addStatement("responseType<%T>()", Unit::class)
+              addStatement("responseCode(%T.Unauthorized)", HttpStatusCode::class)
+              addStatement("description(%S)", "Token is invalid")
+            }
+          }
+        }
+      }
+    }.build())
   }
 
   private fun CodeBlock.Builder.addUniqueQuery(prop: KSPropertyDeclaration) {

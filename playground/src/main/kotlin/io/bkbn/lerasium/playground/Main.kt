@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.playground
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.bkbn.kompendium.core.plugin.NotarizedApplication
 import io.bkbn.kompendium.core.routes.redoc
 import io.bkbn.kompendium.json.schema.definition.TypeDefinition
@@ -25,11 +27,16 @@ import io.bkbn.lerasium.generated.entity.UserDao
 import io.bkbn.lerasium.generated.entity.UserEntity
 import io.bkbn.lerasium.generated.entity.UserTable
 import io.bkbn.lerasium.playground.config.DatabaseConfig
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.cio.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.response.respond
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlin.reflect.typeOf
@@ -98,6 +105,28 @@ fun Application.module() {
         ),
       )
     )
+  }
+  install(Authentication) {
+    jwt("jwt_auth_user") {
+      realm = "playground"
+      verifier(
+        JWT
+          .require(Algorithm.HMAC256("secret"))
+          .withAudience("http://0.0.0.0:8080/hello")
+          .withIssuer("http://0.0.0.0:8080/")
+          .build()
+      )
+      validate { credential ->
+        if (credential.payload.getClaim("username").asString() != "") {
+          JWTPrincipal(credential.payload)
+        } else {
+          null
+        }
+      }
+      challenge { _, _ ->
+        call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+      }
+    }
   }
   routing {
     redoc("The Playground")
