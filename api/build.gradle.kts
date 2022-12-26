@@ -23,6 +23,8 @@ dependencies {
   // Ktor
   api("io.ktor:ktor-server-core:$ktorVersion")
   api("io.ktor:ktor-server-cio:$ktorVersion")
+  api("io.ktor:ktor-server-auth:$ktorVersion")
+  api("io.ktor:ktor-server-auth-jwt:$ktorVersion")
   api("io.ktor:ktor-server-html-builder:$ktorVersion")
   api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
   api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")

@@ -13,6 +13,7 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.serialization.Serializers
+import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import kotlinx.serialization.Serializable
 
 object KotlinPoetUtils {
@@ -60,6 +61,7 @@ object KotlinPoetUtils {
   fun Domain.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toTableClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toDaoClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Dao"))
+  fun Domain.toAuthTag(): String = "jwt_auth_${name.camelToSnakeCase()}"
 
   fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
   fun String.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, this.plus("Entity"))
