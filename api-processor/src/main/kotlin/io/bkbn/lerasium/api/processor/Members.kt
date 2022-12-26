@@ -16,5 +16,5 @@ object Members {
   val installMember = MemberName("io.ktor.server.application", "install")
   val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
   val idParameterMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "idParameter")
-
+  val hmac256Member = MemberName("com.auth0.jwt.algorithms.Algorithm", "HMAC256")
 }

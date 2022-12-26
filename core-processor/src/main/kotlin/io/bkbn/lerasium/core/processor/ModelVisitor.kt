@@ -29,7 +29,7 @@ import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.Request
 import io.bkbn.lerasium.core.model.Response
 import io.bkbn.lerasium.core.serialization.Serializers
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_MODEL_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.MODEL_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -100,7 +100,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
                 }.build()
               } else {
                 val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
-                val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+                val cn = ClassName(MODEL_PACKAGE_NAME, t)
                 ParameterSpec.builder(n, cn).build()
               }
             }
@@ -121,7 +121,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
               }.build()
             } else {
               val t = it.type.resolve().toClassName().simpleName.plus("CreateRequest")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(MODEL_PACKAGE_NAME, t)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -162,7 +162,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              val cn = ClassName(MODEL_PACKAGE_NAME, t).copy(nullable = true)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -192,7 +192,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus("UpdateRequest")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              val cn = ClassName(MODEL_PACKAGE_NAME, t).copy(nullable = true)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -225,7 +225,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
               }.build()
             } else {
               val t = it.type.resolve().toClassName().simpleName.plus("Response")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(MODEL_PACKAGE_NAME, t)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -268,7 +268,7 @@ class ModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus("Response")
-              val cn = ClassName(BASE_MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(MODEL_PACKAGE_NAME, t)
               ParameterSpec.builder(n, cn).build()
             }
           }

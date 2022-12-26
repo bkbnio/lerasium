@@ -1,6 +1,6 @@
 @file:OptIn(KspExperimental::class)
 
-package io.bkbn.lerasium.api.processor
+package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
@@ -30,6 +30,7 @@ import io.bkbn.lerasium.api.processor.Members.putMember
 import io.bkbn.lerasium.api.processor.Members.receiveMember
 import io.bkbn.lerasium.api.processor.Members.respondMember
 import io.bkbn.lerasium.api.processor.Members.routeMember
+import io.bkbn.lerasium.api.processor.hasQueries
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
@@ -49,7 +50,7 @@ import io.ktor.server.routing.Route
 import java.util.Locale
 import java.util.UUID
 
-class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
+class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
     if (classDeclaration.classKind != ClassKind.INTERFACE) {
@@ -58,7 +59,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }
 
     val domain = classDeclaration.findParentDomain()
-    val apiObjectName = domain.name.plus("Api")
+    val apiObjectName = domain.name.plus("Controller")
     val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
@@ -72,7 +73,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
   }
 
   private fun TypeSpec.Builder.addController(charter: LerasiumCharter) {
-    val controllerName = charter.domain.name.plus("Controller")
+    val controllerName = charter.domain.name.plus("Handler")
       .replaceFirstChar { it.lowercase(Locale.getDefault()) }
     val baseName = charter.domain.name.replaceFirstChar { it.lowercase(Locale.getDefault()) }
     addFunction(FunSpec.builder(controllerName).apply {
@@ -83,7 +84,7 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
           addStatement("rootRoute(dao)")
           addStatement("idRoute(dao)")
           if (charter.hasQueries) addStatement("queryRoutes(dao)")
-          if (charter.isActor) addStatement("authRoutes(dao)")
+          if (charter.isActor) addStatement("authRoutes()")
         }
       }
     }.build())
@@ -134,14 +135,13 @@ class ApiVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     addFunction(FunSpec.builder("authRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.cd.findParentDomain().toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/auth") {
           addControlFlow("%M(%S)", routeMember, "/login") {
             addStatement("%M()", charter.documentationMemberName("loginDocumentation"))
             addControlFlow("%M", postMember) {
               addStatement("val request = %M.%M<%T>()", callMember, receiveMember, LoginRequest::class)
-              addStatement("val token = dao.authenticate(request.username, request.password)")
+              addStatement("val token = %T.authenticate(request)", charter.apiServiceClass)
               addStatement("%M.response.headers.append(%T.Authorization, token)", callMember, HttpHeaders::class)
               addStatement("%M.%M(%T.OK)", callMember, respondMember, HttpStatusCode::class)
             }

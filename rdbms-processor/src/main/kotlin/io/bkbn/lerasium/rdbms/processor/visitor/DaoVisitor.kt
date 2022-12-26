@@ -71,7 +71,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val rc = charter.domain.toResponseClass()
     val ec = charter.domain.toEntityClass()
     val tc = charter.domain.toTableClass()
-    addType(TypeSpec.classBuilder(charter.domain.name.plus("Dao")).apply {
+    addType(TypeSpec.objectBuilder(charter.domain.name.plus("Dao")).apply {
       addOriginatingKSFile(charter.cd.containingFile!!)
       addSuperinterface(Dao::class.asTypeName().parameterizedBy(ec, rc, crc, urc))
       addCreateFunction(charter.cd, crc, rc, ec)

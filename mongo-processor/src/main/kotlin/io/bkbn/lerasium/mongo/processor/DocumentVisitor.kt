@@ -1,6 +1,5 @@
 package io.bkbn.lerasium.mongo.processor
 
-import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -24,7 +23,7 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
@@ -89,7 +88,7 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
             false -> {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus("Entity")
-              val cn = ClassName(BASE_ENTITY_PACKAGE_NAME, t)
+              val cn = ClassName(ENTITY_PACKAGE_NAME, t)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -104,7 +103,7 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
           false -> {
             val n = it.simpleName.getShortName()
             val t = it.type.resolve().toClassName().simpleName.plus("Entity")
-            val cn = ClassName(BASE_ENTITY_PACKAGE_NAME, t)
+            val cn = ClassName(ENTITY_PACKAGE_NAME, t)
             PropertySpec.builder(n, cn).apply {
               mutable(true)
               initializer(n)

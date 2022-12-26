@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.api.processor
+package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
@@ -47,7 +47,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     }
 
     val domain = classDeclaration.findParentDomain()
-    val apiObjectName = domain.name.plus("ApiDocs")
+    val apiObjectName = domain.name.plus("Documentation")
     val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {

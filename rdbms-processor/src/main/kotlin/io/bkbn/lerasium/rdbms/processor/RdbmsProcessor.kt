@@ -13,7 +13,8 @@ import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.rdbms.processor.visitor.DaoVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.EntityVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 
 class RdbmsProcessor(
@@ -35,7 +36,7 @@ class RdbmsProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
+      val fb = FileSpec.builder(ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
       it.accept(TableVisitor(fb, logger), Unit)
       it.accept(EntityVisitor(fb, logger), Unit)
       val fs = fb.build()
@@ -44,7 +45,7 @@ class RdbmsProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Dao"))
+      val fb = FileSpec.builder(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
       it.accept(DaoVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)

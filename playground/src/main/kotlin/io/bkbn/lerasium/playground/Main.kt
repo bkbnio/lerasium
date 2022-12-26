@@ -11,21 +11,22 @@ import io.bkbn.kompendium.oas.info.Info
 import io.bkbn.kompendium.oas.info.License
 import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
 import io.bkbn.kompendium.oas.server.Server
-import io.bkbn.lerasium.generated.api.AuthorApi.authorController
-import io.bkbn.lerasium.generated.api.BookApi.bookController
-import io.bkbn.lerasium.generated.api.BookReviewApi.bookReviewController
-import io.bkbn.lerasium.generated.api.ProfileApi.profileController
-import io.bkbn.lerasium.generated.api.UserApi.userController
-import io.bkbn.lerasium.generated.entity.AuthorDao
-import io.bkbn.lerasium.generated.entity.AuthorTable
-import io.bkbn.lerasium.generated.entity.BookDao
-import io.bkbn.lerasium.generated.entity.BookReviewDao
-import io.bkbn.lerasium.generated.entity.BookReviewTable
-import io.bkbn.lerasium.generated.entity.BookTable
-import io.bkbn.lerasium.generated.entity.ProfileDao
-import io.bkbn.lerasium.generated.entity.UserDao
-import io.bkbn.lerasium.generated.entity.UserEntity
-import io.bkbn.lerasium.generated.entity.UserTable
+import io.bkbn.lerasium.generated.api.controller.AuthorController.authorHandler
+import io.bkbn.lerasium.generated.api.controller.BookController.bookHandler
+import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReviewHandler
+import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
+import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
+import io.bkbn.lerasium.generated.models.UserCreateRequest
+import io.bkbn.lerasium.generated.persistence.dao.AuthorDao
+import io.bkbn.lerasium.generated.persistence.dao.BookDao
+import io.bkbn.lerasium.generated.persistence.dao.BookReviewDao
+import io.bkbn.lerasium.generated.persistence.dao.ProfileDao
+import io.bkbn.lerasium.generated.persistence.dao.UserDao
+import io.bkbn.lerasium.generated.persistence.entity.AuthorTable
+import io.bkbn.lerasium.generated.persistence.entity.BookReviewTable
+import io.bkbn.lerasium.generated.persistence.entity.BookTable
+import io.bkbn.lerasium.generated.persistence.entity.UserEntity
+import io.bkbn.lerasium.generated.persistence.entity.UserTable
 import io.bkbn.lerasium.playground.config.DatabaseConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -57,6 +58,9 @@ fun main(args: Array<String>) {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.relationalDatabase
+
+  DatabaseConfig.flyway.clean()
+
   transaction {
     val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
     println("-------------")
@@ -64,6 +68,20 @@ fun main(args: Array<String>) {
     println("-------------")
   }
   DatabaseConfig.flyway.migrate()
+
+  // Inject some dummy data
+  UserDao.create(
+    listOf(
+      UserCreateRequest(
+        "Doctor",
+        "Backbone",
+        email = "admin@bkbn.io",
+        password = "password",
+        favoriteFood = null
+      )
+    )
+  )
+
   logger.info { "Launching API" }
   EngineMain.main(args)
 }
@@ -131,11 +149,11 @@ fun Application.module() {
   routing {
     redoc("The Playground")
     route("/") {
-      userController(UserDao())
-      bookController(BookDao())
-      bookReviewController(BookReviewDao())
-      authorController(AuthorDao())
-      profileController(ProfileDao(DatabaseConfig.documentDatabase))
+      userHandler(UserDao)
+      bookHandler(BookDao)
+      bookReviewHandler(BookReviewDao)
+      authorHandler(AuthorDao)
+      profileHandler(ProfileDao(DatabaseConfig.documentDatabase))
     }
   }
 }

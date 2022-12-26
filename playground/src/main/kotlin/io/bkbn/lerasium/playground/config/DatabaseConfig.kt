@@ -19,6 +19,7 @@ object DatabaseConfig {
 
   val flyway: Flyway by lazy {
     Flyway.configure()
+      .cleanDisabled(false)
       .dataSource(CONNECTION_URI, POSTGRES_USER, POSTGRES_PASSWORD)
       .locations("db/migration")
       .load() ?: error("Problem Loading Flyway!! Please verify Database Connection / Migration Info")

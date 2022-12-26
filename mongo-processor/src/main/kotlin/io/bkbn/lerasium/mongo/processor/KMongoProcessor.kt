@@ -10,7 +10,8 @@ import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.lerasium.mongo.Document
-import io.bkbn.lerasium.utils.KotlinPoetUtils.BASE_ENTITY_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 
 class KMongoProcessor(
@@ -32,7 +33,7 @@ class KMongoProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Document"))
+      val fb = FileSpec.builder(ENTITY_PACKAGE_NAME, domain.name.plus("Document"))
       it.accept(DocumentVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
@@ -40,7 +41,7 @@ class KMongoProcessor(
 
     symbols.forEach {
       val domain = it.findParentDomain()
-      val fb = FileSpec.builder(BASE_ENTITY_PACKAGE_NAME, domain.name.plus("Dao"))
+      val fb = FileSpec.builder(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
       it.accept(DaoVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
