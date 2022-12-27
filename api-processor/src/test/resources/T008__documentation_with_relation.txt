@@ -1,0 +1,105 @@
+package io.bkbn.lerasium.generated.api.docs
+
+import io.bkbn.kompendium.core.metadata.DeleteInfo
+import io.bkbn.kompendium.core.metadata.GetInfo
+import io.bkbn.kompendium.core.metadata.PostInfo
+import io.bkbn.kompendium.core.metadata.PutInfo
+import io.bkbn.kompendium.core.plugin.NotarizedRoute
+import io.bkbn.lerasium.api.util.ApiDocumentationUtils.getAllParameters
+import io.bkbn.lerasium.api.util.ApiDocumentationUtils.idParameter
+import io.bkbn.lerasium.generated.models.CountryCreateRequest
+import io.bkbn.lerasium.generated.models.CountryResponse
+import io.bkbn.lerasium.generated.models.CountryUpdateRequest
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.install
+import io.ktor.server.routing.Route
+import kotlin.Unit
+import kotlin.collections.List
+
+public object CountryDocumentation {
+  internal fun Route.rootDocumentation(): Unit {
+    install(NotarizedRoute()) {
+      tags = setOf("Country")
+      get = GetInfo.builder {
+        summary("Get All Country Entities")
+        description("Retrieves a paginated list of Country Entities")
+        parameters(*getAllParameters().toTypedArray())
+        response {
+          responseType<List<CountryResponse>>()
+          responseCode(HttpStatusCode.OK)
+          description("Paginated list of Country entities")
+        }
+      }
+      post = PostInfo.builder {
+        summary("Create New Country Entity")
+        description("Persists a new Country entity in the database")
+        response {
+          responseType<List<CountryResponse>>()
+          responseCode(HttpStatusCode.Created)
+          description("Country entities saved successfully")
+        }
+        request {
+          requestType<List<CountryCreateRequest>>()
+          description("Collection of Country entities the user wishes to persist")
+        }
+      }
+    }
+  }
+
+  internal fun Route.idDocumentation(): Unit {
+    install(NotarizedRoute()) {
+      tags = setOf("Country")
+      parameters = idParameter()
+      get = GetInfo.builder {
+        summary("Get Country by ID")
+        description("Retrieves the specified Country entity by its ID")
+        response {
+          responseType<CountryResponse>()
+          responseCode(HttpStatusCode.OK)
+          description("The Country entity with the specified ID")
+        }
+      }
+      put = PutInfo.builder {
+        summary("Update Country by ID")
+        description("Updates the specified Country entity by its ID")
+        request {
+          requestType<CountryUpdateRequest>()
+          description("Fields that can be updated on the Country entity")
+        }
+        response {
+          responseType<CountryResponse>()
+          responseCode(HttpStatusCode.Created)
+          description("Indicates that the Country entity was updated successfully")
+        }
+      }
+      delete = DeleteInfo.builder {
+        summary("Delete Country by ID")
+        description("Deletes the specified Country entity by its ID")
+        response {
+          responseType<Unit>()
+          responseCode(HttpStatusCode.NoContent)
+          description("Indicates that the Country entity was deleted successfully")
+        }
+      }
+    }
+  }
+
+  internal fun Route.usersRelationDocumentation(): Unit {
+    install(NotarizedRoute()) {
+      tags = setOf("Country")
+      get = GetInfo.builder {
+        summary("Get All Country Users")
+        description("""
+            |Retrieves a paginated list of Users entities associated
+            |with the provided Country
+            """.trimMargin())
+        parameters(*getAllParameters().toTypedArray().plus(idParameter()))
+        response {
+          responseType<List<CountryResponse>>()
+          responseCode(HttpStatusCode.OK)
+          description("Paginated list of Country entities")
+        }
+      }
+    }
+  }
+}

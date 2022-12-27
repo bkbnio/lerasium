@@ -111,9 +111,11 @@ class KtorProcessor(
         addControlFlow("%M(%M)", installMember, contentNegotiationMember) {
           addStatement("%M(json)", ktorJsonMember)
         }
-        addControlFlow("%M", authenticationMember) {
-          actors.forEach {
-            addStatement("${it}AuthConfig()".replaceFirstChar { c -> c.lowercase(Locale.getDefault()) })
+        if (actors.isNotEmpty()) {
+          addControlFlow("%M", authenticationMember) {
+            actors.forEach {
+              addStatement("${it}AuthConfig()".replaceFirstChar { c -> c.lowercase(Locale.getDefault()) })
+            }
           }
         }
       }

@@ -1,0 +1,66 @@
+package io.bkbn.lerasium.generated.api.controller
+
+import io.bkbn.lerasium.generated.api.docs.UserDocumentation.idDocumentation
+import io.bkbn.lerasium.generated.api.docs.UserDocumentation.rootDocumentation
+import io.bkbn.lerasium.generated.models.UserCreateRequest
+import io.bkbn.lerasium.generated.models.UserUpdateRequest
+import io.bkbn.lerasium.generated.persistence.dao.UserDao
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.`get`
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.route
+import java.util.UUID
+import kotlin.Unit
+import kotlin.collections.List
+
+public object UserController {
+  public fun Route.userHandler(dao: UserDao): Unit {
+    route("/user") {
+      rootRoute(dao)
+      idRoute(dao)
+    }
+  }
+
+  private fun Route.rootRoute(dao: UserDao): Unit {
+    rootDocumentation()
+    post {
+      val request = call.receive<List<UserCreateRequest>>()
+      val result = dao.create(request)
+      call.respond(result)
+    }
+    `get` {
+      val chunk = call.parameters["chunk"]?.toInt() ?: 100
+      val offset = call.parameters["offset"]?.toInt() ?: 0
+      val result = dao.getAll(chunk, offset)
+      call.respond(result)
+    }
+  }
+
+  private fun Route.idRoute(dao: UserDao): Unit {
+    route("/{id}") {
+      idDocumentation()
+      `get` {
+        val id = UUID.fromString(call.parameters["id"])
+        val result = dao.read(id)
+        call.respond(result)
+      }
+      put {
+        val id = UUID.fromString(call.parameters["id"])
+        val request = call.receive<UserUpdateRequest>()
+        val result = dao.update(id, request)
+        call.respond(result)
+      }
+      delete {
+        val id = UUID.fromString(call.parameters["id"])
+        dao.delete(id)
+        call.respond(HttpStatusCode.NoContent)
+      }
+    }
+  }
+}

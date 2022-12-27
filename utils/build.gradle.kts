@@ -42,5 +42,6 @@ dependencies {
 
   testFixturesApi("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
   testFixturesApi("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+  testFixturesApi("io.kotest.extensions:kotest-assertions-compiler:1.0.0")
   testFixturesApi("com.github.tschuchortdev:kotlin-compile-testing-ksp:$kotlinCompileTestingKspVersion")
 }

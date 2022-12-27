@@ -57,7 +57,7 @@ class ConfigVisitor(private val fileBuilder: FileSpec.Builder, private val logge
               addStatement("null")
             }
           }
-          addControlFlow("challenge { _, _ -> ") {
+          addControlFlow("challenge { _, _ ->") {
             addStatement(
               "call.%M(%T.Unauthorized, %S)",
               respondMember,

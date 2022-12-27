@@ -36,6 +36,7 @@ dependencies {
 
   // Test Utils
   testImplementation(testFixtures(projects.lerasiumUtils))
+  testImplementation(kotlin("script-runtime"))
 }
 
 testing {
