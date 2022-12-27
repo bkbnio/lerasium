@@ -13,7 +13,7 @@ class ConfigVisitorTest : DescribeSpec({
         provider = KtorProcessorProvider(),
         expectedFileCount = 4,
         fileUnderTest = "ApiConfig.kt",
-        fileSnapshot = "T001__simple_api_config.txt",
+        fileSnapshot = "T001__config_basic_example.txt",
       )
     }
     it("Can generate a config with jwt auth") {
