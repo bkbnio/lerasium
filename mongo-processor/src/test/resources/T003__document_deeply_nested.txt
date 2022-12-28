@@ -1,0 +1,83 @@
+package io.bkbn.lerasium.generated.persistence.entity
+
+import io.bkbn.lerasium.core.model.Entity
+import io.bkbn.lerasium.generated.models.UserInfoResponse
+import io.bkbn.lerasium.generated.models.UserPreferencesResponse
+import io.bkbn.lerasium.generated.models.UserResponse
+import io.bkbn.lerasium.generated.models.UserStuffResponse
+import java.util.UUID
+import kotlin.Boolean
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.valueParameters
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+public data class UserEntity(
+  @Contextual
+  @SerialName("_id")
+  public val id: UUID,
+  public var preferences: UserPreferencesEntity,
+  public var createdAt: LocalDateTime,
+  public var updatedAt: LocalDateTime,
+) : Entity<UserResponse> {
+  public override fun toResponse(): UserResponse = with(::UserResponse) {
+    val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        "preferences" -> preferences.toResponse()
+        else -> propertiesByName[it.name]?.get(this@UserEntity)
+      }
+    }
+    callBy(params)
+  }
+}
+
+@Serializable
+public data class UserPreferencesEntity(
+  public var stuff: UserStuffEntity,
+) : Entity<UserPreferencesResponse> {
+  public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
+    val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        "stuff" -> stuff.toResponse()
+        else -> propertiesByName[it.name]?.get(this@UserPreferencesEntity)
+      }
+    }
+    callBy(params)
+  }
+}
+
+@Serializable
+public data class UserStuffEntity(
+  public var info: UserInfoEntity,
+) : Entity<UserStuffResponse> {
+  public override fun toResponse(): UserStuffResponse = with(::UserStuffResponse) {
+    val propertiesByName = UserStuffEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        "info" -> info.toResponse()
+        else -> propertiesByName[it.name]?.get(this@UserStuffEntity)
+      }
+    }
+    callBy(params)
+  }
+}
+
+@Serializable
+public data class UserInfoEntity(
+  public var isCool: Boolean,
+) : Entity<UserInfoResponse> {
+  public override fun toResponse(): UserInfoResponse = with(::UserInfoResponse) {
+    val propertiesByName = UserInfoEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        else -> propertiesByName[it.name]?.get(this@UserInfoEntity)
+      }
+    }
+    callBy(params)
+  }
+}
