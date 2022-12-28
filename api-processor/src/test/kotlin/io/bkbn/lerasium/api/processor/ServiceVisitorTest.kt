@@ -12,7 +12,7 @@ class ServiceVisitorTest : DescribeSpec({
         provider = KtorProcessorProvider(),
         expectedFileCount = 4,
         fileUnderTest = "UserService.kt",
-        fileSnapshot = "T0011__service_with_authentication.txt",
+        fileSnapshot = "T011__service_with_authentication.txt",
       )
     }
   }
