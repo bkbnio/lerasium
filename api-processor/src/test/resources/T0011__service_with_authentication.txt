@@ -1,0 +1,22 @@
+package io.bkbn.lerasium.generated.api.service
+
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm.HMAC256
+import io.bkbn.lerasium.core.model.LoginRequest
+import io.bkbn.lerasium.generated.persistence.dao.UserDao
+import java.lang.System
+import java.util.Date
+import kotlin.String
+
+public object UserService {
+  public fun authenticate(request: LoginRequest): String {
+    val actor = UserDao.authenticate(request.username, request.password)
+    val unsignedToken = JWT.create().apply {
+      withAudience("http://0.0.0.0:8080/hello")
+      withIssuer("http://0.0.0.0:8080/")
+      withClaim("id", actor.id.toString())
+      withExpiresAt(Date(System.currentTimeMillis() + 60000))
+    }
+    return unsignedToken.sign(HMAC256("secret"))
+  }
+}
