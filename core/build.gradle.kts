@@ -19,11 +19,11 @@ dependencies {
   // Versions
   val kotlinxSerializationVersion: String by project
   val konformVersion: String by project
-  val bouncerVersion: String by project
+  // val bouncerVersion: String by project
 
   api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
   api("io.konform:konform-jvm:$konformVersion")
-  api("io.bkbn:bouncer-core:$bouncerVersion")
+  // TODO api("io.bkbn:bouncer-core:$bouncerVersion")
 }
 
 testing {
