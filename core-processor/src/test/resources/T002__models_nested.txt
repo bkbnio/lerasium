@@ -1,0 +1,49 @@
+package io.bkbn.lerasium.generated.models
+
+import io.bkbn.lerasium.core.model.Request
+import io.bkbn.lerasium.core.model.Response
+import io.bkbn.lerasium.core.serialization.Serializers
+import java.util.UUID
+import kotlin.String
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
+
+@Serializable
+public data class UserCreateRequest(
+  public val email: String,
+  public val metadata: UserMetadataCreateRequest,
+) : Request.Create
+
+@Serializable
+public data class UserUpdateRequest(
+  public val email: String?,
+  public val metadata: UserMetadataUpdateRequest?,
+) : Request.Update
+
+@Serializable
+public data class UserResponse(
+  @Serializable(with = Serializers.Uuid::class)
+  public val id: UUID,
+  public val email: String,
+  public val metadata: UserMetadataResponse,
+  public val createdAt: LocalDateTime,
+  public val updatedAt: LocalDateTime,
+) : Response
+
+@Serializable
+public data class UserMetadataCreateRequest(
+  public val firstName: String,
+  public val lastName: String,
+) : Request.Create
+
+@Serializable
+public data class UserMetadataUpdateRequest(
+  public val firstName: String?,
+  public val lastName: String?,
+) : Request.Update
+
+@Serializable
+public data class UserMetadataResponse(
+  public val firstName: String,
+  public val lastName: String,
+) : Response

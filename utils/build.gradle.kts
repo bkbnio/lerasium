@@ -2,8 +2,8 @@ plugins {
   kotlin("jvm")
   id("io.bkbn.sourdough.library.jvm")
   id("io.gitlab.arturbosch.detekt")
+  id("org.jetbrains.kotlinx.kover")
   id("com.adarshr.test-logger")
-  id("org.jetbrains.dokka")
   id("maven-publish")
   id("java-library")
   id("java-test-fixtures")
@@ -43,5 +43,6 @@ dependencies {
 
   testFixturesApi("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
   testFixturesApi("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+  testFixturesApi("io.kotest.extensions:kotest-assertions-compiler:1.0.0")
   testFixturesApi("com.github.tschuchortdev:kotlin-compile-testing-ksp:$kotlinCompileTestingKspVersion")
 }

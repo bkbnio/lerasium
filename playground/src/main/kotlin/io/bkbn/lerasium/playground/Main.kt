@@ -7,35 +7,30 @@ import io.bkbn.kompendium.oas.OpenApiSpec
 import io.bkbn.kompendium.oas.info.Contact
 import io.bkbn.kompendium.oas.info.Info
 import io.bkbn.kompendium.oas.info.License
-import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
 import io.bkbn.kompendium.oas.server.Server
-import io.bkbn.lerasium.generated.api.AuthorApi.authorController
-import io.bkbn.lerasium.generated.api.BookApi.bookController
-import io.bkbn.lerasium.generated.api.BookReviewApi.bookReviewController
-import io.bkbn.lerasium.generated.api.ProfileApi.profileController
-import io.bkbn.lerasium.generated.api.UserApi.userController
-import io.bkbn.lerasium.generated.entity.AuthorDao
-import io.bkbn.lerasium.generated.entity.AuthorTable
-import io.bkbn.lerasium.generated.entity.BookDao
-import io.bkbn.lerasium.generated.entity.BookReviewDao
-import io.bkbn.lerasium.generated.entity.BookReviewTable
-import io.bkbn.lerasium.generated.entity.BookTable
-import io.bkbn.lerasium.generated.entity.ProfileDao
-import io.bkbn.lerasium.generated.entity.UserDao
-import io.bkbn.lerasium.generated.entity.UserEntity
-import io.bkbn.lerasium.generated.entity.UserTable
+import io.bkbn.lerasium.generated.api.config.lerasiumConfig
+import io.bkbn.lerasium.generated.api.controller.AuthorController.authorHandler
+import io.bkbn.lerasium.generated.api.controller.BookController.bookHandler
+import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReviewHandler
+import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
+import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
+import io.bkbn.lerasium.generated.models.UserCreateRequest
+import io.bkbn.lerasium.generated.persistence.dao.AuthorDao
+import io.bkbn.lerasium.generated.persistence.dao.BookDao
+import io.bkbn.lerasium.generated.persistence.dao.BookReviewDao
+import io.bkbn.lerasium.generated.persistence.dao.ProfileDao
+import io.bkbn.lerasium.generated.persistence.dao.UserDao
+import io.bkbn.lerasium.generated.persistence.entity.AuthorTable
+import io.bkbn.lerasium.generated.persistence.entity.BookReviewTable
+import io.bkbn.lerasium.generated.persistence.entity.BookTable
+import io.bkbn.lerasium.generated.persistence.entity.UserEntity
+import io.bkbn.lerasium.generated.persistence.entity.UserTable
 import io.bkbn.lerasium.playground.config.DatabaseConfig
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.EngineMain
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import kotlin.reflect.typeOf
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.kotlin.logger
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
@@ -45,11 +40,15 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URI
+import kotlin.reflect.typeOf
 
 fun main(args: Array<String>) {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
   DatabaseConfig.relationalDatabase
+
+  DatabaseConfig.flyway.clean()
+
   transaction {
     val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
     println("-------------")
@@ -57,20 +56,26 @@ fun main(args: Array<String>) {
     println("-------------")
   }
   DatabaseConfig.flyway.migrate()
+
+  // Inject some dummy data
+  UserDao.create(
+    listOf(
+      UserCreateRequest(
+        "Doctor",
+        "Backbone",
+        email = "admin@bkbn.io",
+        password = "password",
+        favoriteFood = null
+      )
+    )
+  )
+
   logger.info { "Launching API" }
   EngineMain.main(args)
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 fun Application.module() {
-  install(ContentNegotiation) {
-    json(Json {
-      serializersModule = KompendiumSerializersModule.module
-      encodeDefaults = true
-      explicitNulls = false
-      prettyPrint = true
-    })
-  }
+  lerasiumConfig()
   install(NotarizedApplication()) {
     customTypes = mapOf(
       typeOf<LocalDateTime>() to TypeDefinition(type = "string", format = "date-time")
@@ -101,13 +106,11 @@ fun Application.module() {
   }
   routing {
     redoc("The Playground")
-    route("/") {
-      userController(UserDao())
-      bookController(BookDao())
-      bookReviewController(BookReviewDao())
-      authorController(AuthorDao())
-      profileController(ProfileDao(DatabaseConfig.documentDatabase))
-    }
+    userHandler(UserDao)
+    bookHandler(BookDao)
+    bookReviewHandler(BookReviewDao)
+    authorHandler(AuthorDao)
+    profileHandler(ProfileDao(DatabaseConfig.documentDatabase))
   }
 }
 

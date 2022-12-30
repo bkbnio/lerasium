@@ -1,0 +1,21 @@
+package io.bkbn.lerasium.generated.api.config
+
+import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import kotlin.Unit
+import kotlinx.serialization.json.Json
+
+public fun Application.lerasiumConfig(): Unit {
+  val json = Json {
+    serializersModule = KompendiumSerializersModule.module
+    prettyPrint = true
+    encodeDefaults = true
+    explicitNulls = false
+  }
+  install(ContentNegotiation) {
+    json(json)
+  }
+}

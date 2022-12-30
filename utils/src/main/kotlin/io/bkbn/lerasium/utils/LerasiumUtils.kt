@@ -33,4 +33,11 @@ object LerasiumUtils {
     return domain
   }
 
+  fun KSClassDeclaration.findParent(): KSClassDeclaration {
+    return superTypes
+      .map { t -> t.resolve().declaration as KSClassDeclaration }
+      .find { t -> t.isAnnotationPresent(Domain::class) }
+      ?: error("Must implement an interface annotated with Domain")
+  }
+
 }

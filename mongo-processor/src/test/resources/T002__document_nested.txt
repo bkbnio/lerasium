@@ -1,0 +1,54 @@
+package io.bkbn.lerasium.generated.persistence.entity
+
+import io.bkbn.lerasium.core.model.Entity
+import io.bkbn.lerasium.generated.models.UserPreferencesResponse
+import io.bkbn.lerasium.generated.models.UserResponse
+import java.util.UUID
+import kotlin.Boolean
+import kotlin.Int
+import kotlin.String
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.valueParameters
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+public data class UserEntity(
+  @Contextual
+  @SerialName("_id")
+  public val id: UUID,
+  public var name: String,
+  public var age: Int,
+  public var preferences: UserPreferencesEntity,
+  public var createdAt: LocalDateTime,
+  public var updatedAt: LocalDateTime,
+) : Entity<UserResponse> {
+  public override fun toResponse(): UserResponse = with(::UserResponse) {
+    val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        "preferences" -> preferences.toResponse()
+        else -> propertiesByName[it.name]?.get(this@UserEntity)
+      }
+    }
+    callBy(params)
+  }
+}
+
+@Serializable
+public data class UserPreferencesEntity(
+  public var status: String,
+  public var subscribed: Boolean,
+) : Entity<UserPreferencesResponse> {
+  public override fun toResponse(): UserPreferencesResponse = with(::UserPreferencesResponse) {
+    val propertiesByName = UserPreferencesEntity::class.memberProperties.associateBy { it.name }
+    val params = valueParameters.associateWith {
+      when (it.name) {
+        else -> propertiesByName[it.name]?.get(this@UserPreferencesEntity)
+      }
+    }
+    callBy(params)
+  }
+}

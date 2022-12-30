@@ -2,8 +2,8 @@ plugins {
   kotlin("jvm")
   id("io.bkbn.sourdough.library.jvm")
   id("io.gitlab.arturbosch.detekt")
+  id("org.jetbrains.kotlinx.kover")
   id("com.adarshr.test-logger")
-  id("org.jetbrains.dokka")
   id("maven-publish")
   id("java-library")
   id("signing")
@@ -24,6 +24,8 @@ dependencies {
   // Ktor
   api("io.ktor:ktor-server-core:$ktorVersion")
   api("io.ktor:ktor-server-cio:$ktorVersion")
+  api("io.ktor:ktor-server-auth:$ktorVersion")
+  api("io.ktor:ktor-server-auth-jwt:$ktorVersion")
   api("io.ktor:ktor-server-html-builder:$ktorVersion")
   api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
   api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")

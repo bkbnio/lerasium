@@ -1,0 +1,55 @@
+package io.bkbn.lerasium.generated.api.config
+
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm.HMAC256
+import io.bkbn.kompendium.oas.serialization.KompendiumSerializersModule
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.response.respond
+import kotlin.Unit
+import kotlinx.serialization.json.Json
+
+public fun Application.lerasiumConfig(): Unit {
+  val json = Json {
+    serializersModule = KompendiumSerializersModule.module
+    prettyPrint = true
+    encodeDefaults = true
+    explicitNulls = false
+  }
+  install(ContentNegotiation) {
+    json(json)
+  }
+  authentication {
+    userAuthConfig()
+  }
+}
+
+private fun AuthenticationConfig.userAuthConfig(): Unit {
+  val verifierBuilder = JWT.require(HMAC256("secret")).apply {
+    withAudience("http://0.0.0.0:8080/hello")
+    withIssuer("http://0.0.0.0:8080/")
+  }
+  val verifier = verifierBuilder.build()
+  jwt("jwt_auth_user") {
+    realm = "application"
+    verifier(verifier)
+    validate { credential ->
+      if (credential.payload.getClaim("id").asString() != "") {
+        JWTPrincipal(credential.payload)
+      }
+      else {
+        null
+      }
+    }
+    challenge { _, _ ->
+      call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+    }
+  }
+}

@@ -13,14 +13,27 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.serialization.Serializers
+import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import kotlinx.serialization.Serializable
 
 object KotlinPoetUtils {
 
   private const val BASE_PACKAGE_NAME = "io.bkbn.lerasium.generated"
-  const val BASE_API_PACKAGE_NAME = "$BASE_PACKAGE_NAME.api"
-  const val BASE_MODEL_PACKAGE_NAME = "$BASE_PACKAGE_NAME.models"
-  const val BASE_ENTITY_PACKAGE_NAME = "$BASE_PACKAGE_NAME.entity"
+  private const val BASE_API_PACKAGE_NAME = "$BASE_PACKAGE_NAME.api"
+  private const val BASE_PERSISTENCE_PACKAGE_NAME = "$BASE_PACKAGE_NAME.persistence"
+
+  // API
+  const val API_DOCS_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.docs"
+  const val API_CONTROLLER_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.controller"
+  const val API_SERVICE_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.service"
+  const val API_CONFIG_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.config"
+
+  // Models
+  const val MODEL_PACKAGE_NAME = "$BASE_PACKAGE_NAME.models"
+
+  // Persistence
+  const val DAO_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.dao"
+  const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
 
   fun CodeBlock.Builder.addControlFlow(
     controlFlow: String,
@@ -53,18 +66,18 @@ object KotlinPoetUtils {
     addCode(CodeBlock.builder().apply(init).build())
   }
 
-  fun Domain.toTocClass(): ClassName = ClassName(BASE_API_PACKAGE_NAME, name.plus("ToC"))
-  fun Domain.toCreateRequestClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("CreateRequest"))
-  fun Domain.toUpdateRequestClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("UpdateRequest"))
-  fun Domain.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, name.plus("Response"))
-  fun Domain.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Entity"))
-  fun Domain.toTableClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Table"))
-  fun Domain.toDaoClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, name.plus("Dao"))
+  fun Domain.toCreateRequestClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("CreateRequest"))
+  fun Domain.toUpdateRequestClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("UpdateRequest"))
+  fun Domain.toResponseClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("Response"))
+  fun Domain.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Entity"))
+  fun Domain.toTableClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Table"))
+  fun Domain.toDaoClass(): ClassName = ClassName(DAO_PACKAGE_NAME, name.plus("Dao"))
+  fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
-  fun String.toResponseClass(): ClassName = ClassName(BASE_MODEL_PACKAGE_NAME, this.plus("Response"))
-  fun String.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, this.plus("Entity"))
+  fun String.toResponseClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, this.plus("Response"))
+  fun String.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, this.plus("Entity"))
 
-  fun ClassName.toEntityClass(): ClassName = ClassName(BASE_ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
+  fun ClassName.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
 
   fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
 
