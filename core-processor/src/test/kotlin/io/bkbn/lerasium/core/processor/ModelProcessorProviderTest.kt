@@ -1,24 +1,13 @@
 package io.bkbn.lerasium.core.processor
 
-import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.SourceFile
-import com.tschuchort.compiletesting.symbolProcessorProviders
 import io.bkbn.lerasium.core.processor.Specs.domainWithDeeplyNestedModel
 import io.bkbn.lerasium.core.processor.Specs.domainWithNestedModel
 import io.bkbn.lerasium.core.processor.Specs.domainWithSensitiveField
 import io.bkbn.lerasium.core.processor.Specs.domainWithSimpleReference
 import io.bkbn.lerasium.core.processor.Specs.domainWithUuidField
 import io.bkbn.lerasium.core.processor.Specs.simpleDomain
-import io.bkbn.lerasium.utils.TestUtils.kotlinCode
-import io.bkbn.lerasium.utils.TestUtils.kspGeneratedSources
-import io.bkbn.lerasium.utils.TestUtils.readTrimmed
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import org.intellij.lang.annotations.Language
-import java.io.File
 
 class ModelProcessorProviderTest : DescribeSpec({
   describe("Validation") {

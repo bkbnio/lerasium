@@ -4,6 +4,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -64,5 +65,31 @@ object TestUtils {
     result shouldNotBe null
     result.kspGeneratedSources shouldHaveSize expectedFileCount
     result.getFileContents(fileUnderTest) shouldBe getFileSnapshot(fileSnapshot)
+  }
+
+  fun verifyGeneratedCode(
+    source: SourceFile,
+    provider: SymbolProcessorProvider,
+    expectedFileCount: Int,
+    filesUnderTest: Map<String, String>
+  ) {
+    // arrange
+    val compilation = KotlinCompilation().apply {
+      sources = listOf(source)
+      symbolProcessorProviders = listOf(provider)
+      inheritClassPath = true
+    }
+
+    // act
+    val result = compilation.compile()
+
+    // assert
+    result shouldNotBe null
+    result.kspGeneratedSources shouldHaveSize expectedFileCount
+    filesUnderTest.forEach { (fileUnderTest, fileSnapshot) ->
+      withClue("Failed for file: $fileUnderTest") {
+        result.getFileContents(fileUnderTest) shouldBe getFileSnapshot(fileSnapshot)
+      }
+    }
   }
 }
