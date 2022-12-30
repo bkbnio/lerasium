@@ -2,11 +2,11 @@ import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmPlugin
 import io.bkbn.sourdough.gradle.library.jvm.LibraryJvmExtension
 
 plugins {
-  kotlin("jvm") version "1.7.22" apply false
-  kotlin("plugin.serialization") version "1.7.22" apply false
+  kotlin("jvm") version "1.8.0" apply false
+  kotlin("plugin.serialization") version "1.8.0" apply false
   id("io.bkbn.sourdough.library.jvm") version "0.12.0" apply false
   id("io.bkbn.sourdough.application.jvm") version "0.12.0" apply false
-  id("com.google.devtools.ksp") version "1.7.22-1.0.8" apply false
+  id("com.google.devtools.ksp") version "1.8.0-1.0.8" apply false
   id("io.bkbn.sourdough.root") version "0.12.0"
   id("com.github.jakemarsden.git-hooks") version "0.0.2"
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
