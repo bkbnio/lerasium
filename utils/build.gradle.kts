@@ -2,6 +2,7 @@ plugins {
   kotlin("jvm")
   id("io.bkbn.sourdough.library.jvm")
   id("io.gitlab.arturbosch.detekt")
+  id("org.jetbrains.kotlinx.kover")
   id("com.adarshr.test-logger")
   id("maven-publish")
   id("java-library")
