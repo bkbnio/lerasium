@@ -35,7 +35,7 @@ testing {
 
         implementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
         implementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
-        implementation("io.kotest.extensions:kotest-assertions-konform-jvm:1.0.0")
+        implementation("io.kotest.extensions:kotest-assertions-konform-jvm:1.0.1")
       }
     }
   }
