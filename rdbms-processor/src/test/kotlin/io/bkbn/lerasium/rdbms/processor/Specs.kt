@@ -390,4 +390,29 @@ object Specs {
     """.trimIndent()
   )
 
+  val domainWithMultipleIndices = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.persistence.Index
+      import io.bkbn.lerasium.rdbms.Table
+
+      @Domain("User")
+      interface User {
+        val email: String
+        val firstName: String
+      }
+
+      @Table
+      internal interface UserTable : User {
+        @Index(true)
+        override val email: String
+
+        @Index
+        override val favoriteFood: String?
+      }
+    """.trimIndent()
+  )
 }
