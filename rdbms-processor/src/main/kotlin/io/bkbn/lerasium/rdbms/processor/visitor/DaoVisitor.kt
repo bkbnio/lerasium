@@ -37,8 +37,6 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParent
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import kotlinx.datetime.Clock
@@ -59,7 +57,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addDao(charter)
@@ -302,10 +300,9 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     tableClass: ClassName,
     responseClass: ClassName
   ) {
-    val parent = charter.classDeclaration.findParent()
-    val usernameProp = parent.getAllProperties().find { it.isAnnotationPresent(Username::class) }
+    val usernameProp = charter.classDeclaration.getAllProperties().find { it.isAnnotationPresent(Username::class) }
       ?: error("No username property found for ${charter.classDeclaration.qualifiedName}")
-    val passwordProp = parent.getAllProperties().find { it.isAnnotationPresent(Password::class) }
+    val passwordProp = charter.classDeclaration.getAllProperties().find { it.isAnnotationPresent(Password::class) }
       ?: error("No password property found for ${charter.classDeclaration.qualifiedName}")
     addFunction(FunSpec.builder("authenticate").apply {
       addParameter("username", String::class)

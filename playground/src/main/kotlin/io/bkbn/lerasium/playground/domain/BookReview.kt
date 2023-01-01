@@ -8,19 +8,13 @@ import io.bkbn.lerasium.rdbms.Table
 
 @Api
 @Domain("BookReview")
+@Table
+@CompositeIndex(true, "reader", "book")
 interface BookReview {
+  @ForeignKey
   val reader: User
+  @ForeignKey
   val book: Book
   val rating: Int
   val review: String
-}
-
-@Table
-@CompositeIndex(true, "reader", "book")
-internal interface BookReviewTable : BookReview {
-  @ForeignKey
-  override val reader: User
-
-  @ForeignKey
-  override val book: Book
 }

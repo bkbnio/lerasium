@@ -11,24 +11,16 @@ import io.bkbn.lerasium.rdbms.Table
 
 @Api
 @Domain("Book")
+@Table
 interface Book {
   val title: String
+  @Index(unique = true)
   @GetBy(unique = true)
   val isbn: String
   val rating: Double
+  @ForeignKey
   val author: Author
+  @ManyToMany(BookReview::class)
   @Relation
   val readers: User
-}
-
-@Table
-internal interface BookTable : Book {
-  @Index(unique = true)
-  override val isbn: String
-
-  @ForeignKey
-  override val author: Author
-
-  @ManyToMany(BookReview::class)
-  override val readers: User
 }

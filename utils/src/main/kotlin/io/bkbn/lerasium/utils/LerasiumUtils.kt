@@ -21,29 +21,4 @@ object LerasiumUtils {
 
   fun KSTypeReference.getDomain(): Domain =
     (resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
-
-  fun KSClassDeclaration.findParentDomain(): Domain {
-    val domainType = superTypes
-      .map { t -> t.resolve().declaration as KSClassDeclaration }
-      .find { t -> t.isAnnotationPresent(Domain::class) }
-      ?: error("Must implement an interface annotated with Domain")
-    val domain = domainType.getAnnotationsByType(Domain::class).first()
-    val domainValidation = DomainValidation.constraints.validate(domain)
-    require(domainValidation.errors.isEmpty()) { "Domain is invalid ${domainValidation.errors}" }
-    return domain
-  }
-
-  fun KSClassDeclaration.findParent(): KSClassDeclaration {
-    return superTypes
-      .map { t -> t.resolve().declaration as KSClassDeclaration }
-      .find { t -> t.isAnnotationPresent(Domain::class) }
-      ?: error("Must implement an interface annotated with Domain")
-  }
-
-  fun KSClassDeclaration.findParentNullable(): KSClassDeclaration? {
-    return superTypes
-      .map { t -> t.resolve().declaration as KSClassDeclaration }
-      .find { t -> t.isAnnotationPresent(Domain::class) }
-  }
-
 }

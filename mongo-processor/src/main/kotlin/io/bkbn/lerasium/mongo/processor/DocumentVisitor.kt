@@ -30,7 +30,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
@@ -54,7 +54,7 @@ class DocumentVisitor(private val fileBuilder: FileSpec.Builder, private val log
 
     containingFile = classDeclaration.containingFile!!
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     fileBuilder.addDocument(classDeclaration, domain.name, true)
 
     classDeclaration.getAllProperties().toList()

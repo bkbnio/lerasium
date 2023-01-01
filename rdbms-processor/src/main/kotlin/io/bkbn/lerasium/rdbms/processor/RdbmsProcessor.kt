@@ -15,7 +15,7 @@ import io.bkbn.lerasium.rdbms.processor.visitor.EntityVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 
 class RdbmsProcessor(
   private val codeGenerator: CodeGenerator,
@@ -35,7 +35,7 @@ class RdbmsProcessor(
     if (!symbols.iterator().hasNext()) return emptyList()
 
     symbols.forEach {
-      val domain = it.findParentDomain()
+      val domain = it.getDomain()
       val fb = FileSpec.builder(ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
       it.accept(TableVisitor(fb, logger), Unit)
       it.accept(EntityVisitor(fb, logger), Unit)
@@ -44,7 +44,7 @@ class RdbmsProcessor(
     }
 
     symbols.forEach {
-      val domain = it.findParentDomain()
+      val domain = it.getDomain()
       val fb = FileSpec.builder(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
       it.accept(DaoVisitor(fb, logger), Unit)
       val fs = fb.build()

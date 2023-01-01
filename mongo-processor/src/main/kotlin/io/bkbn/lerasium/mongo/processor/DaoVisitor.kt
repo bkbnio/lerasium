@@ -35,7 +35,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.util.UUID
@@ -59,7 +59,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
 
     fileBuilder.addDao(classDeclaration, domain)
   }

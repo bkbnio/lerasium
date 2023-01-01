@@ -30,7 +30,6 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
@@ -53,7 +52,7 @@ class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logge
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
 
     fileBuilder.addEntity(classDeclaration, domain)
   }

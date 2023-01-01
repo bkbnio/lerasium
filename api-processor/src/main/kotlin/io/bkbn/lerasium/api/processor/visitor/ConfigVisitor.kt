@@ -15,7 +15,6 @@ import io.bkbn.lerasium.api.processor.authSlug
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.AuthenticationConfig

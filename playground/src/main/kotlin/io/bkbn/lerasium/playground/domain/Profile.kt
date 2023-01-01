@@ -1,12 +1,14 @@
 package io.bkbn.lerasium.playground.domain
 
+import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.mongo.Document
-import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 
 @Api
+@Document
+@CompositeIndex(fields = ["mood", "viewCount"])
 @Domain("Profile")
 interface Profile {
   val mood: String?
@@ -18,6 +20,7 @@ interface Profile {
   interface Metadata {
     val isPrivate: Boolean
     val otherThing: String
+    @Index(unique = true)
     val handle: String
   }
 
@@ -30,16 +33,5 @@ interface Profile {
       val infoC: String
       val infoD: Int
     }
-  }
-}
-
-@Document
-@CompositeIndex(fields = ["mood", "viewCount"])
-interface ProfileDocument : Profile {
-  override val metadata: MetadataDocument
-
-  interface MetadataDocument : Profile.Metadata {
-    @Index(unique = true)
-    override val handle: String
   }
 }

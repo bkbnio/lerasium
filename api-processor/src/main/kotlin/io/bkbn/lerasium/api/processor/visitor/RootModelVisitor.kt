@@ -33,7 +33,6 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable

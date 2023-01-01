@@ -8,14 +8,10 @@ import io.bkbn.lerasium.rdbms.Table
 
 @Api
 @Domain("Author")
+@Table
 interface Author {
   val name: String
   @Relation
-  val books: Book
-}
-
-@Table
-interface AuthorTableSpec : Author {
   @OneToMany("author")
-  override val books: Book
+  val books: Book
 }

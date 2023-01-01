@@ -28,7 +28,7 @@ import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
 import kotlinx.datetime.LocalDateTime
@@ -52,7 +52,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
 
     fileBuilder.addTable(classDeclaration, domain)
   }
