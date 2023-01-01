@@ -9,11 +9,10 @@ import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentNullable
 
 open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDeclaration) {
   @OptIn(KspExperimental::class)
-  open val isActor: Boolean = classDeclaration.findParentNullable()?.isAnnotationPresent(Actor::class) ?: false
+  open val isActor: Boolean = classDeclaration.isAnnotationPresent(Actor::class)
   // TODO Should not leak out of persistence layer
   val daoClass: ClassName = ClassName(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
   // TODO Should not leak out of api layer

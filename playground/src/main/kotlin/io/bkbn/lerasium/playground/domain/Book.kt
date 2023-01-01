@@ -9,9 +9,11 @@ import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.Table
 
+@Api
 @Domain("Book")
 interface Book {
   val title: String
+  @GetBy(unique = true)
   val isbn: String
   val rating: Double
   val author: Author
@@ -29,10 +31,4 @@ internal interface BookTable : Book {
 
   @ManyToMany(BookReview::class)
   override val readers: User
-}
-
-@Api
-internal interface BookApi : Book {
-  @GetBy(true)
-  override val isbn: String
 }

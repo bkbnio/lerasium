@@ -6,6 +6,7 @@ import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.rdbms.Table
 
+@Api
 @Domain("Author")
 interface Author {
   val name: String
@@ -18,6 +19,3 @@ interface AuthorTableSpec : Author {
   @OneToMany("author")
   override val books: Book
 }
-
-@Api
-internal interface AuthorApiSpec : Author

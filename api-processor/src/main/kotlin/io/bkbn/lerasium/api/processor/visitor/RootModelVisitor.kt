@@ -34,6 +34,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -51,7 +52,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
 
     containingFile = classDeclaration.containingFile!!
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addIoModelObject(charter)

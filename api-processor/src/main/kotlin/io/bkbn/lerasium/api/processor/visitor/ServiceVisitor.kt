@@ -14,7 +14,7 @@ import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import java.util.Date
 
 class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
@@ -25,7 +25,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val apiObjectName = domain.name.plus("Service")
     val charter = LerasiumCharter(domain, classDeclaration)
 

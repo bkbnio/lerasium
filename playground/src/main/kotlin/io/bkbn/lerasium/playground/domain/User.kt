@@ -11,12 +11,14 @@ import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Table
 
+@Api
 @Actor
 @Domain("User")
 interface User {
   val firstName: String
   val lastName: String
 
+  @GetBy(unique = true)
   @Username
   val email: String
 
@@ -24,6 +26,7 @@ interface User {
   @Sensitive
   val password: String
 
+  @GetBy
   val favoriteFood: String?
 }
 
@@ -35,14 +38,5 @@ internal interface UserTable : User {
   override val email: String
 
   @Index
-  override val favoriteFood: String?
-}
-
-@Api
-internal interface UserApi : User {
-  @GetBy(true)
-  override val email: String
-
-  @GetBy
   override val favoriteFood: String?
 }

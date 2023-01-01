@@ -6,6 +6,7 @@ import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 
+@Api
 @Domain("Profile")
 interface Profile {
   val mood: String?
@@ -42,6 +43,3 @@ interface ProfileDocument : Profile {
     override val handle: String
   }
 }
-
-@Api
-interface ProfileApi : Profile

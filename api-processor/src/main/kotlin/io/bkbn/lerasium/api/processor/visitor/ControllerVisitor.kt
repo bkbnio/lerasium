@@ -39,7 +39,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpHeaders
@@ -56,7 +56,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val apiObjectName = domain.name.plus("Controller")
     val charter = LerasiumCharter(domain, classDeclaration)
 
@@ -122,7 +122,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("queryRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.classDeclaration.findParentDomain().toDaoClass()).build())
+      addParameter(ParameterSpec.builder("dao", charter.classDeclaration.getDomain().toDaoClass()).build())
       addCodeBlock {
         addQueries(charter)
       }

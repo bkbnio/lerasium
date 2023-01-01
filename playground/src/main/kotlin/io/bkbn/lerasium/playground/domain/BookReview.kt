@@ -6,6 +6,7 @@ import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
 
+@Api
 @Domain("BookReview")
 interface BookReview {
   val reader: User
@@ -23,6 +24,3 @@ internal interface BookReviewTable : BookReview {
   @ForeignKey
   override val book: Book
 }
-
-@Api
-internal interface BookReviewApi : BookReview

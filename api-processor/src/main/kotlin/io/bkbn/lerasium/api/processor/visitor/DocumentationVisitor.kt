@@ -29,7 +29,7 @@ import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.routing.Route
@@ -42,7 +42,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val apiObjectName = domain.name.plus("Documentation")
     val charter = LerasiumCharter(domain, classDeclaration)
 
