@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
@@ -82,7 +83,7 @@ object KotlinPoetUtils {
 
   fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
 
-  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false) =
+  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false, isOverride: Boolean = false) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
       if (type.resolve().toClassName().simpleName == "UUID") {
         addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
@@ -90,6 +91,7 @@ object KotlinPoetUtils {
         }.build())
       }
       if (isMutable) mutable()
+      if (isOverride) addModifiers(KModifier.OVERRIDE)
       initializer(simpleName.getShortName())
     }.build()
 

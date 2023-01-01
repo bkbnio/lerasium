@@ -13,7 +13,7 @@ import io.bkbn.lerasium.rdbms.Table
 
 @Actor
 @Domain("User")
-internal sealed interface User {
+interface User {
   val firstName: String
   val lastName: String
 

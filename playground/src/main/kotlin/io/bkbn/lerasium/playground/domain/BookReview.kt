@@ -7,7 +7,7 @@ import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
 
 @Domain("BookReview")
-internal sealed interface BookReview {
+interface BookReview {
   val reader: User
   val book: Book
   val rating: Int

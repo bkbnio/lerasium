@@ -10,7 +10,7 @@ import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.Table
 
 @Domain("Book")
-internal sealed interface Book {
+interface Book {
   val title: String
   val isbn: String
   val rating: Double
