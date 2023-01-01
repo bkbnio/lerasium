@@ -124,7 +124,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("queryRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.cd.findParentDomain().toDaoClass()).build())
+      addParameter(ParameterSpec.builder("dao", charter.classDeclaration.findParentDomain().toDaoClass()).build())
       addCodeBlock {
         addQueries(charter)
       }
@@ -217,7 +217,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   }
 
   private fun CodeBlock.Builder.addRelationalRoutes(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
       add(CodeBlock.builder().apply {
         addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
@@ -235,7 +235,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   }
 
   private fun CodeBlock.Builder.addQueries(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
         true -> addUniqueQuery(prop, charter)

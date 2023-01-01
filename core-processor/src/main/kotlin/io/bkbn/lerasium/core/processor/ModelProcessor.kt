@@ -33,7 +33,7 @@ class ModelProcessor(
     symbols.forEach {
       val domain = it.getDomain()
       val fb = FileSpec.builder(MODEL_PACKAGE_NAME, domain.name.plus("Models"))
-      it.accept(ModelVisitor(fb, logger), Unit)
+      it.accept(DomainModelVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
     }

@@ -72,16 +72,16 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     val ec = charter.domain.toEntityClass()
     val tc = charter.domain.toTableClass()
     addType(TypeSpec.objectBuilder(charter.domain.name.plus("Dao")).apply {
-      addOriginatingKSFile(charter.cd.containingFile!!)
+      addOriginatingKSFile(charter.classDeclaration.containingFile!!)
       addSuperinterface(Dao::class.asTypeName().parameterizedBy(ec, rc, crc, urc))
-      addCreateFunction(charter.cd, crc, rc, ec)
+      addCreateFunction(charter.classDeclaration, crc, rc, ec)
       addReadFunction(rc, ec)
-      addUpdateFunction(charter.cd, urc, rc, ec)
+      addUpdateFunction(charter.classDeclaration, urc, rc, ec)
       addDeleteFunction(ec)
       addCountAllFunction(ec)
       addGetAllFunction(ec, rc)
-      addRelations(charter.cd, ec)
-      addIndices(charter.cd, ec, tc, rc)
+      addRelations(charter.classDeclaration, ec)
+      addIndices(charter.classDeclaration, ec, tc, rc)
       if (charter.isActor) addAuthenticationFunction(charter, ec, tc, rc)
     }.build())
   }
@@ -302,11 +302,11 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     tableClass: ClassName,
     responseClass: ClassName
   ) {
-    val parent = charter.cd.findParent()
+    val parent = charter.classDeclaration.findParent()
     val usernameProp = parent.getAllProperties().find { it.isAnnotationPresent(Username::class) }
-      ?: error("No username property found for ${charter.cd.qualifiedName}")
+      ?: error("No username property found for ${charter.classDeclaration.qualifiedName}")
     val passwordProp = parent.getAllProperties().find { it.isAnnotationPresent(Password::class) }
-      ?: error("No password property found for ${charter.cd.qualifiedName}")
+      ?: error("No password property found for ${charter.classDeclaration.qualifiedName}")
     addFunction(FunSpec.builder("authenticate").apply {
       addParameter("username", String::class)
       addParameter("password", String::class)

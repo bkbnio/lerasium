@@ -2,15 +2,15 @@ package io.bkbn.lerasium.core.dao
 
 import io.bkbn.lerasium.core.model.CountResponse
 import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.core.model.Request
-import io.bkbn.lerasium.core.model.Response
+import io.bkbn.lerasium.core.model.IORequest
+import io.bkbn.lerasium.core.model.IOResponse
 import java.util.UUID
 
 interface Dao<ENT, RESP, CRE, UPT>
-  where RESP : Response,
+  where RESP : IOResponse,
         ENT : Entity<RESP>,
-        CRE : Request.Create,
-        UPT : Request.Update {
+        CRE : IORequest.Create,
+        UPT : IORequest.Update {
   fun create(requests: List<CRE>): List<RESP>
   fun read(id: UUID): RESP
   fun update(id: UUID, request: UPT): RESP

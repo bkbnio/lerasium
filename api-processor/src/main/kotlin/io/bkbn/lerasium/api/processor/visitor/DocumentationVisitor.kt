@@ -141,7 +141,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
 
   @OptIn(KspExperimental::class)
   private fun TypeSpec.Builder.addRelationalDocumentation(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
       addFunction(FunSpec.builder("${name}RelationDocumentation").apply {
         receiver(Route::class)
@@ -176,7 +176,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
 
   @OptIn(KspExperimental::class)
   private fun TypeSpec.Builder.addQueryDocumentation(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
         true -> addUniqueQueryDocumentation(prop, charter.domain)

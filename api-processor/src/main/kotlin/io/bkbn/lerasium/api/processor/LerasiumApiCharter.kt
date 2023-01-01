@@ -8,7 +8,7 @@ import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 
 @OptIn(KspExperimental::class)
 val LerasiumCharter.hasQueries: Boolean
-  get() = cd.getAllProperties().any { it.isAnnotationPresent(GetBy::class) }
+  get() = classDeclaration.getAllProperties().any { it.isAnnotationPresent(GetBy::class) }
 
 val LerasiumCharter.authSlug: String
   get() = "jwt_auth_${domain.name.camelToSnakeCase()}"
