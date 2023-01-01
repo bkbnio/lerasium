@@ -37,9 +37,7 @@ import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
@@ -166,7 +164,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
           "val request = %M.%M<%T>()",
           callMember,
           receiveMember,
-          List::class.asClassName().parameterizedBy(charter.domain.toCreateRequestClass())
+          List::class.asClassName().parameterizedBy(charter.apiCreateRequestClass)
         )
         addStatement("val result = dao.create(request)")
         addStatement("%M.%M(result)", callMember, respondMember)
@@ -199,7 +197,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     add(CodeBlock.builder().apply {
       addControlFlow("%M", putMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("val request = %M.%M<%T>()", callMember, receiveMember, charter.domain.toUpdateRequestClass())
+        addStatement("val request = %M.%M<%T>()", callMember, receiveMember, charter.apiUpdateRequestClass)
         addStatement("val result = dao.update(id, request)")
         addStatement("%M.%M(result)", callMember, respondMember)
       }

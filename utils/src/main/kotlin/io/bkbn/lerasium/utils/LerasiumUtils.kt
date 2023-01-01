@@ -24,7 +24,7 @@ object LerasiumUtils {
 
   fun KSClassDeclaration.findParentDomain(): Domain {
     val domainType = superTypes
-      .map { t -> t.resolve().declaration }
+      .map { t -> t.resolve().declaration as KSClassDeclaration }
       .find { t -> t.isAnnotationPresent(Domain::class) }
       ?: error("Must implement an interface annotated with Domain")
     val domain = domainType.getAnnotationsByType(Domain::class).first()

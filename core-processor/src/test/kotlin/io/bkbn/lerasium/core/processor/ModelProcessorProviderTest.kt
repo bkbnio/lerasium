@@ -17,7 +17,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Can generate a file with create, update and response models") {
       verifyGeneratedCode(
         source = simpleDomain,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 1,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T001__models_basic.txt"
@@ -26,7 +26,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Can generate models with nested domain models") {
       verifyGeneratedCode(
         source = domainWithNestedModel,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 1,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T002__models_nested.txt"
@@ -35,7 +35,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Can support a domain with deeply nested models") {
       verifyGeneratedCode(
         source = domainWithDeeplyNestedModel,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 1,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T003__models_deeply_nested.txt"
@@ -44,7 +44,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Is aware of fields marked as sensitive") {
       verifyGeneratedCode(
         source = domainWithSensitiveField,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 1,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T004__models_sensitive_field.txt"
@@ -53,7 +53,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Applies a UUID serializer to any UUID type") {
       verifyGeneratedCode(
         source = domainWithUuidField,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 1,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T005__models_uuid_serializer.txt"
@@ -62,7 +62,7 @@ class ModelProcessorProviderTest : DescribeSpec({
     it("Can handle a simple reference to another domain") {
       verifyGeneratedCode(
         source = domainWithSimpleReference,
-        provider = ModelProcessorProvider(),
+        provider = DomainProcessorProvider(),
         expectedFileCount = 2,
         fileUnderTest = "UserModels.kt",
         fileSnapshot = "T006__models_simple_reference.txt"

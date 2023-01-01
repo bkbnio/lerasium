@@ -22,6 +22,7 @@ dependencies {
   // Versions
   val kspVersion: String by project
   val kotlinPoetVersion: String by project
+  val kotlinxDatetimeVersion: String by project
 
   // Lerasium
   implementation(projects.lerasiumCore)
@@ -34,6 +35,9 @@ dependencies {
   // CodeGen
   implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
   implementation("com.squareup:kotlinpoet-ksp:$kotlinPoetVersion")
+
+  // Date
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
   // Test Utils
   testImplementation(testFixtures(projects.lerasiumUtils))

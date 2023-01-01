@@ -24,14 +24,10 @@ import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.api.processor.Members.getAllParametersMember
 import io.bkbn.lerasium.api.processor.Members.idParameterMember
 import io.bkbn.lerasium.api.processor.Members.installMember
-import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
@@ -52,15 +48,16 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
 
     fileBuilder.addType(TypeSpec.objectBuilder(apiObjectName).apply {
       addOriginatingKSFile(classDeclaration.containingFile!!)
-      addRootDocumentation(charter.domain)
-      addIdDocumentation(charter.domain)
+      addRootDocumentation(charter)
+      addIdDocumentation(charter)
       addRelationalDocumentation(charter)
       addQueryDocumentation(charter)
       if (charter.isActor) addAuthDocumentation(charter)
     }.build())
   }
 
-  private fun TypeSpec.Builder.addRootDocumentation(domain: Domain) {
+  private fun TypeSpec.Builder.addRootDocumentation(charter: LerasiumCharter) {
+    val domain = charter.domain
     addFunction(FunSpec.builder("rootDocumentation").apply {
       receiver(Route::class)
       addModifiers(KModifier.INTERNAL)
@@ -72,7 +69,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} Entities")
             addStatement("parameters(*%M().toTypedArray())", getAllParametersMember)
             addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiResponseClass))
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
               addStatement("description(%S)", "Paginated list of ${domain.name} entities")
             }
@@ -81,12 +78,12 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addStatement("summary(%S)", "Create New ${domain.name} Entity")
             addStatement("description(%S)", "Persists a new ${domain.name} entity in the database")
             addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiResponseClass))
               addStatement("responseCode(%T.Created)", HttpStatusCode::class)
               addStatement("description(%S)", "${domain.name} entities saved successfully")
             }
             addControlFlow("request") {
-              addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(domain.toCreateRequestClass()))
+              addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiCreateRequestClass))
               addStatement("description(%S)", "Collection of ${domain.name} entities the user wishes to persist")
             }
           }
@@ -95,7 +92,8 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     }.build())
   }
 
-  private fun TypeSpec.Builder.addIdDocumentation(domain: Domain) {
+  private fun TypeSpec.Builder.addIdDocumentation(charter: LerasiumCharter) {
+    val domain = charter.domain
     addFunction(FunSpec.builder("idDocumentation").apply {
       receiver(Route::class)
       addModifiers(KModifier.INTERNAL)
@@ -107,7 +105,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addStatement("summary(%S)", "Get ${domain.name} by ID")
             addStatement("description(%S)", "Retrieves the specified ${domain.name} entity by its ID")
             addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
               addStatement("description(%S)", "The ${domain.name} entity with the specified ID")
             }
@@ -116,11 +114,11 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addStatement("summary(%S)", "Update ${domain.name} by ID")
             addStatement("description(%S)", "Updates the specified ${domain.name} entity by its ID")
             addControlFlow("request") {
-              addStatement("requestType<%T>()", domain.toUpdateRequestClass())
+              addStatement("requestType<%T>()", charter.apiUpdateRequestClass)
               addStatement("description(%S)", "Fields that can be updated on the ${domain.name} entity")
             }
             addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.Created)", HttpStatusCode::class)
               addStatement("description(%S)", "Indicates that the ${domain.name} entity was updated successfully")
             }
@@ -162,7 +160,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
               addControlFlow("response") {
                 addStatement(
                   "responseType<%T>()",
-                  List::class.asTypeName().parameterizedBy(charter.domain.toResponseClass())
+                  List::class.asTypeName().parameterizedBy(charter.apiResponseClass)
                 )
                 addStatement("responseCode(%T.OK)", HttpStatusCode::class)
                 addStatement("description(%S)", "Paginated list of ${charter.domain.name} entities")
@@ -179,13 +177,14 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
-        true -> addUniqueQueryDocumentation(prop, charter.domain)
-        false -> addNonUniqueQueryDocumentation(prop, charter.domain)
+        true -> addUniqueQueryDocumentation(prop, charter)
+        false -> addNonUniqueQueryDocumentation(prop, charter)
       }
     }
   }
 
-  private fun TypeSpec.Builder.addUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
+  private fun TypeSpec.Builder.addUniqueQueryDocumentation(prop: KSPropertyDeclaration, charter: LerasiumCharter) {
+    val domain = charter.domain
     val name = prop.simpleName.getShortName()
     addFunction(FunSpec.builder("${name}QueryDocumentation").apply {
       receiver(Route::class)
@@ -204,7 +203,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             )
             addStatement("parameters(*%M().toTypedArray())", idParameterMember)
             addControlFlow("response") {
-              addStatement("responseType<%T>()", domain.toResponseClass())
+              addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
               addStatement("description(%S)", "${domain.name} entity associated with the specified $name")
             }
@@ -214,7 +213,8 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
     }.build())
   }
 
-  private fun TypeSpec.Builder.addNonUniqueQueryDocumentation(prop: KSPropertyDeclaration, domain: Domain) {
+  private fun TypeSpec.Builder.addNonUniqueQueryDocumentation(prop: KSPropertyDeclaration, charter: LerasiumCharter) {
+    val domain = charter.domain
     val name = prop.simpleName.getShortName()
     addFunction(FunSpec.builder("${name}QueryDocumentation").apply {
       receiver(Route::class)
@@ -233,7 +233,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             )
             addStatement("parameters(*%M().toTypedArray().plus(%M()))", getAllParametersMember, idParameterMember)
             addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(domain.toResponseClass()))
+              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiResponseClass))
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
               addStatement("description(%S)", "${domain.name} entities associated with the specified $name")
             }

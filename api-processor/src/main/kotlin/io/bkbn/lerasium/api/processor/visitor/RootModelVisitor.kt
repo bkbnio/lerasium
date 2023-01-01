@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.core.processor
+package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
@@ -28,19 +28,18 @@ import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
 import io.bkbn.lerasium.core.serialization.Serializers
-import io.bkbn.lerasium.utils.KotlinPoetUtils.MODEL_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toResponseClass
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @OptIn(KspExperimental::class)
-class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
+class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   private lateinit var containingFile: KSFile
 
@@ -52,7 +51,7 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
 
     containingFile = classDeclaration.containingFile!!
 
-    val domain = classDeclaration.getDomain()
+    val domain = classDeclaration.findParentDomain()
     val charter = LerasiumCharter(domain, classDeclaration)
 
     fileBuilder.addIoModelObject(charter)
@@ -64,12 +63,16 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
       addUpdateRequestModel(charter)
       addResponseModel(charter)
 
-      val childModelVisitor = ChildModelVisitor(this, logger)
+      val nestedModelVisitor = NestedModelVisitor(this, logger)
 
       charter.classDeclaration.getAllProperties().toList()
         .filterNot { it.type.isSupportedScalar() }
         .filterNot { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
-        .forEach { childModelVisitor.visitTypeReference(it.type, ChildModelVisitor.Data(parentCharter = charter)) }
+        .forEach {
+          nestedModelVisitor.visitTypeReference(
+            it.type, NestedModelVisitor.Data(parentCharter = charter)
+          )
+        }
     }.build())
   }
 
@@ -96,7 +99,7 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
                 }.build()
               } else {
                 val t = it.type.resolve().toClassName().simpleName.plus(".Create")
-                val cn = ClassName(MODEL_PACKAGE_NAME, t)
+                val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
                 ParameterSpec.builder(n, cn).build()
               }
             }
@@ -117,7 +120,7 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
               }.build()
             } else {
               val t = it.type.resolve().toClassName().simpleName.plus(".Create")
-              val cn = ClassName(MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -159,7 +162,7 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Update")
-              val cn = ClassName(MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t).copy(nullable = true)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -190,7 +193,7 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Update")
-              val cn = ClassName(MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t).copy(nullable = true)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -218,12 +221,13 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
             val domain =
               (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
             if (domain != null) {
-              PropertySpec.builder(n, domain.toResponseClass()).apply {
+              val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels.Response"))
+              PropertySpec.builder(n, responseClass).apply {
                 initializer(n)
               }.build()
             } else {
               val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-              val cn = ClassName(MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
               PropertySpec.builder(n, cn).apply {
                 initializer(n)
               }.build()
@@ -259,11 +263,12 @@ class DomainModelVisitor(private val fileBuilder: FileSpec.Builder, private val 
             val domain =
               (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
             if (domain != null) {
-              ParameterSpec.builder(it.simpleName.getShortName(), domain.toResponseClass()).build()
+              val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels.Response"))
+              ParameterSpec.builder(it.simpleName.getShortName(), responseClass).build()
             } else {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-              val cn = ClassName(MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
               ParameterSpec.builder(n, cn).build()
             }
           }

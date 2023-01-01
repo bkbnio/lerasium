@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.core.processor.util
+package io.bkbn.lerasium.utils
 
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation

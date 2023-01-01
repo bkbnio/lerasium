@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.core.processor
+package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
@@ -17,18 +17,18 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
-import io.bkbn.lerasium.core.processor.util.ChildCharter
-import io.bkbn.lerasium.core.processor.util.KSVisitorWithData
 import io.bkbn.lerasium.core.serialization.Serializers
-import io.bkbn.lerasium.utils.KotlinPoetUtils
+import io.bkbn.lerasium.utils.KSVisitorWithData
+import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
+import io.bkbn.lerasium.utils.NestedLerasiumCharter
 import kotlinx.serialization.Serializable
 
-class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val logger: KSPLogger) :
-  KSVisitorWithData<ChildModelVisitor.Data>() {
+class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val logger: KSPLogger) :
+  KSVisitorWithData<NestedModelVisitor.Data>() {
 
   data class Data(
     val parentCharter: LerasiumCharter,
@@ -38,7 +38,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
   override fun visitTypeReference(typeReference: KSTypeReference, data: Data) {
     val classDeclaration = typeReference.resolve().declaration as KSClassDeclaration
 
-    val charter = ChildCharter(
+    val charter = NestedLerasiumCharter(
       parentCharter = data.parentCharter,
       classDeclaration = classDeclaration,
     )
@@ -51,13 +51,13 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
     typeBuilder.addChildObject(charter, newData)
   }
 
-  private fun TypeSpec.Builder.addChildObject(charter: ChildCharter, data: Data) {
+  private fun TypeSpec.Builder.addChildObject(charter: NestedLerasiumCharter, data: Data) {
     addType(TypeSpec.objectBuilder(charter.classDeclaration.simpleName.getShortName()).apply {
       addCreateRequest(charter)
       addUpdateRequest(charter)
       addResponse(charter)
 
-      val childModelVisitor = ChildModelVisitor(this, logger)
+      val childModelVisitor = NestedModelVisitor(this, logger)
 
       charter.classDeclaration.getAllProperties().toList()
         .filterNot { it.type.isSupportedScalar() }
@@ -67,7 +67,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
     }.build())
   }
 
-  private fun TypeSpec.Builder.addCreateRequest(charter: ChildCharter) {
+  private fun TypeSpec.Builder.addCreateRequest(charter: NestedLerasiumCharter) {
     val properties = charter.classDeclaration.getAllProperties()
     addType(TypeSpec.classBuilder("Create").apply {
       addModifiers(KModifier.DATA)
@@ -79,7 +79,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
             false -> {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Create")
-              val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -92,7 +92,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
           false -> {
             val n = it.simpleName.getShortName()
             val t = it.type.resolve().toClassName().simpleName.plus(".Create")
-            val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t)
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
             PropertySpec.builder(n, cn).apply {
               initializer(n)
             }.build()
@@ -103,7 +103,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
     }.build())
   }
 
-  private fun TypeSpec.Builder.addUpdateRequest(charter: ChildCharter) {
+  private fun TypeSpec.Builder.addUpdateRequest(charter: NestedLerasiumCharter) {
     val properties = charter.classDeclaration.getAllProperties()
     addType(TypeSpec.classBuilder("Update").apply {
       addModifiers(KModifier.DATA)
@@ -119,7 +119,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
             false -> {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Update")
-              val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t).copy(nullable = true)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t).copy(nullable = true)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -142,7 +142,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
           false -> {
             val n = it.simpleName.getShortName()
             val t = it.type.resolve().toClassName().simpleName.plus(".Update")
-            val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t).copy(nullable = true)
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t).copy(nullable = true)
             PropertySpec.builder(n, cn).apply {
               initializer(n)
             }.build()
@@ -154,7 +154,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
   }
 
   @OptIn(KspExperimental::class)
-  private fun TypeSpec.Builder.addResponse(charter: ChildCharter) {
+  private fun TypeSpec.Builder.addResponse(charter: NestedLerasiumCharter) {
     val properties = charter.classDeclaration.getAllProperties()
       .filterNot { it.isAnnotationPresent(Sensitive::class) }
     addType(TypeSpec.classBuilder("Response").apply {
@@ -168,7 +168,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
             false -> {
               val n = it.simpleName.getShortName()
               val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-              val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t)
+              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
               ParameterSpec.builder(n, cn).build()
             }
           }
@@ -181,7 +181,7 @@ class ChildModelVisitor(private val typeBuilder: TypeSpec.Builder, private val l
           false -> {
             val n = it.simpleName.getShortName()
             val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-            val cn = ClassName(KotlinPoetUtils.MODEL_PACKAGE_NAME, t)
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
             PropertySpec.builder(n, cn).apply {
               initializer(n)
               if (it.type.resolve().toClassName().simpleName == "UUID") {

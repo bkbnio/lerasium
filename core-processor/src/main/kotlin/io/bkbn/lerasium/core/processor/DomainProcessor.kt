@@ -10,10 +10,10 @@ import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.utils.KotlinPoetUtils.MODEL_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.DOMAIN_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 
-class ModelProcessor(
+class DomainProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger,
   options: Map<String, String>
@@ -32,8 +32,8 @@ class ModelProcessor(
 
     symbols.forEach {
       val domain = it.getDomain()
-      val fb = FileSpec.builder(MODEL_PACKAGE_NAME, domain.name.plus("Models"))
-      it.accept(DomainModelVisitor(fb, logger), Unit)
+      val fb = FileSpec.builder(DOMAIN_PACKAGE_NAME, domain.name.plus("Domain"))
+      it.accept(DomainVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
     }

@@ -22,11 +22,13 @@ import io.bkbn.lerasium.api.processor.Members.ktorJsonMember
 import io.bkbn.lerasium.api.processor.visitor.ConfigVisitor
 import io.bkbn.lerasium.api.processor.visitor.ControllerVisitor
 import io.bkbn.lerasium.api.processor.visitor.DocumentationVisitor
+import io.bkbn.lerasium.api.processor.visitor.RootModelVisitor
 import io.bkbn.lerasium.api.processor.visitor.ServiceVisitor
 import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_CONFIG_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_CONTROLLER_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_DOCS_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
@@ -56,6 +58,7 @@ class KtorProcessor(
     symbols.forEach { it.writeControllerFile() }
     symbols.forEach { it.writeDocFile() }
     symbols.forEach { it.writeServiceFile() }
+    symbols.forEach { it.writeModelFile() }
 
     symbols.writeConfigFile()
 
@@ -82,6 +85,14 @@ class KtorProcessor(
     val domain = this.findParentDomain()
     val fb = FileSpec.builder(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))
     this.accept(ServiceVisitor(fb, logger), Unit)
+    val fs = fb.build()
+    fs.writeTo(codeGenerator, false)
+  }
+
+  private fun KSClassDeclaration.writeModelFile() {
+    val domain = this.findParentDomain()
+    val fb = FileSpec.builder(API_MODELS_PACKAGE_NAME, domain.name.plus("Models"))
+    this.accept(RootModelVisitor(fb, logger), Unit)
     val fs = fb.build()
     fs.writeTo(codeGenerator, false)
   }

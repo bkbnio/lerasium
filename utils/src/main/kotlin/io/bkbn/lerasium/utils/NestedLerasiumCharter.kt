@@ -1,9 +1,9 @@
-package io.bkbn.lerasium.core.processor.util
+package io.bkbn.lerasium.utils
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import io.bkbn.lerasium.utils.LerasiumCharter
 
-class ChildCharter(
+class NestedLerasiumCharter(
   classDeclaration: KSClassDeclaration,
   parentCharter: LerasiumCharter
 ) : LerasiumCharter(parentCharter.domain, classDeclaration) {
