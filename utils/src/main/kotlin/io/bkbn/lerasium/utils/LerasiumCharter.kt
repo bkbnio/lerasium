@@ -24,6 +24,6 @@ open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDecl
   val ioModelClass: ClassName = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels"))
   val apiCreateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Create")
   val apiUpdateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Update")
-  val apiResponseClass: ClassName = ClassName(ioModelClass.canonicalName, "Response")
+  open val apiResponseClass: ClassName = ClassName(ioModelClass.canonicalName, "Response")
 
 }

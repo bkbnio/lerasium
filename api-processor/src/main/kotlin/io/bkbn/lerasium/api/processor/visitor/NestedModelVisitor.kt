@@ -221,7 +221,6 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
         addFunction(FunSpec.builder("from").apply {
           addModifiers(KModifier.OVERRIDE)
           addParameter("input", charter.classDeclaration.toClassName())
-          // TODO So is this
           returns(charter.apiResponseClass)
           addCodeBlock {
             addObjectInstantiation(charter.apiResponseClass, returnInstance = true) {
