@@ -11,10 +11,12 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
@@ -25,10 +27,13 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.Sensitive
+import io.bkbn.lerasium.core.converter.Converter
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
 import io.bkbn.lerasium.core.serialization.Serializers
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -236,17 +241,21 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
         }
         addProperty(prop)
       }
-      addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
-        addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-          addMember("with = %T::class", Serializers.Uuid::class)
+      addType(TypeSpec.companionObjectBuilder().apply {
+        addSuperinterface(
+          Converter::class.asTypeName()
+            .parameterizedBy(charter.classDeclaration.toClassName(), charter.apiResponseClass)
+        )
+        addFunction(FunSpec.builder("from").apply {
+          addModifiers(KModifier.OVERRIDE)
+          addParameter("input", charter.classDeclaration.toClassName())
+          returns(charter.apiResponseClass)
+          addCodeBlock {
+            addObjectInstantiation(charter.apiResponseClass, returnInstance = true) {
+              addConverterProperties(properties)
+            }
+          }
         }.build())
-        initializer("id")
-      }.build())
-      addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName()).apply {
-        initializer("createdAt")
-      }.build())
-      addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName()).apply {
-        initializer("updatedAt")
       }.build())
     }.build())
   }
@@ -255,7 +264,6 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
     properties: Sequence<KSPropertyDeclaration>
   ) {
     primaryConstructor(FunSpec.constructorBuilder().apply {
-      addParameter(ParameterSpec("id", UUID::class.asTypeName()))
       properties.forEach {
         val param = when (it.type.isSupportedScalar()) {
           true -> it.toParameter()
@@ -275,8 +283,27 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
         }
         addParameter(param)
       }
-      addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
-      addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
     }.build())
+  }
+
+  private fun CodeBlock.Builder.addConverterProperties(properties: Sequence<KSPropertyDeclaration>) {
+    properties.filterNot { it.isAnnotationPresent(Sensitive::class) }.forEach {
+      when (it.type.isSupportedScalar()) {
+        true -> addStatement("${it.simpleName.getShortName()} = input.${it.simpleName.getShortName()},")
+        false -> {
+          val n = it.simpleName.getShortName()
+          val domain =
+            (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+          if (domain != null) {
+            val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels.Response"))
+            addStatement("$n = ${responseClass.simpleName}.from(input.${n}),")
+          } else {
+            val t = it.type.resolve().toClassName().simpleName.plus(".Response")
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
+            addStatement("$n = ${cn.simpleName}.from(input.${n}),")
+          }
+        }
+      }
+    }
   }
 }

@@ -1,25 +1,34 @@
 package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Sensitive
+import io.bkbn.lerasium.core.converter.Converter
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
 import io.bkbn.lerasium.core.serialization.Serializers
 import io.bkbn.lerasium.utils.KSVisitorWithData
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -27,6 +36,7 @@ import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.NestedLerasiumCharter
 import kotlinx.serialization.Serializable
 
+@OptIn(KspExperimental::class)
 class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val logger: KSPLogger) :
   KSVisitorWithData<NestedModelVisitor.Data>() {
 
@@ -38,17 +48,23 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
   override fun visitTypeReference(typeReference: KSTypeReference, data: Data) {
     val classDeclaration = typeReference.resolve().declaration as KSClassDeclaration
 
-    val charter = NestedLerasiumCharter(
-      parentCharter = data.parentCharter,
-      classDeclaration = classDeclaration,
-    )
+    try {
+      val charter = NestedLerasiumCharter(
+        parentCharter = data.parentCharter,
+        classDeclaration = classDeclaration,
+      )
 
-    val newData = Data(
-      parentCharter = charter,
-      visitedModels = data.visitedModels.plus(typeReference),
-    )
+      val newData = Data(
+        parentCharter = charter,
+        visitedModels = data.visitedModels.plus(typeReference),
+      )
 
-    typeBuilder.addChildObject(charter, newData)
+      typeBuilder.addChildObject(charter, newData)
+    } catch (e: Exception) {
+      logger.error(data.parentCharter.domain.name)
+      throw e
+    }
+
   }
 
   private fun TypeSpec.Builder.addChildObject(charter: NestedLerasiumCharter, data: Data) {
@@ -194,7 +210,48 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
         }
         addProperty(prop)
       }
+      addType(TypeSpec.companionObjectBuilder().apply {
+        addSuperinterface(
+          Converter::class.asTypeName()
+            .parameterizedBy(
+              charter.classDeclaration.toClassName(),
+              charter.apiResponseClass
+            )
+        )
+        addFunction(FunSpec.builder("from").apply {
+          addModifiers(KModifier.OVERRIDE)
+          addParameter("input", charter.classDeclaration.toClassName())
+          // TODO So is this
+          returns(charter.apiResponseClass)
+          addCodeBlock {
+            addObjectInstantiation(charter.apiResponseClass, returnInstance = true) {
+              addConverterProperties(properties)
+            }
+          }
+        }.build())
+      }.build())
     }.build())
+  }
+
+  private fun CodeBlock.Builder.addConverterProperties(properties: Sequence<KSPropertyDeclaration>) {
+    properties.filterNot { it.isAnnotationPresent(Sensitive::class) }.forEach {
+      when (it.type.isSupportedScalar()) {
+        true -> addStatement("${it.simpleName.getShortName()} = input.${it.simpleName.getShortName()},")
+        false -> {
+          val n = it.simpleName.getShortName()
+          val domain =
+            (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+          if (domain != null) {
+            val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels.Response"))
+            addStatement("$n = ${responseClass.simpleName}.from(input.${n}),")
+          } else {
+            val t = it.type.resolve().toClassName().simpleName.plus(".Response")
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
+            addStatement("$n = ${cn.simpleName}.from(input.${n}),")
+          }
+        }
+      }
+    }
   }
 
 }

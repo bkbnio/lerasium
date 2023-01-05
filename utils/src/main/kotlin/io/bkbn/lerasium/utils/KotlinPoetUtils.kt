@@ -50,9 +50,10 @@ object KotlinPoetUtils {
   fun CodeBlock.Builder.addObjectInstantiation(
     type: TypeName,
     trailingComma: Boolean = false,
+    returnInstance: Boolean = false,
     init: CodeBlock.Builder.() -> Unit
   ) {
-    add("%T(\n", type)
+    if (returnInstance) add("return %T(\n", type) else add("%T(\n", type)
     indent()
     add(CodeBlock.Builder().apply(init).build())
     unindent()

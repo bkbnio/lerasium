@@ -9,12 +9,16 @@ import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.DOMAIN_PACKAGE_NAME
 
 open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDeclaration) {
   @OptIn(KspExperimental::class)
   open val isActor: Boolean = classDeclaration.isAnnotationPresent(Actor::class)
+  val domainClass: ClassName = ClassName(DOMAIN_PACKAGE_NAME, domain.name)
+
   // TODO Should not leak out of persistence layer
   val daoClass: ClassName = ClassName(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
+
   // TODO Should not leak out of api layer
   val apiServiceClass: ClassName = ClassName(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))
   val ioModelClass: ClassName = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels"))

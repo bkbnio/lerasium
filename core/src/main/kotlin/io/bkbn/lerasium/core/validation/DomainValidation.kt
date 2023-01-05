@@ -15,4 +15,6 @@ object DomainValidation {
   private fun ValidationBuilder<String>.pascalCase(): Constraint<String> {
     return addConstraint("Must be UpperCamelCase syntax") { it.matches(Regex("^([A-Z][a-z]*)+")) }
   }
+
+  // TODO Enforce that domain class inherits from LerasiumDomain
 }
