@@ -11,6 +11,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.auth.Password
@@ -116,7 +117,9 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addParameter("id", UUID::class)
       scalarProperties.forEach { addParameter(it.toParameter(guaranteeNullable = true)) }
       foreignKeys.forEach {
-        addParameter(ParameterSpec.builder(it.simpleName.getShortName(), UUID::class).build())
+        addParameter(
+          ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asTypeName().copy(nullable = true)).build()
+        )
       }
       addCodeBlock {
         addControlFlow("return %M", Transaction) {

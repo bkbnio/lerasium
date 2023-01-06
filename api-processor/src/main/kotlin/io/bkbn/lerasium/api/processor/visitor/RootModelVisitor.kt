@@ -39,6 +39,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.isCollection
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -71,6 +72,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
 
       charter.classDeclaration.getAllProperties().toList()
         .filterNot { it.type.isSupportedScalar() }
+        .filterNot { it.type.isCollection() }
         .filterNot { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
         .forEach {
           nestedModelVisitor.visitTypeReference(
