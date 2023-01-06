@@ -22,4 +22,15 @@ class NestedLerasiumCharter(
       "Response"
     )
   }
+  override val documentClass: ClassName = when (parentCharter) {
+    is NestedLerasiumCharter -> ClassName(
+      parentCharter.documentClass.canonicalName,
+      parentCharter.classDeclaration.simpleName.asString(),
+      classDeclaration.simpleName.asString().plus("Document")
+    )
+    else -> ClassName(
+      parentCharter.documentClass.canonicalName,
+      classDeclaration.simpleName.asString().plus("Document")
+    )
+  }
 }

@@ -48,23 +48,17 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
   override fun visitTypeReference(typeReference: KSTypeReference, data: Data) {
     val classDeclaration = typeReference.resolve().declaration as KSClassDeclaration
 
-    try {
-      val charter = NestedLerasiumCharter(
-        parentCharter = data.parentCharter,
-        classDeclaration = classDeclaration,
-      )
+    val charter = NestedLerasiumCharter(
+      parentCharter = data.parentCharter,
+      classDeclaration = classDeclaration,
+    )
 
-      val newData = Data(
-        parentCharter = charter,
-        visitedModels = data.visitedModels.plus(typeReference),
-      )
+    val newData = Data(
+      parentCharter = charter,
+      visitedModels = data.visitedModels.plus(typeReference),
+    )
 
-      typeBuilder.addChildObject(charter, newData)
-    } catch (e: Exception) {
-      logger.error(data.parentCharter.domain.name)
-      throw e
-    }
-
+    typeBuilder.addChildObject(charter, newData)
   }
 
   private fun TypeSpec.Builder.addChildObject(charter: NestedLerasiumCharter, data: Data) {
@@ -78,7 +72,6 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
       charter.classDeclaration.getAllProperties().toList()
         .filterNot { it.type.isSupportedScalar() }
         .filterNot { data.visitedModels.contains(it.type) }
-        // .distinctBy { it.type.resolve().declaration.simpleName.getShortName() }
         .forEach { childModelVisitor.visitTypeReference(it.type, data) }
     }.build())
   }

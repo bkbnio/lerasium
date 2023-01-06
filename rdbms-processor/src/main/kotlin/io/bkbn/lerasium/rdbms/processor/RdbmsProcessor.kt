@@ -13,7 +13,7 @@ import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.rdbms.processor.visitor.EntityVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.RepositoryVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
-import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.TABLE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 
@@ -36,7 +36,7 @@ class RdbmsProcessor(
 
     symbols.forEach {
       val domain = it.getDomain()
-      val fb = FileSpec.builder(ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
+      val fb = FileSpec.builder(TABLE_PACKAGE_NAME, domain.name.plus("Table"))
       it.accept(TableVisitor(fb, logger), Unit)
       it.accept(EntityVisitor(fb, logger), Unit)
       val fs = fb.build()

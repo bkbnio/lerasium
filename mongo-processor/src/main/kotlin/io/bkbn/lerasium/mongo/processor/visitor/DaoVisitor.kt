@@ -213,6 +213,7 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
             addStatement("$entityName.%L = it", propName)
           }
         }
+
         false -> {
           addControlFlow("$requestName.$propName?.let") {
             addControlFlow("$entityName.$propName.let { $propName ->") {

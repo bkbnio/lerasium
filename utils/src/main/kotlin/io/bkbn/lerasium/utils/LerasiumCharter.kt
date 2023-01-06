@@ -8,9 +8,9 @@ import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
-import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.DOCUMENT_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DOMAIN_PACKAGE_NAME
-import io.bkbn.lerasium.utils.KotlinPoetUtils.ENTITY_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.TABLE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 
 open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDeclaration) {
@@ -19,10 +19,10 @@ open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDecl
   val domainClass: ClassName = ClassName(DOMAIN_PACKAGE_NAME, domain.name)
 
   // TODO Should not leak out of persistence layer
-  val daoClass: ClassName = ClassName(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
   val repositoryClass: ClassName = ClassName(REPOSITORY_PACKAGE_NAME, domain.name.plus("Repository"))
-  val entityClass: ClassName = ClassName(ENTITY_PACKAGE_NAME, domain.name.plus("Entity"))
-  val tableClass: ClassName = ClassName(ENTITY_PACKAGE_NAME, domain.name.plus("Table"))
+  val entityClass: ClassName = ClassName(TABLE_PACKAGE_NAME, domain.name.plus("Entity"))
+  val tableClass: ClassName = ClassName(TABLE_PACKAGE_NAME, domain.name.plus("Table"))
+  open val documentClass: ClassName = ClassName(DOCUMENT_PACKAGE_NAME, domain.name.plus("Document"))
 
   // TODO Should not leak out of api layer
   val apiServiceClass: ClassName = ClassName(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))

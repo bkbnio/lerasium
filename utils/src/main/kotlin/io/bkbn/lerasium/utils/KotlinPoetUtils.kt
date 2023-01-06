@@ -33,9 +33,10 @@ object KotlinPoetUtils {
   const val DOMAIN_PACKAGE_NAME = "$BASE_PACKAGE_NAME.domain"
 
   // Persistence
-  const val DAO_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.dao"
   const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
   const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
+  const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"
+  const val DOCUMENT_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.document"
 
   fun CodeBlock.Builder.addControlFlow(
     controlFlow: String,
@@ -72,14 +73,14 @@ object KotlinPoetUtils {
   fun Domain.toCreateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("CreateRequest"))
   fun Domain.toUpdateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("UpdateRequest"))
   fun Domain.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("Response"))
-  fun Domain.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Entity"))
-  fun Domain.toTableClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Table"))
+  fun Domain.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Entity"))
+  fun Domain.toTableClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
   fun String.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, this.plus("Response"))
-  fun String.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, this.plus("Entity"))
+  fun String.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, this.plus("Entity"))
 
-  fun ClassName.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
+  fun ClassName.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, simpleName.plus("Entity"))
 
   fun KSPropertyDeclaration.toParameter(guaranteeNullable: Boolean = false) =
     ParameterSpec.builder(

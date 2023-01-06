@@ -1,7 +1,5 @@
 package io.bkbn.lerasium.core.processor
 
-import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -19,7 +17,6 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
-import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -29,7 +26,6 @@ import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomainOrNull
 import io.bkbn.lerasium.utils.LerasiumUtils.isCollection
 
-@OptIn(KspExperimental::class)
 class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
   private lateinit var containingFile: KSFile
 
