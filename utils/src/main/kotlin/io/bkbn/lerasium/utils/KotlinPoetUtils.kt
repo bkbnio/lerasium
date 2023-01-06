@@ -48,13 +48,27 @@ object KotlinPoetUtils {
     endControlFlow()
   }
 
+  fun CodeBlock.Builder.addControlFlowWithTrailingComma(
+    controlFlow: String,
+    vararg args: Any,
+    init: CodeBlock.Builder.() -> Unit
+  ) {
+    beginControlFlow(controlFlow, *args)
+    add(CodeBlock.Builder().apply(init).build())
+    unindent()
+    add("},\n")
+  }
+
   fun CodeBlock.Builder.addObjectInstantiation(
     type: TypeName,
     trailingComma: Boolean = false,
     returnInstance: Boolean = false,
+    assignment: String? = null,
     init: CodeBlock.Builder.() -> Unit
   ) {
-    if (returnInstance) add("return %T(\n", type) else add("%T(\n", type)
+    if (returnInstance) add("return %T(\n", type)
+    else if (assignment != null) add("%L = %T(\n", assignment, type)
+    else add("%T(\n", type)
     indent()
     add(CodeBlock.Builder().apply(init).build())
     unindent()

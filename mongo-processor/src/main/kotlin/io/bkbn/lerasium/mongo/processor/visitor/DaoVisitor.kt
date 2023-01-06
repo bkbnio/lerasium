@@ -262,3 +262,26 @@ class DaoVisitor(private val fileBuilder: FileSpec.Builder, private val logger: 
     }.build())
   }
 }
+
+/*
+val document = ProfileDocument(
+      id = UUID.randomUUID(),
+      mood = null,
+      viewCount = 0,
+      metadata = ProfileDocument.MetadataDocument(
+        isPrivate = false,
+        otherThing = "idk",
+        handle = "yessir",
+      ),
+      miscA = ProfileDocument.MiscDocument(
+        infoA = "a",
+        infoB = 0,
+        more = ProfileDocument.MiscDocument.MoreMiscDocument(
+          infoC = "c",
+          infoD = 0,
+        ),
+      ),
+      createdAt = now,
+      updatedAt = now
+    )
+ */
