@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.mongo.processor
+package io.bkbn.lerasium.mongo.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType

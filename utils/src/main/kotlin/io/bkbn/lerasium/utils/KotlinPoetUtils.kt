@@ -35,6 +35,7 @@ object KotlinPoetUtils {
 
   // Persistence
   const val DAO_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.dao"
+  const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
   const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
 
   fun CodeBlock.Builder.addControlFlow(

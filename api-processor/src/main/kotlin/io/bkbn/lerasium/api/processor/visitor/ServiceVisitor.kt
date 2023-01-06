@@ -16,6 +16,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import java.util.Date
+import java.util.UUID
 
 class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
@@ -36,7 +37,54 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   }
 
   private fun TypeSpec.Builder.addService(charter: LerasiumCharter) {
+    addCreateFunction(charter)
+    addReadFunction(charter)
+    addUpdateFunction(charter)
+    addDeleteFunction(charter)
     if (charter.isActor) addAuthenticationFunction(charter)
+  }
+
+  private fun TypeSpec.Builder.addCreateFunction(charter: LerasiumCharter) {
+    addFunction(FunSpec.builder("create").apply {
+      addParameter("request", charter.apiCreateRequestClass)
+      returns(charter.apiResponseClass)
+      addCodeBlock {
+        addStatement("val result = %T.create()", charter.repositoryClass)
+        addStatement("return %T.from(result)", charter.apiResponseClass)
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
+    addFunction(FunSpec.builder("read").apply {
+      addParameter("id", UUID::class)
+      returns(charter.apiResponseClass)
+      addCodeBlock {
+        addStatement("val result = %T.read()", charter.repositoryClass)
+        addStatement("return %T.from(result)", charter.apiResponseClass)
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
+    addFunction(FunSpec.builder("update").apply {
+      addParameter("id", UUID::class)
+      addParameter("request", charter.apiUpdateRequestClass)
+      returns(charter.apiResponseClass)
+      addCodeBlock {
+        addStatement("val result = %T.update()", charter.repositoryClass)
+        addStatement("return %T.from(result)", charter.apiResponseClass)
+      }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addDeleteFunction(charter: LerasiumCharter) {
+    addFunction(FunSpec.builder("delete").apply {
+      addParameter("id", UUID::class)
+      addCodeBlock {
+        addStatement("%T.delete()", charter.repositoryClass)
+      }
+    }.build())
   }
 
   private fun TypeSpec.Builder.addAuthenticationFunction(charter: LerasiumCharter) {

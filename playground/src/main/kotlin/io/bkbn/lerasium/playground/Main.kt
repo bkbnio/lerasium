@@ -14,12 +14,6 @@ import io.bkbn.lerasium.generated.api.controller.BookController.bookHandler
 import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReviewHandler
 import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
 import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
-import io.bkbn.lerasium.generated.models.UserCreateRequest
-import io.bkbn.lerasium.generated.persistence.dao.AuthorDao
-import io.bkbn.lerasium.generated.persistence.dao.BookDao
-import io.bkbn.lerasium.generated.persistence.dao.BookReviewDao
-import io.bkbn.lerasium.generated.persistence.dao.ProfileDao
-import io.bkbn.lerasium.generated.persistence.dao.UserDao
 import io.bkbn.lerasium.generated.persistence.entity.AuthorTable
 import io.bkbn.lerasium.generated.persistence.entity.BookReviewTable
 import io.bkbn.lerasium.generated.persistence.entity.BookTable
@@ -58,17 +52,7 @@ fun main(args: Array<String>) {
   DatabaseConfig.flyway.migrate()
 
   // Inject some dummy data
-  UserDao.create(
-    listOf(
-      UserCreateRequest(
-        "Doctor",
-        "Backbone",
-        email = "admin@bkbn.io",
-        password = "password",
-        favoriteFood = null
-      )
-    )
-  )
+  // TODO
 
   logger.info { "Launching API" }
   EngineMain.main(args)
@@ -106,11 +90,11 @@ fun Application.module() {
   }
   routing {
     redoc("The Playground")
-    userHandler(UserDao)
-    bookHandler(BookDao)
-    bookReviewHandler(BookReviewDao)
-    authorHandler(AuthorDao)
-    profileHandler(ProfileDao(DatabaseConfig.documentDatabase))
+    userHandler()
+    bookHandler()
+    bookReviewHandler()
+    authorHandler()
+    profileHandler()
   }
 }
 

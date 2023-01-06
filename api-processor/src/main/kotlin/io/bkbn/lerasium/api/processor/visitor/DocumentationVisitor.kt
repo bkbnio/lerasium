@@ -64,27 +64,17 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
       addCodeBlock {
         addControlFlow("%M(%T())", installMember, NotarizedRoute::class) {
           addStatement("tags = setOf(%S)", domain.name)
-          addControlFlow("get = %T.builder", GetInfo::class) {
-            addStatement("summary(%S)", "Get All ${domain.name} Entities")
-            addStatement("description(%S)", "Retrieves a paginated list of ${domain.name} Entities")
-            addStatement("parameters(*%M().toTypedArray())", getAllParametersMember)
-            addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiResponseClass))
-              addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "Paginated list of ${domain.name} entities")
-            }
-          }
           addControlFlow("post = %T.builder", PostInfo::class) {
-            addStatement("summary(%S)", "Create New ${domain.name} Entity")
-            addStatement("description(%S)", "Persists a new ${domain.name} entity in the database")
+            addStatement("summary(%S)", "Create New ${domain.name}")
+            addStatement("description(%S)", "Persists a new ${domain.name} in the database")
             addControlFlow("response") {
-              addStatement("responseType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiResponseClass))
+              addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.Created)", HttpStatusCode::class)
-              addStatement("description(%S)", "${domain.name} entities saved successfully")
+              addStatement("description(%S)", "${domain.name} saved successfully")
             }
             addControlFlow("request") {
-              addStatement("requestType<%T>()", List::class.asTypeName().parameterizedBy(charter.apiCreateRequestClass))
-              addStatement("description(%S)", "Collection of ${domain.name} entities the user wishes to persist")
+              addStatement("requestType<%T>()", charter.apiCreateRequestClass)
+              addStatement("description(%S)", "${domain.name} to persist")
             }
           }
         }
@@ -103,33 +93,33 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
           addStatement("parameters = %M()", idParameterMember)
           addControlFlow("get = %T.builder", GetInfo::class) {
             addStatement("summary(%S)", "Get ${domain.name} by ID")
-            addStatement("description(%S)", "Retrieves the specified ${domain.name} entity by its ID")
+            addStatement("description(%S)", "Retrieves the specified ${domain.name} by its ID")
             addControlFlow("response") {
               addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "The ${domain.name} entity with the specified ID")
+              addStatement("description(%S)", "The ${domain.name} with the specified ID")
             }
           }
           addControlFlow("put = %T.builder", PutInfo::class) {
             addStatement("summary(%S)", "Update ${domain.name} by ID")
-            addStatement("description(%S)", "Updates the specified ${domain.name} entity by its ID")
+            addStatement("description(%S)", "Updates the specified ${domain.name} by its ID")
             addControlFlow("request") {
               addStatement("requestType<%T>()", charter.apiUpdateRequestClass)
-              addStatement("description(%S)", "Fields that can be updated on the ${domain.name} entity")
+              addStatement("description(%S)", "Fields that can be updated on the ${domain.name}")
             }
             addControlFlow("response") {
               addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.Created)", HttpStatusCode::class)
-              addStatement("description(%S)", "Indicates that the ${domain.name} entity was updated successfully")
+              addStatement("description(%S)", "Indicates that the ${domain.name} was updated successfully")
             }
           }
           addControlFlow("delete = %T.builder", DeleteInfo::class) {
             addStatement("summary(%S)", "Delete ${domain.name} by ID")
-            addStatement("description(%S)", "Deletes the specified ${domain.name} entity by its ID")
+            addStatement("description(%S)", "Deletes the specified ${domain.name} by its ID")
             addControlFlow("response") {
               addStatement("responseType<%T>()", Unit::class)
               addStatement("responseCode(%T.NoContent)", HttpStatusCode::class)
-              addStatement("description(%S)", "Indicates that the ${domain.name} entity was deleted successfully")
+              addStatement("description(%S)", "Indicates that the ${domain.name} was deleted successfully")
             }
           }
         }
@@ -197,7 +187,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addStatement(
               "description(%S)",
               """
-              Attempts to find a ${domain.name} entity associated
+              Attempts to find a ${domain.name} associated
               with the provided ${name.capitalized()} id
               """.trimIndent()
             )
@@ -205,7 +195,7 @@ class DocumentationVisitor(private val fileBuilder: FileSpec.Builder, private va
             addControlFlow("response") {
               addStatement("responseType<%T>()", charter.apiResponseClass)
               addStatement("responseCode(%T.OK)", HttpStatusCode::class)
-              addStatement("description(%S)", "${domain.name} entity associated with the specified $name")
+              addStatement("description(%S)", "${domain.name} associated with the specified $name")
             }
           }
         }

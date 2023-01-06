@@ -10,6 +10,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DAO_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.DOMAIN_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 
 open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDeclaration) {
   @OptIn(KspExperimental::class)
@@ -18,6 +19,7 @@ open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDecl
 
   // TODO Should not leak out of persistence layer
   val daoClass: ClassName = ClassName(DAO_PACKAGE_NAME, domain.name.plus("Dao"))
+  val repositoryClass: ClassName = ClassName(REPOSITORY_PACKAGE_NAME, domain.name.plus("Repository"))
 
   // TODO Should not leak out of api layer
   val apiServiceClass: ClassName = ClassName(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))
@@ -25,5 +27,4 @@ open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDecl
   val apiCreateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Create")
   val apiUpdateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Update")
   open val apiResponseClass: ClassName = ClassName(ioModelClass.canonicalName, "Response")
-
 }
