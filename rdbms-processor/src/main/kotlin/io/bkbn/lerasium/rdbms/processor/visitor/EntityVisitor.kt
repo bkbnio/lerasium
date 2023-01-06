@@ -62,7 +62,6 @@ class EntityVisitor(private val fileBuilder: FileSpec.Builder, private val logge
   private fun FileSpec.Builder.addEntity(charter: LerasiumCharter) {
     addType(TypeSpec.classBuilder(charter.domain.name.plus("Entity")).apply {
       addEntityTypeInfo(charter)
-//      addResponseConverter(charter)
       addDomainConverter(charter)
       addEntityProperties(charter)
       addRelations(charter)

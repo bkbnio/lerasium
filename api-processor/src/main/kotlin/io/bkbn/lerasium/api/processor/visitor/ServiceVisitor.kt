@@ -61,18 +61,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       addParameter("request", charter.apiCreateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.create(", charter.repositoryClass)
-        indent()
-        scalarProperties.forEach { property ->
-          val name = property.simpleName.getShortName()
-          addStatement("%L = request.%L,", name, name)
-        }
-        domainProperties.forEach { property ->
-          val name = property.simpleName.getShortName()
-          addStatement("%L = request.%L,", name, name)
-        }
-        unindent()
-        addStatement(")")
+        addStatement("val result = %T.create(request)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -102,19 +91,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       addParameter("request", charter.apiUpdateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.update(", charter.repositoryClass)
-        indent()
-        addStatement("id = id,")
-        scalarProperties.forEach { property ->
-          val name = property.simpleName.getShortName()
-          addStatement("%L = request.%L,", name, name)
-        }
-        domainProperties.forEach { property ->
-          val name = property.simpleName.getShortName()
-          addStatement("%L = request.%L,", name, name)
-        }
-        unindent()
-        addStatement(")")
+        addStatement("val result = %T.update(id, request)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())

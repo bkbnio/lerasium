@@ -13,15 +13,17 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.core.Relation
-import io.bkbn.lerasium.utils.KotlinPoetUtils
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -56,11 +58,11 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
 
   private fun FileSpec.Builder.addDocument(charter: LerasiumCharter) {
     val properties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(Relation::class) }
       .filterNot { it.type.isDomain() }
       .filterNot { it.simpleName.getShortName() == "id" }
     addType(TypeSpec.classBuilder(charter.documentClass).apply {
       addOriginatingKSFile(charter.classDeclaration.containingFile!!)
+      addSuperinterface(ConvertTo::class.asClassName().parameterizedBy(charter.domainClass))
       addAnnotation(Serializable::class)
       addModifiers(KModifier.DATA)
       primaryConstructor(FunSpec.constructorBuilder().apply {
@@ -91,13 +93,14 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
       }.build())
       properties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
-          true -> it.toProperty()
+          true -> it.toProperty(isMutable = true)
           false -> {
             val n = it.simpleName.getShortName()
             val t = it.type.resolve().toClassName().simpleName.plus("Document")
             val p =  charter.documentClass.canonicalName
             val cn = ClassName(p, t)
             PropertySpec.builder(n, cn).apply {
+              mutable()
               initializer(n)
             }.build()
           }
@@ -112,6 +115,8 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
         initializer("updatedAt")
       }.build())
 
+      addDomainConverter(charter)
+
       val nestedDocumentVisitor = NestedDocumentVisitor(this, logger)
       charter.classDeclaration.getAllProperties()
         .filterNot { it.type.isSupportedScalar() }
@@ -122,6 +127,30 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
             it.type, NestedDocumentVisitor.Data(parentCharter = charter)
           )
         }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.addDomainConverter(charter: LerasiumCharter) {
+    val scalarProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isSupportedScalar() }
+      .filterNot { it.simpleName.getShortName() == "id" }
+    val nestedProps = charter.classDeclaration.getAllProperties()
+      .filterNot { it in scalarProps }
+      .filterNot { it.simpleName.getShortName() == "id" }
+    addFunction(FunSpec.builder("to").apply {
+      returns(charter.domainClass)
+      addModifiers(KModifier.OVERRIDE)
+      addCodeBlock {
+        addObjectInstantiation(charter.domainClass, returnInstance = true) {
+          addStatement("id = id,")
+          scalarProps.forEach {
+            addStatement("%L = %L,", it.simpleName.getShortName(), it.simpleName.getShortName())
+          }
+          nestedProps.forEach {
+            addStatement("%L = %L.to(),", it.simpleName.getShortName(), it.simpleName.getShortName())
+          }
+        }
+      }
     }.build())
   }
 }

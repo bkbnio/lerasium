@@ -126,16 +126,16 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
             val name = prop.simpleName.getShortName()
             addStatement("$name = request.$name,", charter.documentClass)
           }
-          nestedProps.forEach { prop -> convertToNestedEntity(charter, prop, "request") }
+          nestedProps.forEach { prop -> convertToNestedCreateDocument(charter, prop, "request") }
           addStatement("createdAt = now,")
           addStatement("updatedAt = now,")
         }
       }
-      addStatement("TODO()")
+      addStatement("return document.to()")
     }.build())
   }
 
-  private fun CodeBlock.Builder.convertToNestedEntity(
+  private fun CodeBlock.Builder.convertToNestedCreateDocument(
     charter: LerasiumCharter,
     property: KSPropertyDeclaration,
     grandparentPropName: String,
@@ -160,7 +160,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           addStatement("%L = %L.%L,", propName, parentPropName, propName)
         }
         nestedProps.forEach { prop ->
-          convertToNestedEntity(updatedCharter, prop, parentPropName)
+          convertToNestedCreateDocument(updatedCharter, prop, parentPropName)
         }
       }
     }
@@ -169,20 +169,74 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("read").apply {
       returns(charter.domainClass)
-      addStatement("TODO()")
+      addParameter("id", UUID::class)
+      addStatement("val document = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
+      addStatement("return document.to()")
     }.build())
   }
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
+    val scalarProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isSupportedScalar() }
+      .filterNot { it.simpleName.getShortName() == "id" }
+    val nestedProps = charter.classDeclaration.getAllProperties()
+      .filterNot { it in scalarProps }
+      .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("update").apply {
       returns(charter.domainClass)
-      addStatement("TODO()")
+      addParameter("id", UUID::class)
+      addParameter("request", charter.apiUpdateRequestClass)
+      addCodeBlock {
+        addStatement("val document = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
+        addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
+        addControlFlow("document.apply") {
+          scalarProps.forEach { prop ->
+            val name = prop.simpleName.getShortName()
+            addStatement("request.%L?.let { %L = it }", name, name)
+          }
+          nestedProps.forEach { prop ->
+            val name = prop.simpleName.getShortName()
+            addControlFlow("request.%L?.let", name) {
+              convertToNestedUpdateDocument(charter, prop)
+            }
+          }
+        }
+        addStatement("document.updatedAt = now")
+        addStatement("collection.%M(document)", Save)
+        addStatement("return document.to()")
+      }
     }.build())
+  }
+
+  private fun CodeBlock.Builder.convertToNestedUpdateDocument(
+    charter: LerasiumCharter,
+    property: KSPropertyDeclaration,
+  ) {
+    val entityClassDeclaration = property.type.resolve().declaration as KSClassDeclaration
+    val updatedCharter = NestedLerasiumCharter(classDeclaration = entityClassDeclaration, parentCharter = charter)
+    val scalarProps = entityClassDeclaration.getAllProperties()
+      .filter { it.type.isSupportedScalar() }
+    val nestedProps = entityClassDeclaration.getAllProperties()
+      .filterNot { it in scalarProps }
+    val parentPropName = property.simpleName.getShortName()
+    addControlFlow("%L.apply", parentPropName) {
+      scalarProps.forEach { prop ->
+        val propName = prop.simpleName.getShortName()
+        addStatement("it.%L?.let { %L = it }", propName, propName)
+      }
+      nestedProps.forEach { prop ->
+        val propName = prop.simpleName.getShortName()
+        addControlFlow("it.%L?.let", propName) {
+          convertToNestedUpdateDocument(updatedCharter, prop)
+        }
+      }
+    }
   }
 
   private fun TypeSpec.Builder.addDeleteFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("delete").apply {
-      addStatement("TODO()")
+      addParameter("id", UUID::class)
+      addStatement("collection.%M(id)", DeleteOneById)
     }.build())
   }
 }
