@@ -7,6 +7,7 @@ import io.bkbn.lerasium.core.Sensitive
 import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.core.auth.Password
 import io.bkbn.lerasium.core.auth.Username
+import io.bkbn.lerasium.core.domain.LerasiumDomain
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.rdbms.Table
@@ -17,7 +18,7 @@ import io.bkbn.lerasium.rdbms.Table
 @Table
 @CompositeIndex(unique = false, "firstName", "lastName")
 @CompositeIndex(unique = false, "favoriteFood", "lastName")
-interface User {
+interface User : LerasiumDomain {
   val firstName: String
   val lastName: String
 

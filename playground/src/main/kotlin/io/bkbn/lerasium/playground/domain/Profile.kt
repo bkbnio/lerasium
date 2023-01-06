@@ -2,6 +2,7 @@ package io.bkbn.lerasium.playground.domain
 
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.domain.LerasiumDomain
 import io.bkbn.lerasium.mongo.Document
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
@@ -10,7 +11,7 @@ import io.bkbn.lerasium.persistence.Index
 @Document
 @CompositeIndex(fields = ["mood", "viewCount"])
 @Domain("Profile")
-interface Profile {
+interface Profile : LerasiumDomain {
   val mood: String?
   val viewCount: Long
   val metadata: Metadata

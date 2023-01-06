@@ -277,28 +277,20 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Country")
+      @Table
       interface Country {
         val name: String
         @Relation
-        val users: User
-      }
-
-      @Table
-      interface CountryTable : Country {
         @OneToMany("country")
-        override val users: User
+        val users: List<User>
       }
 
       @Domain("User")
+      @Table
       interface User {
         val name: String
-        val country: Country
-      }
-
-      @Table
-      interface UserTable : User {
         @ForeignKey
-        override val country: Country
+        val country: Country
       }
     """.trimIndent()
   )

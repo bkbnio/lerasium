@@ -100,7 +100,7 @@ object Specs {
         val firstName: String
         val lastName: String
         val email: String
-        val favoriteUuid: UUID,
+        val favoriteUuid: UUID
       }
     """.trimIndent()
   )
@@ -125,6 +125,30 @@ object Specs {
         val lastName: String
         val email: String
         val country: Country
+      }
+    """.trimIndent()
+  )
+
+  val domainWithOneToManyReference = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.core.Sensitive
+      import java.util.UUID
+
+      @Domain("Country")
+      interface Country {
+        val name: String
+        val citizens: List<User>
+      }
+
+      @Domain("User")
+      interface User {
+        val firstName: String
+        val lastName: String
+        val email: String
       }
     """.trimIndent()
   )

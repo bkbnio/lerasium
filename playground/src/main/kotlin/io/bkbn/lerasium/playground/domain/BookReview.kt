@@ -2,6 +2,7 @@ package io.bkbn.lerasium.playground.domain
 
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.domain.LerasiumDomain
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
@@ -10,7 +11,7 @@ import io.bkbn.lerasium.rdbms.Table
 @Domain("BookReview")
 @Table
 @CompositeIndex(true, "reader", "book")
-interface BookReview {
+interface BookReview : LerasiumDomain {
   @ForeignKey
   val reader: User
   @ForeignKey

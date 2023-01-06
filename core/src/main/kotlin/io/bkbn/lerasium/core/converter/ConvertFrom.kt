@@ -1,6 +1,6 @@
 package io.bkbn.lerasium.core.converter
 
-interface Converter<A, B> {
+interface ConvertFrom<A, B> {
 
   fun from(input: A): B
 

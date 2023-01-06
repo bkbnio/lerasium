@@ -1,6 +1,8 @@
 package io.bkbn.lerasium.api.processor.visitor
 
 import com.auth0.jwt.JWT
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -10,14 +12,17 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.processor.Members.hmac256Member
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.isDomain
 import java.util.Date
 import java.util.UUID
 
+@OptIn(KspExperimental::class)
 class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -45,11 +50,29 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   }
 
   private fun TypeSpec.Builder.addCreateFunction(charter: LerasiumCharter) {
+    val scalarProperties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filterNot { it.type.isDomain() }
+      .filterNot { it.simpleName.getShortName() == "id" }
+    val domainProperties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filter { it.type.isDomain() }
     addFunction(FunSpec.builder("create").apply {
       addParameter("request", charter.apiCreateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.create()", charter.repositoryClass)
+        addStatement("val result = %T.create(", charter.repositoryClass)
+        indent()
+        scalarProperties.forEach { property ->
+          val name = property.simpleName.getShortName()
+          addStatement("%L = request.%L,", name, name)
+        }
+        domainProperties.forEach { property ->
+          val name = property.simpleName.getShortName()
+          addStatement("%L = request.%L,", name, name)
+        }
+        unindent()
+        addStatement(")")
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -60,19 +83,38 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       addParameter("id", UUID::class)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.read()", charter.repositoryClass)
+        addStatement("val result = %T.read(id)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
   }
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
+    val scalarProperties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filterNot { it.type.isDomain() }
+      .filterNot { it.simpleName.getShortName() == "id" }
+    val domainProperties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filter { it.type.isDomain() }
     addFunction(FunSpec.builder("update").apply {
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.update()", charter.repositoryClass)
+        addStatement("val result = %T.update(", charter.repositoryClass)
+        indent()
+        addStatement("id = id,")
+        scalarProperties.forEach { property ->
+          val name = property.simpleName.getShortName()
+          addStatement("%L = request.%L,", name, name)
+        }
+        domainProperties.forEach { property ->
+          val name = property.simpleName.getShortName()
+          addStatement("%L = request.%L,", name, name)
+        }
+        unindent()
+        addStatement(")")
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -82,7 +124,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
     addFunction(FunSpec.builder("delete").apply {
       addParameter("id", UUID::class)
       addCodeBlock {
-        addStatement("%T.delete()", charter.repositoryClass)
+        addStatement("%T.delete(id)", charter.repositoryClass)
       }
     }.build())
   }
@@ -92,7 +134,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
       addParameter("request", LoginRequest::class)
       returns(String::class)
       addCodeBlock {
-        addStatement("val actor = %T.authenticate(request.username, request.password)", charter.daoClass)
+        addStatement("val actor = %T.authenticate(request.username, request.password)", charter.repositoryClass)
         addControlFlow("val unsignedToken = %T.create().apply", JWT::class) {
           addStatement("withAudience(%S)", "http://0.0.0.0:8080/hello")
           addStatement("withIssuer(%S)", "http://0.0.0.0:8080/")

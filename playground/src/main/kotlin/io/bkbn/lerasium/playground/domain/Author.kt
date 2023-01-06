@@ -12,7 +12,8 @@ import io.bkbn.lerasium.rdbms.Table
 @Table
 interface Author : LerasiumDomain {
   val name: String
+
   @Relation
   @OneToMany("author")
-  val books: Book
+  val books: List<Book>
 }

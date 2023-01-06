@@ -24,5 +24,5 @@ interface Book : LerasiumDomain {
   val author: Author
   @ManyToMany(BookReview::class)
   @Relation
-  val readers: User
+  val readers: List<User>
 }

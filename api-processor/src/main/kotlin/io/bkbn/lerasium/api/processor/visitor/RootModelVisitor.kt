@@ -27,7 +27,7 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.Sensitive
-import io.bkbn.lerasium.core.converter.Converter
+import io.bkbn.lerasium.core.converter.ConvertFrom
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
 import io.bkbn.lerasium.core.serialization.Serializers
@@ -39,7 +39,6 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -82,7 +81,9 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
   }
 
   private fun TypeSpec.Builder.addCreateRequestModel(charter: LerasiumCharter) {
-    val properties = charter.classDeclaration.getAllProperties().filterNot { it.isAnnotationPresent(Relation::class) }
+    val properties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.simpleName.getShortName() == "id" }
+      .filterNot { it.isAnnotationPresent(Relation::class) }
     addType(TypeSpec.classBuilder("Create").apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
@@ -138,7 +139,9 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
   }
 
   private fun TypeSpec.Builder.addUpdateRequestModel(charter: LerasiumCharter) {
-    val properties = charter.classDeclaration.getAllProperties().filterNot { it.isAnnotationPresent(Relation::class) }
+    val properties = charter.classDeclaration.getAllProperties()
+      .filterNot { it.simpleName.getShortName() == "id" }
+      .filterNot { it.isAnnotationPresent(Relation::class) }
     addType(TypeSpec.classBuilder("Update").apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
@@ -243,7 +246,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
       }
       addType(TypeSpec.companionObjectBuilder().apply {
         addSuperinterface(
-          Converter::class.asTypeName()
+          ConvertFrom::class.asTypeName()
             .parameterizedBy(charter.classDeclaration.toClassName(), charter.apiResponseClass)
         )
         addFunction(FunSpec.builder("from").apply {

@@ -14,7 +14,6 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.serialization.Serializers
-import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import kotlinx.serialization.Serializable
 
 object KotlinPoetUtils {
@@ -75,7 +74,6 @@ object KotlinPoetUtils {
   fun Domain.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("Response"))
   fun Domain.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toTableClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Table"))
-  fun Domain.toDaoClass(): ClassName = ClassName(DAO_PACKAGE_NAME, name.plus("Dao"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
   fun String.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, this.plus("Response"))
@@ -83,7 +81,11 @@ object KotlinPoetUtils {
 
   fun ClassName.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
 
-  fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
+  fun KSPropertyDeclaration.toParameter(guaranteeNullable: Boolean = false) =
+    ParameterSpec.builder(
+      simpleName.getShortName(),
+      type.toTypeName().copy(nullable = guaranteeNullable || this.type.resolve().isMarkedNullable)
+    ).build()
 
   fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false, isOverride: Boolean = false) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {

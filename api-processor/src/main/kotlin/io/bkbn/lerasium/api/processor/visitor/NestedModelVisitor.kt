@@ -21,7 +21,7 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Sensitive
-import io.bkbn.lerasium.core.converter.Converter
+import io.bkbn.lerasium.core.converter.ConvertFrom
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
 import io.bkbn.lerasium.core.serialization.Serializers
@@ -212,7 +212,7 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
       }
       addType(TypeSpec.companionObjectBuilder().apply {
         addSuperinterface(
-          Converter::class.asTypeName()
+          ConvertFrom::class.asTypeName()
             .parameterizedBy(
               charter.classDeclaration.toClassName(),
               charter.apiResponseClass

@@ -6,14 +6,17 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
@@ -21,7 +24,10 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
+import io.bkbn.lerasium.utils.LerasiumUtils.getCollectionType
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomainOrNull
+import io.bkbn.lerasium.utils.LerasiumUtils.isCollection
 
 @OptIn(KspExperimental::class)
 class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
@@ -53,10 +59,10 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
             true -> it.toParameter()
             false -> {
               val n = it.simpleName.getShortName()
-              val domain =
-                (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+              val domain = it.getDomainOrNull()
               if (domain != null) {
-                ParameterSpec.builder(n, it.type.toTypeName()).build()
+                val domainType = it.getDomainType()
+                ParameterSpec.builder(n, domainType).build()
               } else {
                 val tn = it.type.resolve().declaration.simpleName.getShortName()
                 val pn = charter.classDeclaration.toClassName().canonicalName
@@ -73,10 +79,10 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
           true -> it.toProperty(isOverride = true)
           false -> {
             val n = it.simpleName.getShortName()
-            val domain =
-              (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
+            val domain = it.getDomainOrNull()
             if (domain != null) {
-              PropertySpec.builder(n, it.type.toTypeName()).apply {
+              val domainType = it.getDomainType()
+              PropertySpec.builder(n, domainType).apply {
                 addModifiers(KModifier.OVERRIDE)
                 initializer(n)
               }.build()
@@ -94,5 +100,17 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
         addProperty(prop)
       }
     }.build())
+  }
+
+  private fun KSPropertyDeclaration.getDomainOrNull() = if (type.isCollection()) {
+    type.getCollectionType().getDomainOrNull()
+  } else {
+    type.getDomainOrNull()
+  }
+
+  private fun KSPropertyDeclaration.getDomainType() = if (type.isCollection()) {
+    List::class.asTypeName().parameterizedBy(type.getCollectionType().toTypeName())
+  } else {
+    type.toTypeName()
   }
 }
