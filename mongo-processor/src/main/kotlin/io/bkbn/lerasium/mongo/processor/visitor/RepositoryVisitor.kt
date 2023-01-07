@@ -9,6 +9,8 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.mongodb.client.MongoCollection
+import com.mongodb.client.MongoDatabase
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -21,6 +23,7 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
+import io.bkbn.lerasium.utils.KotlinPoetUtils.PERSISTENCE_CONFIG_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlowWithTrailingComma
@@ -61,6 +64,11 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun FileSpec.Builder.addRepository(charter: LerasiumCharter) {
     addType(TypeSpec.objectBuilder(charter.domain.name.plus("Repository")).apply {
       addOriginatingKSFile(charter.classDeclaration.containingFile!!)
+
+      addProperty(PropertySpec.builder("db", MongoDatabase::class).apply {
+        addModifiers(KModifier.PRIVATE)
+        initializer("%T.documentDatabase", ClassName(PERSISTENCE_CONFIG_PACKAGE_NAME, "MongoConfig"))
+      }.build())
 
       addProperty(
         PropertySpec.builder(

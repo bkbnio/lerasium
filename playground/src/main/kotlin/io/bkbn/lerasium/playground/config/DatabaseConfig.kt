@@ -10,13 +10,11 @@ import org.litote.kmongo.KMongo
 object DatabaseConfig {
 
   val documentDatabase: MongoDatabase by lazy {
-    val clientSettings = MongoClientSettings
-      .builder()
-      .apply {
-        applyConnectionString(ConnectionString("mongodb://test_user:test_password@localhost:27017"))
-        uuidRepresentation(UuidRepresentation.STANDARD)
-      }
-      .build()
+    val clientSettingBuilder = MongoClientSettings.builder().apply {
+      applyConnectionString(ConnectionString("mongodb://test_user:test_password@localhost:27017"))
+      uuidRepresentation(UuidRepresentation.STANDARD)
+    }
+    val clientSettings = clientSettingBuilder.build()
     val mongoClient = KMongo.createClient(clientSettings)
     mongoClient.getDatabase("test_db")
   }
