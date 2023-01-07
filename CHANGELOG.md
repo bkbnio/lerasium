@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 
-- Authentication
-
 ### Changed
 
 ### Removed
+
+## Released
+
+## [0.4.0] - January 6th, 2023
+
+### Added
+
+- Authentication
+- Improved architecture and separation 
 
 ## [0.3.1] - September 17th, 2022
 ### Added
