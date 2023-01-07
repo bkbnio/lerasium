@@ -12,13 +12,11 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
       import io.bkbn.lerasium.mongo.Document
 
+      @Document
       @Domain("User")
       interface User {
         val name: String
       }
-
-      @Document
-      interface UserDoc : User
     """.trimIndent()
   )
 
@@ -30,6 +28,7 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
       import io.bkbn.lerasium.mongo.Document
 
+      @Document
       @Domain("User")
       interface User {
         val name: String
@@ -41,9 +40,6 @@ object Specs {
         val status: String
         val subscribed: Boolean
       }
-
-      @Document
-      interface UserDoc : User
     """.trimIndent()
   )
 
@@ -55,6 +51,7 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
       import io.bkbn.lerasium.mongo.Document
 
+      @Document
       @Domain("User")
       interface User {
         val preferences: UserPreferences
@@ -72,9 +69,6 @@ object Specs {
       interface UserInfo {
         val isCool: Boolean
       }
-
-      @Document
-      interface UserDoc : User
     """.trimIndent()
   )
 
@@ -87,15 +81,11 @@ object Specs {
       import io.bkbn.lerasium.mongo.Document
       import io.bkbn.lerasium.persistence.Index
 
+      @Document
       @Domain("User")
       interface User {
-        val name: String
-      }
-
-      @Document
-      interface UserDoc : User {
         @Index(unique = true)
-        override val name: String
+        val name: String
       }
     """.trimIndent()
   )
@@ -109,15 +99,13 @@ object Specs {
       import io.bkbn.lerasium.mongo.Document
       import io.bkbn.lerasium.persistence.CompositeIndex
 
+      @Document
+      @CompositeIndex(fields = ["name", "favoriteFood"])
       @Domain("User")
       interface User {
         val name: String
         val favoriteFood: String
       }
-
-      @Document
-      @CompositeIndex(fields = ["name", "favoriteFood"])
-      interface UserDoc : User
     """.trimIndent()
   )
 

@@ -11,7 +11,7 @@ class ApiConfigVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = minimalSpec,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 4,
+        expectedFileCount = 5,
         fileUnderTest = "ApiConfig.kt",
         fileSnapshot = "T001__config_basic_example.txt",
       )
@@ -20,7 +20,7 @@ class ApiConfigVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = simpleSpecWithActor,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 4,
+        expectedFileCount = 5,
         fileUnderTest = "ApiConfig.kt",
         fileSnapshot = "T002__config_with_actor.txt",
       )

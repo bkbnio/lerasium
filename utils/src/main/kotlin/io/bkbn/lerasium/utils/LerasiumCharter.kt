@@ -26,7 +26,7 @@ open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDecl
 
   // TODO Should not leak out of api layer
   val apiServiceClass: ClassName = ClassName(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))
-  val ioModelClass: ClassName = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels"))
+  val ioModelClass: ClassName = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("Models"))
   val apiCreateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Create")
   val apiUpdateRequestClass: ClassName = ClassName(ioModelClass.canonicalName, "Update")
   open val apiResponseClass: ClassName = ClassName(ioModelClass.canonicalName, "Response")

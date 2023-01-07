@@ -234,7 +234,7 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
           val domain =
             (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).firstOrNull()
           if (domain != null) {
-            val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("IOModels.Response"))
+            val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("Models.Response"))
             addStatement("$n = ${responseClass.simpleName}.from(input.${n}),")
           } else {
             val t = it.type.resolve().toClassName().simpleName.plus(".Response")

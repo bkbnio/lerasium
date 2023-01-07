@@ -1,0 +1,120 @@
+package io.bkbn.lerasium.generated.api.models
+
+import io.bkbn.lerasium.core.converter.ConvertFrom
+import io.bkbn.lerasium.core.model.IORequest
+import io.bkbn.lerasium.core.model.IOResponse
+import kotlin.String
+import kotlinx.serialization.Serializable
+import test.User
+
+public object UserModels {
+  @Serializable
+  public data class Create(
+    public val name: String,
+    public val address: Address.Create,
+  ) : IORequest.Create
+
+  @Serializable
+  public data class Update(
+    public val name: String?,
+    public val address: Address.Update?,
+  ) : IORequest.Update
+
+  @Serializable
+  public data class Response(
+    public val name: String,
+    public val address: Address.Response,
+  ) : IOResponse {
+    public companion object : ConvertFrom<User, Response> {
+      public override fun from(input: User): Response = Response(
+        name = input.name,
+        address = Address.Response.from(input.address),
+      )
+    }
+  }
+
+  public object Address {
+    @Serializable
+    public data class Create(
+      public val street: String,
+      public val city: String,
+      public val state: State.Create,
+    )
+
+    @Serializable
+    public data class Update(
+      public val street: String?,
+      public val city: String?,
+      public val state: State.Update?,
+    ) : IORequest.Update
+
+    @Serializable
+    public data class Response(
+      public val street: String,
+      public val city: String,
+      public val state: State.Response,
+    ) : IOResponse {
+      public companion object : ConvertFrom<User.Address, Response> {
+        public override fun from(input: User.Address): Response = Response(
+          street = input.street,
+          city = input.city,
+          state = State.Response.from(input.state),
+        )
+      }
+    }
+
+    public object State {
+      @Serializable
+      public data class Create(
+        public val name: String,
+        public val country: Country.Create,
+      )
+
+      @Serializable
+      public data class Update(
+        public val name: String?,
+        public val country: Country.Update?,
+      ) : IORequest.Update
+
+      @Serializable
+      public data class Response(
+        public val name: String,
+        public val country: Country.Response,
+      ) : IOResponse {
+        public companion object : ConvertFrom<User.Address.State, Response> {
+          public override fun from(input: User.Address.State): Response = Response(
+            name = input.name,
+            country = Country.Response.from(input.country),
+          )
+        }
+      }
+
+      public object Country {
+        @Serializable
+        public data class Create(
+          public val name: String,
+        )
+
+        @Serializable
+        public data class Update(
+          public val name: String?,
+        ) : IORequest.Update
+
+        @Serializable
+        public data class Response(
+          public val name: String,
+        ) : IOResponse {
+          public companion object :
+              ConvertFrom<User.Address.State.Country, io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response>
+              {
+            public override fun from(input: User.Address.State.Country):
+                io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response =
+                io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response(
+              name = input.name,
+            )
+          }
+        }
+      }
+    }
+  }
+}
