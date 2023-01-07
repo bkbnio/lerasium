@@ -61,7 +61,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addController(charter)
       addRootRouteFunction(charter)
       addIdRouteFunction(charter)
-      if (charter.hasQueries) addQueryRoutesFunction(charter)
+      // if (charter.hasQueries) addQueryRoutesFunction(charter)
       if (charter.isActor) addAuthRoutesFunction(charter)
     }.build())
   }
@@ -76,7 +76,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
           addStatement("rootRoute()")
           addStatement("idRoute()")
-          if (charter.hasQueries) addStatement("queryRoutes()")
+          // if (charter.hasQueries) addStatement("queryRoutes()")
           if (charter.isActor) addStatement("authRoutes()")
         }
       }
@@ -104,7 +104,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
           addReadRoute(charter)
           addUpdateRoute(charter)
           addDeleteRoute(charter)
-          addRelationalRoutes(charter)
+          // addRelationalRoutes(charter)
         }
       }
     }.build())
