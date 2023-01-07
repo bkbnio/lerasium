@@ -13,7 +13,7 @@ class DocumentationVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = minimalSpec,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 4,
+        expectedFileCount = 5,
         fileUnderTest = "UserDocumentation.kt",
         fileSnapshot = "T007__documentation_basic_example.txt",
       )
@@ -22,7 +22,7 @@ class DocumentationVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = simpleSpecWithRelation,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 7,
+        expectedFileCount = 9,
         fileUnderTest = "CountryDocumentation.kt",
         fileSnapshot = "T008__documentation_with_relation.txt",
       )
@@ -31,7 +31,7 @@ class DocumentationVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = simpleSpecWithQuery,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 4,
+        expectedFileCount = 5,
         fileUnderTest = "UserDocumentation.kt",
         fileSnapshot = "T009__documentation_with_query.txt",
       )
@@ -40,7 +40,7 @@ class DocumentationVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = simpleSpecWithActor,
         provider = KtorProcessorProvider(),
-        expectedFileCount = 4,
+        expectedFileCount = 5,
         fileUnderTest = "UserDocumentation.kt",
         fileSnapshot = "T010__documentation_with_actor.txt",
       )

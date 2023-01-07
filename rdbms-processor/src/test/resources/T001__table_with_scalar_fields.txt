@@ -1,0 +1,62 @@
+package io.bkbn.lerasium.generated.persistence.table
+
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.User
+import java.util.UUID
+import kotlin.Boolean
+import kotlin.Float
+import kotlin.Int
+import kotlin.Long
+import kotlin.String
+import kotlinx.datetime.LocalDateTime
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+
+public object UserTable : UUIDTable("user") {
+  public val name: Column<String> = varchar("name", 128)
+
+  public val count: Column<Int> = integer("count")
+
+  public val isFact: Column<Boolean> = bool("is_fact")
+
+  public val size: Column<Long> = long("size")
+
+  public val pointyNum: Column<Float> = float("pointy_num")
+
+  public val createdAt: Column<LocalDateTime> = datetime("created_at")
+
+  public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
+}
+
+public class UserEntity(
+  id: EntityID<UUID>,
+) : UUIDEntity(id), ConvertTo<User> {
+  public var name: String by UserTable.name
+
+  public var count: Int by UserTable.count
+
+  public var isFact: Boolean by UserTable.isFact
+
+  public var size: Long by UserTable.size
+
+  public var pointyNum: Float by UserTable.pointyNum
+
+  public var createdAt: LocalDateTime by UserTable.createdAt
+
+  public var updatedAt: LocalDateTime by UserTable.updatedAt
+
+  public override fun to(): User = User(
+    id = this.id.value,
+    name = this.name,
+    count = this.count,
+    isFact = this.isFact,
+    size = this.size,
+    pointyNum = this.pointyNum,
+  )
+
+  public companion object : UUIDEntityClass<UserEntity>(UserTable)
+}

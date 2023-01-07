@@ -12,7 +12,7 @@ class DocumentVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithDocument,
         provider = KMongoProcessorProvider(),
-        expectedFileCount = 2,
+        expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
         fileSnapshot = "T001__document_simple.txt",
       )
@@ -21,7 +21,7 @@ class DocumentVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithNestedDocument,
         provider = KMongoProcessorProvider(),
-        expectedFileCount = 2,
+        expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
         fileSnapshot = "T002__document_nested.txt",
       )
@@ -30,7 +30,7 @@ class DocumentVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithDeeplyNestedDocument,
         provider = KMongoProcessorProvider(),
-        expectedFileCount = 2,
+        expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
         fileSnapshot = "T003__document_deeply_nested.txt",
       )

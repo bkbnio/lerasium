@@ -14,18 +14,12 @@ import io.bkbn.lerasium.generated.api.controller.BookController.bookHandler
 import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReviewHandler
 import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
 import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
-import io.bkbn.lerasium.generated.models.UserCreateRequest
-import io.bkbn.lerasium.generated.persistence.dao.AuthorDao
-import io.bkbn.lerasium.generated.persistence.dao.BookDao
-import io.bkbn.lerasium.generated.persistence.dao.BookReviewDao
-import io.bkbn.lerasium.generated.persistence.dao.ProfileDao
-import io.bkbn.lerasium.generated.persistence.dao.UserDao
-import io.bkbn.lerasium.generated.persistence.entity.AuthorTable
-import io.bkbn.lerasium.generated.persistence.entity.BookReviewTable
-import io.bkbn.lerasium.generated.persistence.entity.BookTable
-import io.bkbn.lerasium.generated.persistence.entity.UserEntity
-import io.bkbn.lerasium.generated.persistence.entity.UserTable
-import io.bkbn.lerasium.playground.config.DatabaseConfig
+import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
+import io.bkbn.lerasium.generated.persistence.table.AuthorTable
+import io.bkbn.lerasium.generated.persistence.table.BookReviewTable
+import io.bkbn.lerasium.generated.persistence.table.BookTable
+import io.bkbn.lerasium.generated.persistence.table.UserEntity
+import io.bkbn.lerasium.generated.persistence.table.UserTable
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.EngineMain
@@ -45,9 +39,8 @@ import kotlin.reflect.typeOf
 fun main(args: Array<String>) {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
-  DatabaseConfig.relationalDatabase
-
-  DatabaseConfig.flyway.clean()
+  PostgresConfig.relationalDatabase
+  PostgresConfig.flyway.clean()
 
   transaction {
     val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
@@ -55,20 +48,11 @@ fun main(args: Array<String>) {
     statements.forEach { println(it.plus("\n")) }
     println("-------------")
   }
-  DatabaseConfig.flyway.migrate()
+
+  PostgresConfig.flyway.migrate()
 
   // Inject some dummy data
-  UserDao.create(
-    listOf(
-      UserCreateRequest(
-        "Doctor",
-        "Backbone",
-        email = "admin@bkbn.io",
-        password = "password",
-        favoriteFood = null
-      )
-    )
-  )
+  // TODO
 
   logger.info { "Launching API" }
   EngineMain.main(args)
@@ -106,11 +90,11 @@ fun Application.module() {
   }
   routing {
     redoc("The Playground")
-    userHandler(UserDao)
-    bookHandler(BookDao)
-    bookReviewHandler(BookReviewDao)
-    authorHandler(AuthorDao)
-    profileHandler(ProfileDao(DatabaseConfig.documentDatabase))
+    userHandler()
+    bookHandler()
+    bookReviewHandler()
+    authorHandler()
+    profileHandler()
   }
 }
 

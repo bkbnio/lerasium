@@ -12,7 +12,7 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val firstName: String
         val lastName: String
         val email: String
@@ -30,15 +30,17 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val email: String
-        val metadata: UserMetadata
+        val metadata: Metadata
+
+        interface Metadata {
+          val firstName: String
+          val lastName: String
+        }
       }
 
-      interface UserMetadata {
-        val firstName: String
-        val lastName: String
-      }
+
     """.trimIndent()
   )
 
@@ -50,19 +52,19 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val email: String
         val metadata: UserMetadata
-      }
 
-      interface UserMetadata {
-        val firstName: String
-        val lastName: String
-        val otherStuffs: OhBoiWeDeepInItNow
-      }
+        interface UserMetadata {
+          val firstName: String
+          val lastName: String
+          val otherStuffs: OhBoiWeDeepInItNow
 
-      interface OhBoiWeDeepInItNow {
-        val otherInfo: String
+          interface OhBoiWeDeepInItNow {
+            val otherInfo: String
+          }
+        }
       }
     """.trimIndent()
   )
@@ -76,7 +78,7 @@ object Specs {
       import io.bkbn.lerasium.core.Sensitive
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val firstName: String
         val lastName: String
         val email: String
@@ -96,11 +98,11 @@ object Specs {
       import java.util.UUID
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val firstName: String
         val lastName: String
         val email: String
-        val favoriteUuid: UUID,
+        val favoriteUuid: UUID
       }
     """.trimIndent()
   )
@@ -120,11 +122,35 @@ object Specs {
       }
 
       @Domain("User")
-      interface UserDomain {
+      interface User {
         val firstName: String
         val lastName: String
         val email: String
         val country: Country
+      }
+    """.trimIndent()
+  )
+
+  val domainWithOneToManyReference = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.core.Sensitive
+      import java.util.UUID
+
+      @Domain("Country")
+      interface Country {
+        val name: String
+        val citizens: List<User>
+      }
+
+      @Domain("User")
+      interface User {
+        val firstName: String
+        val lastName: String
+        val email: String
       }
     """.trimIndent()
   )

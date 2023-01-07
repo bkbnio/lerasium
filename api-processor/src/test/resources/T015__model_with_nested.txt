@@ -1,0 +1,62 @@
+package io.bkbn.lerasium.generated.api.models
+
+import io.bkbn.lerasium.core.converter.ConvertFrom
+import io.bkbn.lerasium.core.model.IORequest
+import io.bkbn.lerasium.core.model.IOResponse
+import kotlin.String
+import kotlinx.serialization.Serializable
+import test.User
+
+public object UserModels {
+  @Serializable
+  public data class Create(
+    public val name: String,
+    public val address: Address.Create,
+  ) : IORequest.Create
+
+  @Serializable
+  public data class Update(
+    public val name: String?,
+    public val address: Address.Update?,
+  ) : IORequest.Update
+
+  @Serializable
+  public data class Response(
+    public val name: String,
+    public val address: Address.Response,
+  ) : IOResponse {
+    public companion object : ConvertFrom<User, Response> {
+      public override fun from(input: User): Response = Response(
+        name = input.name,
+        address = Address.Response.from(input.address),
+      )
+    }
+  }
+
+  public object Address {
+    @Serializable
+    public data class Create(
+      public val street: String,
+      public val city: String,
+    )
+
+    @Serializable
+    public data class Update(
+      public val street: String?,
+      public val city: String?,
+    ) : IORequest.Update
+
+    @Serializable
+    public data class Response(
+      public val street: String,
+      public val city: String,
+    ) : IOResponse {
+      public companion object : ConvertFrom<User.Address, Response> {
+        public override fun from(input: User.Address): Response = Response(
+          street = input.street,
+          city = input.city,
+        )
+      }
+    }
+  }
+}

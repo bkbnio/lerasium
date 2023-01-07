@@ -19,19 +19,19 @@ import io.bkbn.lerasium.api.processor.Members.contentNegotiationMember
 import io.bkbn.lerasium.api.processor.Members.installMember
 import io.bkbn.lerasium.api.processor.Members.kotlinxJsonMember
 import io.bkbn.lerasium.api.processor.Members.ktorJsonMember
-import io.bkbn.lerasium.api.processor.visitor.ConfigVisitor
+import io.bkbn.lerasium.api.processor.visitor.ApiConfigVisitor
 import io.bkbn.lerasium.api.processor.visitor.ControllerVisitor
 import io.bkbn.lerasium.api.processor.visitor.DocumentationVisitor
+import io.bkbn.lerasium.api.processor.visitor.RootModelVisitor
 import io.bkbn.lerasium.api.processor.visitor.ServiceVisitor
 import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_CONFIG_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_CONTROLLER_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_DOCS_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.API_MODELS_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.API_SERVICE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
-import io.bkbn.lerasium.utils.LerasiumUtils.findParent
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.ktor.server.application.Application
 import java.util.Locale
@@ -56,6 +56,7 @@ class KtorProcessor(
     symbols.forEach { it.writeControllerFile() }
     symbols.forEach { it.writeDocFile() }
     symbols.forEach { it.writeServiceFile() }
+    symbols.forEach { it.writeModelFile() }
 
     symbols.writeConfigFile()
 
@@ -63,7 +64,7 @@ class KtorProcessor(
   }
 
   private fun KSClassDeclaration.writeControllerFile() {
-    val domain = this.findParentDomain()
+    val domain = this.getDomain()
     val fb = FileSpec.builder(API_CONTROLLER_PACKAGE_NAME, domain.name.plus("Controller"))
     this.accept(ControllerVisitor(fb, logger), Unit)
     val fs = fb.build()
@@ -71,7 +72,7 @@ class KtorProcessor(
   }
 
   private fun KSClassDeclaration.writeDocFile() {
-    val domain = this.findParentDomain()
+    val domain = this.getDomain()
     val fb = FileSpec.builder(API_DOCS_PACKAGE_NAME, domain.name.plus("Documentation"))
     this.accept(DocumentationVisitor(fb, logger), Unit)
     val fs = fb.build()
@@ -79,9 +80,17 @@ class KtorProcessor(
   }
 
   private fun KSClassDeclaration.writeServiceFile() {
-    val domain = this.findParentDomain()
+    val domain = this.getDomain()
     val fb = FileSpec.builder(API_SERVICE_PACKAGE_NAME, domain.name.plus("Service"))
     this.accept(ServiceVisitor(fb, logger), Unit)
+    val fs = fb.build()
+    fs.writeTo(codeGenerator, false)
+  }
+
+  private fun KSClassDeclaration.writeModelFile() {
+    val domain = this.getDomain()
+    val fb = FileSpec.builder(API_MODELS_PACKAGE_NAME, domain.name.plus("Models"))
+    this.accept(RootModelVisitor(fb, logger), Unit)
     val fs = fb.build()
     fs.writeTo(codeGenerator, false)
   }
@@ -89,11 +98,11 @@ class KtorProcessor(
   @OptIn(KspExperimental::class)
   private fun Sequence<KSClassDeclaration>.writeConfigFile() {
     val fb = FileSpec.builder(API_CONFIG_PACKAGE_NAME, "ApiConfig")
-    val actors = this.map { it.findParent() }
+    val actors = this
       .filter { it.isAnnotationPresent(Actor::class) }
       .map { it.getDomain().name }
     fb.addConfigEntrypoint(actors.toList())
-    this.forEach { it.accept(ConfigVisitor(fb, logger), Unit) }
+    this.forEach { it.accept(ApiConfigVisitor(fb, logger), Unit) }
     val fs = fb.build()
     fs.writeTo(codeGenerator, false)
   }

@@ -1,0 +1,40 @@
+package io.bkbn.lerasium.generated.persistence.config
+
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import kotlin.String
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+
+public object PostgresConfig {
+  private const val CONNECTION_URI: String = "jdbc:postgresql://localhost:5432/test_db"
+
+  private const val POSTGRES_USER: String = "test_user"
+
+  private const val POSTGRES_PASSWORD: String = "test_password"
+
+  public val flyway: Flyway by lazy {
+    val config = Flyway.configure().apply {
+      cleanDisabled(false)
+      dataSource(CONNECTION_URI, POSTGRES_USER, POSTGRES_PASSWORD)
+      locations("db/migration")
+    }
+    config.load() ?:
+        error("Problem Loading Flyway!! Please verify Database Connection / Migration Info")
+  }
+
+
+  public val relationalDatabase: Database by lazy {
+    val config = HikariConfig().apply {
+      jdbcUrl = CONNECTION_URI
+      username = POSTGRES_USER
+      password = POSTGRES_PASSWORD
+      maximumPoolSize = 5
+      initializationFailTimeout = 60000L
+      isAutoCommit = false
+      transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+    }
+    Database.connect(HikariDataSource(config))
+  }
+
+}

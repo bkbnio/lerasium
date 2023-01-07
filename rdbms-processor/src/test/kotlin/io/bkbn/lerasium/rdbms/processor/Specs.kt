@@ -4,7 +4,7 @@ import com.tschuchort.compiletesting.SourceFile
 
 object Specs {
 
-  val domainWithStringColumn = SourceFile.kotlin(
+  val domainWithBasicTypes = SourceFile.kotlin(
     name = "Spec.kt",
     contents = """
       package test
@@ -12,31 +12,15 @@ object Specs {
       import io.bkbn.lerasium.core.Domain
       import io.bkbn.lerasium.rdbms.Table
 
+      @Table
       @Domain("User")
       interface User {
         val name: String
-      }
-
-      @Table
-      interface UserTable : User
-    """.trimIndent()
-  )
-
-  val domainWithIntColumn = SourceFile.kotlin(
-    name = "Spec.kt",
-    contents = """
-      package test
-
-      import io.bkbn.lerasium.core.Domain
-      import io.bkbn.lerasium.rdbms.Table
-
-      @Domain("Counter")
-      interface Counter {
         val count: Int
+        val isFact: Boolean
+        val size: Long
+        val pointyNum: Float
       }
-
-      @Table
-      interface CounterTable : Counter
     """.trimIndent()
   )
 
@@ -49,73 +33,12 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Column
       import io.bkbn.lerasium.rdbms.Table
 
+      @Table
       @Domain("User")
       interface User {
+        @Column("super_important_field")
         val userInfo: String
       }
-
-      @Table
-      interface UserTable : User {
-        @Column("super_important_field")
-        override val userInfo: String
-      }
-    """.trimIndent()
-  )
-
-  val domainWithBooleanColumn = SourceFile.kotlin(
-    name = "Spec.kt",
-    contents = """
-      package test
-
-      import io.bkbn.lerasium.core.Domain
-      import io.bkbn.lerasium.rdbms.Column
-      import io.bkbn.lerasium.rdbms.Table
-
-      @Domain("Facts")
-      interface Facts {
-        val isFact: Boolean
-      }
-
-      @Table
-      interface FactTableSpec : Facts
-    """.trimIndent()
-  )
-
-  val domainWithLongColumn = SourceFile.kotlin(
-    name = "Spec.kt",
-    contents = """
-      package test
-
-      import io.bkbn.lerasium.core.Domain
-      import io.bkbn.lerasium.rdbms.Column
-      import io.bkbn.lerasium.rdbms.Table
-
-      @Domain("BigNum")
-      interface BigNum {
-        val size: Long
-      }
-
-      @Table
-      interface BigNumTableSpec : BigNum
-    """.trimIndent()
-  )
-
-  val domainWithFloatColumn = SourceFile.kotlin(
-    name = "Spec.kt",
-    contents = """
-      package test
-
-      import io.bkbn.lerasium.core.Domain
-      import io.bkbn.lerasium.rdbms.Column
-      import io.bkbn.lerasium.rdbms.Table
-
-      @Domain("Floaty")
-      interface Floaty {
-        val pointyNum: Float
-      }
-
-      @Table
-      interface FloatyTableSpec : Floaty
     """.trimIndent()
   )
 
@@ -129,14 +52,10 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Words")
-      interface Words {
-        val word: String
-      }
-
       @Table
-      interface WordsTableSpec : Words {
-        @VarChar(size = 256)
-        override val word: String
+      interface Words {
+        @VarChar(256)
+        val word: String
       }
     """.trimIndent()
   )
@@ -150,6 +69,7 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Letters")
+      @Table
       interface Letters {
         val s: String?
         val i: Int?
@@ -158,9 +78,6 @@ object Specs {
         val d: Double?
         val f: Float?
       }
-
-      @Table
-      interface LetterTable : Letters
     """.trimIndent()
   )
 
@@ -173,15 +90,11 @@ object Specs {
       import io.bkbn.lerasium.persistence.Index
       import io.bkbn.lerasium.rdbms.Table
 
+      @Table
       @Domain("Words")
       interface Words {
-        val word: String
-      }
-
-      @Table
-      interface WordsTableSpec : Words {
         @Index
-        override val word: String
+        val word: String
       }
     """.trimIndent()
   )
@@ -196,14 +109,10 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Words")
-      interface Words {
-        val word: String
-      }
-
       @Table
-      interface WordsTableSpec : Words {
+      interface Words {
         @Index(unique = true)
-        override val word: String
+        val word: String
       }
     """.trimIndent()
   )
@@ -218,16 +127,11 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Words")
+      @Table
+      @CompositeIndex(true, "word", "language")
       interface Words {
         val word: String
         val language: String
-      }
-
-      @Table
-      @CompositeIndex(true, "word", "language")
-      interface WordsTableSpec : Words {
-        override val word: String
-        override val language: String
       }
     """.trimIndent()
   )
@@ -243,23 +147,17 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Country")
+      @Table
       interface Country {
         val name: String
       }
 
-      @Table
-      interface CountryTable : Country
-
       @Domain("User")
+      @Table
       interface User {
         val name: String
-        val country: Country
-      }
-
-      @Table
-      interface UserTable : User {
         @ForeignKey
-        override val country: Country
+        val country: Country
       }
     """.trimIndent()
   )
@@ -277,28 +175,20 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Country")
+      @Table
       interface Country {
         val name: String
         @Relation
-        val users: User
-      }
-
-      @Table
-      interface CountryTable : Country {
         @OneToMany("country")
-        override val users: User
+        val users: List<User>
       }
 
       @Domain("User")
+      @Table
       interface User {
         val name: String
-        val country: Country
-      }
-
-      @Table
-      interface UserTable : User {
         @ForeignKey
-        override val country: Country
+        val country: Country
       }
     """.trimIndent()
   )
@@ -315,44 +205,31 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("User")
-      sealed interface User {
+      @Table
+      interface User {
         val name: String
         @Relation
-        val books: Book
-      }
-
-      @Table
-      interface UserTable : User {
         @ManyToMany(BookReview::class)
-        override val books: Book
+        val books: List<Book>
       }
 
       @Domain("Book")
-      sealed interface Book {
+      @Table
+      interface Book {
         val title: String
         @Relation
-        val readers: User
-      }
-
-      @Table
-      interface BookTable : Book {
         @ManyToMany(BookReview::class)
-        override val readers: User
+        val readers: List<User>
       }
 
       @Domain("BookReview")
-      sealed interface BookReview {
+      @Table
+      interface BookReview {
+        @ForeignKey
         val reader: User
+        @ForeignKey
         val book: Book
         val rating: Int
-      }
-
-      @Table
-      interface BookReviewTable : BookReview {
-        @ForeignKey
-        override val reader: User
-        @ForeignKey
-        override val book: Book
       }
     """.trimIndent()
   )
@@ -367,25 +244,17 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("Words")
+      @Table
       interface Words {
+        @VarChar(256)
         val word: String
       }
 
-      @Table
-      interface WordsTable : Words {
-        @VarChar(size = 256)
-        override val word: String
-      }
-
       @Domain("OtherWords")
-      interface OtherWords {
-        val wordy: String
-      }
-
       @Table
-      interface OtherWordsTableSpec : OtherWords {
-        @VarChar(size = 128)
-        override val wordy: String
+      interface OtherWords {
+        @VarChar(128)
+        val wordy: String
       }
     """.trimIndent()
   )
@@ -400,18 +269,12 @@ object Specs {
       import io.bkbn.lerasium.rdbms.Table
 
       @Domain("User")
-      interface User {
-        val email: String
-        val firstName: String
-      }
-
       @Table
-      internal interface UserTable : User {
+      interface User {
         @Index(true)
-        override val email: String
-
+        val email: String
         @Index
-        override val favoriteFood: String?
+        val favoriteFood: String
       }
     """.trimIndent()
   )

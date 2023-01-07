@@ -1,0 +1,11 @@
+package io.bkbn.lerasium.generated.domain
+
+import kotlin.String
+import test.User as Domain
+
+public data class User(
+  public override val firstName: String,
+  public override val lastName: String,
+  public override val email: String,
+  public override val password: String,
+) : Domain

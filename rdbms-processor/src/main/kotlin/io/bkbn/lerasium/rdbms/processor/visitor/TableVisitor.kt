@@ -28,7 +28,8 @@ import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.OneToMany
 import io.bkbn.lerasium.rdbms.VarChar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumCharter
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
 import kotlinx.datetime.LocalDateTime
@@ -52,19 +53,21 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
+    val charter = LerasiumCharter(classDeclaration = classDeclaration, domain = domain)
 
-    fileBuilder.addTable(classDeclaration, domain)
+    fileBuilder.addTable(charter)
   }
 
-  private fun FileSpec.Builder.addTable(cd: KSClassDeclaration, domain: Domain) {
-    val properties = cd.getAllProperties()
+  private fun FileSpec.Builder.addTable(charter: LerasiumCharter) {
+    val properties = charter.classDeclaration.getAllProperties()
       .filterNot { it.isAnnotationPresent(OneToMany::class) }
       .filterNot { it.isAnnotationPresent(ManyToMany::class) }
-    addType(TypeSpec.objectBuilder(domain.name.plus("Table")).apply {
-      addOriginatingKSFile(cd.containingFile!!)
+      .filterNot { it.simpleName.getShortName() == "id" }
+    addType(TypeSpec.objectBuilder(charter.domain.name.plus("Table")).apply {
+      addOriginatingKSFile(charter.classDeclaration.containingFile!!)
       superclass(UUIDTable::class)
-      addSuperclassConstructorParameter("%S", domain.name.pascalToSnakeCase())
+      addSuperclassConstructorParameter("%S", charter.domain.name.pascalToSnakeCase())
       properties.forEach { property ->
         val columnAnnotation: Column? = property.getAnnotationsByType(Column::class).firstOrNull()
         val fieldName = property.simpleName.asString()
@@ -90,9 +93,9 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
         }.build()
       )
 
-      if (cd.isAnnotationPresent(CompositeIndex::class)) {
+      if (charter.classDeclaration.isAnnotationPresent(CompositeIndex::class)) {
         addInitializerBlock(CodeBlock.builder().apply {
-          cd.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
+          charter.classDeclaration.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
             require(ci.fields.size > 1) {
               "Composite index must have at least 2 fields, if applying single field index, use @Index"
             }

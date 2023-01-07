@@ -1,11 +1,9 @@
-package io.bkbn.lerasium.generated.persistence.entity
+package io.bkbn.lerasium.generated.persistence.table
 
-import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.generated.models.CountryResponse
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.Country
 import java.util.UUID
 import kotlin.String
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.valueParameters
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -25,7 +23,7 @@ public object CountryTable : UUIDTable("country") {
 
 public class CountryEntity(
   id: EntityID<UUID>,
-) : UUIDEntity(id), Entity<CountryResponse> {
+) : UUIDEntity(id), ConvertTo<Country> {
   public var name: String by CountryTable.name
 
   public var createdAt: LocalDateTime by CountryTable.createdAt
@@ -34,16 +32,11 @@ public class CountryEntity(
 
   public val users: SizedIterable<UserEntity> by UserEntity referrersOn UserTable.country
 
-  public override fun toResponse(): CountryResponse = with(::CountryResponse) {
-    val propertiesByName = CountryEntity::class.memberProperties.associateBy { it.name }
-    val params = valueParameters.associateWith {
-      when (it.name) {
-        CountryResponse::id.name -> id.value
-        else -> propertiesByName[it.name]?.get(this@CountryEntity)
-      }
-    }
-    callBy(params)
-  }
+  public override fun to(): Country = Country(
+    id = this.id.value,
+    name = this.name,
+    users = this.users.map { it.to() },
+  )
 
   public companion object : UUIDEntityClass<CountryEntity>(CountryTable)
 }

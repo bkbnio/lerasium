@@ -5,42 +5,30 @@ import io.bkbn.kompendium.core.metadata.GetInfo
 import io.bkbn.kompendium.core.metadata.PostInfo
 import io.bkbn.kompendium.core.metadata.PutInfo
 import io.bkbn.kompendium.core.plugin.NotarizedRoute
-import io.bkbn.lerasium.api.util.ApiDocumentationUtils.getAllParameters
 import io.bkbn.lerasium.api.util.ApiDocumentationUtils.idParameter
-import io.bkbn.lerasium.generated.models.UserCreateRequest
-import io.bkbn.lerasium.generated.models.UserResponse
-import io.bkbn.lerasium.generated.models.UserUpdateRequest
+import io.bkbn.lerasium.generated.api.models.UserModels.Create
+import io.bkbn.lerasium.generated.api.models.UserModels.Response
+import io.bkbn.lerasium.generated.api.models.UserModels.Update
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
 import io.ktor.server.routing.Route
 import kotlin.Unit
-import kotlin.collections.List
 
 public object UserDocumentation {
   internal fun Route.rootDocumentation(): Unit {
     install(NotarizedRoute()) {
       tags = setOf("User")
-      get = GetInfo.builder {
-        summary("Get All User Entities")
-        description("Retrieves a paginated list of User Entities")
-        parameters(*getAllParameters().toTypedArray())
-        response {
-          responseType<List<UserResponse>>()
-          responseCode(HttpStatusCode.OK)
-          description("Paginated list of User entities")
-        }
-      }
       post = PostInfo.builder {
-        summary("Create New User Entity")
-        description("Persists a new User entity in the database")
+        summary("Create New User")
+        description("Persists a new User in the database")
         response {
-          responseType<List<UserResponse>>()
+          responseType<Response>()
           responseCode(HttpStatusCode.Created)
-          description("User entities saved successfully")
+          description("User saved successfully")
         }
         request {
-          requestType<List<UserCreateRequest>>()
-          description("Collection of User entities the user wishes to persist")
+          requestType<Create>()
+          description("User to persist")
         }
       }
     }
@@ -52,33 +40,33 @@ public object UserDocumentation {
       parameters = idParameter()
       get = GetInfo.builder {
         summary("Get User by ID")
-        description("Retrieves the specified User entity by its ID")
+        description("Retrieves the specified User by its ID")
         response {
-          responseType<UserResponse>()
+          responseType<Response>()
           responseCode(HttpStatusCode.OK)
-          description("The User entity with the specified ID")
+          description("The User with the specified ID")
         }
       }
       put = PutInfo.builder {
         summary("Update User by ID")
-        description("Updates the specified User entity by its ID")
+        description("Updates the specified User by its ID")
         request {
-          requestType<UserUpdateRequest>()
-          description("Fields that can be updated on the User entity")
+          requestType<Update>()
+          description("Fields that can be updated on the User")
         }
         response {
-          responseType<UserResponse>()
+          responseType<Response>()
           responseCode(HttpStatusCode.Created)
-          description("Indicates that the User entity was updated successfully")
+          description("Indicates that the User was updated successfully")
         }
       }
       delete = DeleteInfo.builder {
         summary("Delete User by ID")
-        description("Deletes the specified User entity by its ID")
+        description("Deletes the specified User by its ID")
         response {
           responseType<Unit>()
           responseCode(HttpStatusCode.NoContent)
-          description("Indicates that the User entity was deleted successfully")
+          description("Indicates that the User was deleted successfully")
         }
       }
     }

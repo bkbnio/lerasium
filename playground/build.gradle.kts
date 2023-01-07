@@ -13,9 +13,6 @@ sourdoughApp {
 
 dependencies {
   // Versions
-  val flywayVersion: String by project
-  val hikariCPVersion: String by project
-  val postgresVersion: String by project
   val kotlinxDatetimeVersion: String by project
   val kotlinxSerializationVersion: String by project
 
@@ -31,11 +28,6 @@ dependencies {
 
   ksp(projects.lerasiumMongoProcessor)
   implementation(projects.lerasiumMongo)
-
-  // Database
-  implementation("org.flywaydb:flyway-core:$flywayVersion")
-  implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-  implementation("org.postgresql:postgresql:$postgresVersion")
 
   // Date
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")

@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
@@ -13,7 +14,6 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.serialization.Serializers
-import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
 import kotlinx.serialization.Serializable
 
 object KotlinPoetUtils {
@@ -25,15 +25,19 @@ object KotlinPoetUtils {
   // API
   const val API_DOCS_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.docs"
   const val API_CONTROLLER_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.controller"
+  const val API_MODELS_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.models"
   const val API_SERVICE_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.service"
   const val API_CONFIG_PACKAGE_NAME = "$BASE_API_PACKAGE_NAME.config"
 
-  // Models
-  const val MODEL_PACKAGE_NAME = "$BASE_PACKAGE_NAME.models"
+  // Domain
+  const val DOMAIN_PACKAGE_NAME = "$BASE_PACKAGE_NAME.domain"
 
   // Persistence
-  const val DAO_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.dao"
+  const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
   const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
+  const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"
+  const val DOCUMENT_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.document"
+  const val PERSISTENCE_CONFIG_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.config"
 
   fun CodeBlock.Builder.addControlFlow(
     controlFlow: String,
@@ -45,12 +49,27 @@ object KotlinPoetUtils {
     endControlFlow()
   }
 
+  fun CodeBlock.Builder.addControlFlowWithTrailingComma(
+    controlFlow: String,
+    vararg args: Any,
+    init: CodeBlock.Builder.() -> Unit
+  ) {
+    beginControlFlow(controlFlow, *args)
+    add(CodeBlock.Builder().apply(init).build())
+    unindent()
+    add("},\n")
+  }
+
   fun CodeBlock.Builder.addObjectInstantiation(
     type: TypeName,
     trailingComma: Boolean = false,
+    returnInstance: Boolean = false,
+    assignment: String? = null,
     init: CodeBlock.Builder.() -> Unit
   ) {
-    add("%T(\n", type)
+    if (returnInstance) add("return %T(\n", type)
+    else if (assignment != null) add("%L = %T(\n", assignment, type)
+    else add("%T(\n", type)
     indent()
     add(CodeBlock.Builder().apply(init).build())
     unindent()
@@ -66,22 +85,25 @@ object KotlinPoetUtils {
     addCode(CodeBlock.builder().apply(init).build())
   }
 
-  fun Domain.toCreateRequestClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("CreateRequest"))
-  fun Domain.toUpdateRequestClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("UpdateRequest"))
-  fun Domain.toResponseClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, name.plus("Response"))
-  fun Domain.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Entity"))
-  fun Domain.toTableClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, name.plus("Table"))
-  fun Domain.toDaoClass(): ClassName = ClassName(DAO_PACKAGE_NAME, name.plus("Dao"))
+  fun Domain.toCreateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("CreateRequest"))
+  fun Domain.toUpdateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("UpdateRequest"))
+  fun Domain.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("Response"))
+  fun Domain.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Entity"))
+  fun Domain.toTableClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Table"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
-  fun String.toResponseClass(): ClassName = ClassName(MODEL_PACKAGE_NAME, this.plus("Response"))
-  fun String.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, this.plus("Entity"))
+  fun String.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, this.plus("Response"))
+  fun String.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, this.plus("Entity"))
 
-  fun ClassName.toEntityClass(): ClassName = ClassName(ENTITY_PACKAGE_NAME, simpleName.plus("Entity"))
+  fun ClassName.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, simpleName.plus("Entity"))
 
-  fun KSPropertyDeclaration.toParameter() = ParameterSpec.builder(simpleName.getShortName(), type.toTypeName()).build()
+  fun KSPropertyDeclaration.toParameter(guaranteeNullable: Boolean = false) =
+    ParameterSpec.builder(
+      simpleName.getShortName(),
+      type.toTypeName().copy(nullable = guaranteeNullable || this.type.resolve().isMarkedNullable)
+    ).build()
 
-  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false) =
+  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false, isOverride: Boolean = false) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
       if (type.resolve().toClassName().simpleName == "UUID") {
         addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
@@ -89,6 +111,7 @@ object KotlinPoetUtils {
         }.build())
       }
       if (isMutable) mutable()
+      if (isOverride) addModifiers(KModifier.OVERRIDE)
       initializer(simpleName.getShortName())
     }.build()
 

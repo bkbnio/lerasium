@@ -1,0 +1,33 @@
+package io.bkbn.lerasium.generated.api.models
+
+import io.bkbn.lerasium.core.converter.ConvertFrom
+import io.bkbn.lerasium.core.model.IORequest
+import io.bkbn.lerasium.core.model.IOResponse
+import kotlin.String
+import kotlinx.serialization.Serializable
+import test.User
+
+public object UserModels {
+  @Serializable
+  public data class Create(
+    public val name: String,
+    public val password: String,
+  ) : IORequest.Create
+
+  @Serializable
+  public data class Update(
+    public val name: String?,
+    public val password: String?,
+  ) : IORequest.Update
+
+  @Serializable
+  public data class Response(
+    public val name: String,
+  ) : IOResponse {
+    public companion object : ConvertFrom<User, Response> {
+      public override fun from(input: User): Response = Response(
+        name = input.name,
+      )
+    }
+  }
+}

@@ -1,4 +1,3 @@
-@file:OptIn(KspExperimental::class)
 
 package io.bkbn.lerasium.api.processor.visitor
 
@@ -15,10 +14,7 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.GetBy
 import io.bkbn.lerasium.api.processor.Members.authenticateMember
@@ -37,11 +33,8 @@ import io.bkbn.lerasium.core.model.LoginRequest
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toCreateRequestClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toDaoClass
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toUpdateRequestClass
 import io.bkbn.lerasium.utils.LerasiumCharter
-import io.bkbn.lerasium.utils.LerasiumUtils.findParentDomain
+import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpHeaders
@@ -50,6 +43,7 @@ import io.ktor.server.routing.Route
 import java.util.Locale
 import java.util.UUID
 
+@OptIn(KspExperimental::class)
 class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -58,7 +52,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
       return
     }
 
-    val domain = classDeclaration.findParentDomain()
+    val domain = classDeclaration.getDomain()
     val apiObjectName = domain.name.plus("Controller")
     val charter = LerasiumCharter(domain, classDeclaration)
 
@@ -67,7 +61,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addController(charter)
       addRootRouteFunction(charter)
       addIdRouteFunction(charter)
-      if (charter.hasQueries) addQueryRoutesFunction(charter)
+      // if (charter.hasQueries) addQueryRoutesFunction(charter)
       if (charter.isActor) addAuthRoutesFunction(charter)
     }.build())
   }
@@ -78,12 +72,11 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     val baseName = charter.domain.name.replaceFirstChar { it.lowercase(Locale.getDefault()) }
     addFunction(FunSpec.builder(controllerName).apply {
       receiver(Route::class)
-      addParameter(ParameterSpec.builder("dao", charter.domain.toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/$baseName") {
-          addStatement("rootRoute(dao)")
-          addStatement("idRoute(dao)")
-          if (charter.hasQueries) addStatement("queryRoutes(dao)")
+          addStatement("rootRoute()")
+          addStatement("idRoute()")
+          // if (charter.hasQueries) addStatement("queryRoutes()")
           if (charter.isActor) addStatement("authRoutes()")
         }
       }
@@ -94,11 +87,9 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("rootRoute").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.domain.toDaoClass()).build())
       addCodeBlock {
         addStatement("%M()", charter.documentationMemberName("rootDocumentation"))
         addCreateRoute(charter)
-        addGetAllRoute()
       }
     }.build())
   }
@@ -107,24 +98,23 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("idRoute").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.domain.toDaoClass()).build())
       addCodeBlock {
         addControlFlow("%M(%S)", routeMember, "/{id}") {
           addStatement("%M()", charter.documentationMemberName("idDocumentation"))
-          addReadRoute()
+          addReadRoute(charter)
           addUpdateRoute(charter)
-          addDeleteRoute()
-          addRelationalRoutes(charter)
+          addDeleteRoute(charter)
+          // addRelationalRoutes(charter)
         }
       }
     }.build())
   }
 
+  @Suppress("UnusedPrivateMember")
   private fun TypeSpec.Builder.addQueryRoutesFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("queryRoutes").apply {
       receiver(Route::class)
       addModifiers(KModifier.PRIVATE)
-      addParameter(ParameterSpec.builder("dao", charter.cd.findParentDomain().toDaoClass()).build())
       addCodeBlock {
         addQueries(charter)
       }
@@ -166,30 +156,19 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
           "val request = %M.%M<%T>()",
           callMember,
           receiveMember,
-          List::class.asClassName().parameterizedBy(charter.domain.toCreateRequestClass())
+          charter.apiCreateRequestClass
         )
-        addStatement("val result = dao.create(request)")
+        addStatement("val result = %T.create(request)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
   }
 
-  private fun CodeBlock.Builder.addGetAllRoute() {
-    add(CodeBlock.builder().apply {
-      addControlFlow("%M", getMember) {
-        addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
-        addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
-        addStatement("val result = dao.getAll(chunk, offset)")
-        addStatement("%M.%M(result)", callMember, respondMember)
-      }
-    }.build())
-  }
-
-  private fun CodeBlock.Builder.addReadRoute() {
+  private fun CodeBlock.Builder.addReadRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", getMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("val result = dao.read(id)")
+        addStatement("val result = %T.read(id)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
@@ -199,25 +178,26 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     add(CodeBlock.builder().apply {
       addControlFlow("%M", putMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("val request = %M.%M<%T>()", callMember, receiveMember, charter.domain.toUpdateRequestClass())
-        addStatement("val result = dao.update(id, request)")
+        addStatement("val request = %M.%M<%T>()", callMember, receiveMember, charter.apiUpdateRequestClass)
+        addStatement("val result = %T.update(id, request)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
   }
 
-  private fun CodeBlock.Builder.addDeleteRoute() {
+  private fun CodeBlock.Builder.addDeleteRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", deleteMember) {
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("dao.delete(id)")
+        addStatement("%T.delete(id)", charter.apiServiceClass)
         addStatement("%M.%M(%T.NoContent)", callMember, respondMember, HttpStatusCode::class)
       }
     }.build())
   }
 
+  @Suppress("UnusedPrivateMember")
   private fun CodeBlock.Builder.addRelationalRoutes(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()
       add(CodeBlock.builder().apply {
         addControlFlow("%M(%S)", routeMember, "/${name.decapitalized()}") {
@@ -226,7 +206,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
             addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
             addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
             addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
-            addStatement("val result = dao.getAll${name.capitalized()}(id, chunk, offset)")
+            addStatement("val result = %T.get${name.capitalized()}(id, chunk, offset)", charter.apiServiceClass)
             addStatement("%M.%M(result)", callMember, respondMember)
           }
         }
@@ -235,7 +215,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   }
 
   private fun CodeBlock.Builder.addQueries(charter: LerasiumCharter) {
-    charter.cd.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
+    charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(GetBy::class) }.forEach { prop ->
       val getBy = prop.getAnnotationsByType(GetBy::class).first()
       when (getBy.unique) {
         true -> addUniqueQuery(prop, charter)
@@ -250,7 +230,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addStatement("%M()", charter.documentationMemberName("${name}QueryDocumentation"))
       addControlFlow("%M", getMember) {
         addStatement("val $name = call.parameters[%S]!!", name)
-        addStatement("val result = dao.getBy${name.capitalized()}($name)")
+        addStatement("val result = %T.getBy${name.capitalized()}($name)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }
@@ -264,7 +244,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
         addStatement("val $name = call.parameters[%S]!!", name)
         addStatement("val chunk = %M.parameters[%S]?.toInt() ?: 100", callMember, "chunk")
         addStatement("val offset = %M.parameters[%S]?.toInt() ?: 0", callMember, "offset")
-        addStatement("val result = dao.getBy${name.capitalized()}($name, chunk, offset)")
+        addStatement("val result = %T.getBy${name.capitalized()}($name, chunk, offset)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }
