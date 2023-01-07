@@ -1,11 +1,9 @@
-package io.bkbn.lerasium.generated.persistence.entity
+package io.bkbn.lerasium.generated.persistence.table
 
-import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.generated.models.UserResponse
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.User
 import java.util.UUID
 import kotlin.String
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.valueParameters
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -15,9 +13,9 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 public object UserTable : UUIDTable("user") {
-  public val country: Column<EntityID<UUID>> = reference("country", CountryTable)
-
   public val name: Column<String> = varchar("name", 128)
+
+  public val country: Column<EntityID<UUID>> = reference("country", CountryTable)
 
   public val createdAt: Column<LocalDateTime> = datetime("created_at")
 
@@ -26,26 +24,20 @@ public object UserTable : UUIDTable("user") {
 
 public class UserEntity(
   id: EntityID<UUID>,
-) : UUIDEntity(id), Entity<UserResponse> {
-  public var country: CountryEntity by CountryEntity referencedOn UserTable.country
-
+) : UUIDEntity(id), ConvertTo<User> {
   public var name: String by UserTable.name
+
+  public var country: CountryEntity by CountryEntity referencedOn UserTable.country
 
   public var createdAt: LocalDateTime by UserTable.createdAt
 
   public var updatedAt: LocalDateTime by UserTable.updatedAt
 
-  public override fun toResponse(): UserResponse = with(::UserResponse) {
-    val propertiesByName = UserEntity::class.memberProperties.associateBy { it.name }
-    val params = valueParameters.associateWith {
-      when (it.name) {
-        UserResponse::id.name -> id.value
-        UserEntity::country.name -> country.toResponse()
-        else -> propertiesByName[it.name]?.get(this@UserEntity)
-      }
-    }
-    callBy(params)
-  }
+  public override fun to(): User = User(
+    id = this.id.value,
+    name = this.name,
+    country = this.country.to(),
+  )
 
   public companion object : UUIDEntityClass<UserEntity>(UserTable)
 }

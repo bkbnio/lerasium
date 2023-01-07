@@ -112,7 +112,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addCreateFunction(charter)
       addReadFunction(charter)
       addUpdateFunction(charter)
-      addDeleteFunction(charter)
+      addDeleteFunction()
     }.build())
   }
 
@@ -241,7 +241,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }
   }
 
-  private fun TypeSpec.Builder.addDeleteFunction(charter: LerasiumCharter) {
+  private fun TypeSpec.Builder.addDeleteFunction() {
     addFunction(FunSpec.builder("delete").apply {
       addParameter("id", UUID::class)
       addStatement("collection.%M(id)", DeleteOneById)

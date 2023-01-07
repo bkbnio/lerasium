@@ -1,11 +1,9 @@
-package io.bkbn.lerasium.generated.persistence.entity
+package io.bkbn.lerasium.generated.persistence.table
 
-import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.generated.models.WordsResponse
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.Words
 import java.util.UUID
 import kotlin.String
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.valueParameters
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -30,7 +28,7 @@ public object WordsTable : UUIDTable("words") {
 
 public class WordsEntity(
   id: EntityID<UUID>,
-) : UUIDEntity(id), Entity<WordsResponse> {
+) : UUIDEntity(id), ConvertTo<Words> {
   public var word: String by WordsTable.word
 
   public var language: String by WordsTable.language
@@ -39,16 +37,11 @@ public class WordsEntity(
 
   public var updatedAt: LocalDateTime by WordsTable.updatedAt
 
-  public override fun toResponse(): WordsResponse = with(::WordsResponse) {
-    val propertiesByName = WordsEntity::class.memberProperties.associateBy { it.name }
-    val params = valueParameters.associateWith {
-      when (it.name) {
-        WordsResponse::id.name -> id.value
-        else -> propertiesByName[it.name]?.get(this@WordsEntity)
-      }
-    }
-    callBy(params)
-  }
+  public override fun to(): Words = Words(
+    id = this.id.value,
+    word = this.word,
+    language = this.language,
+  )
 
   public companion object : UUIDEntityClass<WordsEntity>(WordsTable)
 }

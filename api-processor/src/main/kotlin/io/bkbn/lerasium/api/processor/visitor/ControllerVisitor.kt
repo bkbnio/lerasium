@@ -110,6 +110,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }.build())
   }
 
+  @Suppress("UnusedPrivateMember")
   private fun TypeSpec.Builder.addQueryRoutesFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("queryRoutes").apply {
       receiver(Route::class)
@@ -194,6 +195,7 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }.build())
   }
 
+  @Suppress("UnusedPrivateMember")
   private fun CodeBlock.Builder.addRelationalRoutes(charter: LerasiumCharter) {
     charter.classDeclaration.getAllProperties().filter { it.isAnnotationPresent(Relation::class) }.forEach { property ->
       val name = property.simpleName.getShortName()

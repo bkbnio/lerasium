@@ -50,13 +50,6 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   }
 
   private fun TypeSpec.Builder.addCreateFunction(charter: LerasiumCharter) {
-    val scalarProperties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(Relation::class) }
-      .filterNot { it.type.isDomain() }
-      .filterNot { it.simpleName.getShortName() == "id" }
-    val domainProperties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(Relation::class) }
-      .filter { it.type.isDomain() }
     addFunction(FunSpec.builder("create").apply {
       addParameter("request", charter.apiCreateRequestClass)
       returns(charter.apiResponseClass)
@@ -79,13 +72,6 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   }
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
-    val scalarProperties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(Relation::class) }
-      .filterNot { it.type.isDomain() }
-      .filterNot { it.simpleName.getShortName() == "id" }
-    val domainProperties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(Relation::class) }
-      .filter { it.type.isDomain() }
     addFunction(FunSpec.builder("update").apply {
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)

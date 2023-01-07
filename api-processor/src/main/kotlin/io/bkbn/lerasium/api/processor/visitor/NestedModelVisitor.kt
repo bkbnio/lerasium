@@ -170,39 +170,8 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
       addModifiers(KModifier.DATA)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())
       addSuperinterface(IOResponse::class)
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        properties.forEach {
-          val param = when (it.type.isSupportedScalar()) {
-            true -> it.toParameter()
-            false -> {
-              val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-              val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
-              ParameterSpec.builder(n, cn).build()
-            }
-          }
-          addParameter(param)
-        }
-      }.build())
-      properties.forEach {
-        val prop = when (it.type.isSupportedScalar()) {
-          true -> it.toProperty()
-          false -> {
-            val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus(".Response")
-            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
-            PropertySpec.builder(n, cn).apply {
-              initializer(n)
-              if (it.type.resolve().toClassName().simpleName == "UUID") {
-                addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-                  addMember("with = %T::class", Serializers.Uuid::class)
-                }.build())
-              }
-            }.build()
-          }
-        }
-        addProperty(prop)
-      }
+      createFunctionPrimaryConstructor(properties)
+      createFunctionProperties(properties)
       addType(TypeSpec.companionObjectBuilder().apply {
         addSuperinterface(
           ConvertFrom::class.asTypeName()
@@ -223,6 +192,46 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
         }.build())
       }.build())
     }.build())
+  }
+
+  private fun TypeSpec.Builder.createFunctionPrimaryConstructor(properties: Sequence<KSPropertyDeclaration>) {
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      properties.forEach {
+        val param = when (it.type.isSupportedScalar()) {
+          true -> it.toParameter()
+          false -> {
+            val n = it.simpleName.getShortName()
+            val t = it.type.resolve().toClassName().simpleName.plus(".Response")
+            val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
+            ParameterSpec.builder(n, cn).build()
+          }
+        }
+        addParameter(param)
+      }
+    }.build())
+  }
+
+  @Suppress("NestedBlockDepth")
+  private fun TypeSpec.Builder.createFunctionProperties(properties: Sequence<KSPropertyDeclaration>) {
+    properties.forEach {
+      val prop = when (it.type.isSupportedScalar()) {
+        true -> it.toProperty()
+        false -> {
+          val n = it.simpleName.getShortName()
+          val t = it.type.resolve().toClassName().simpleName.plus(".Response")
+          val cn = ClassName(API_MODELS_PACKAGE_NAME, t)
+          PropertySpec.builder(n, cn).apply {
+            initializer(n)
+            if (it.type.resolve().toClassName().simpleName == "UUID") {
+              addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+                addMember("with = %T::class", Serializers.Uuid::class)
+              }.build())
+            }
+          }.build()
+        }
+      }
+      addProperty(prop)
+    }
   }
 
   private fun CodeBlock.Builder.addConverterProperties(properties: Sequence<KSPropertyDeclaration>) {

@@ -6,6 +6,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
@@ -65,56 +66,8 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
       addSuperinterface(ConvertTo::class.asClassName().parameterizedBy(charter.domainClass))
       addAnnotation(Serializable::class)
       addModifiers(KModifier.DATA)
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        addParameter(ParameterSpec.builder("id", UUID::class).apply {
-          addAnnotation(Contextual::class)
-          addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
-            addMember("%S", "_id")
-          }.build())
-        }.build())
-        properties.forEach {
-          val param = when (it.type.isSupportedScalar()) {
-            true -> it.toParameter()
-            false -> {
-              val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus("Document")
-              val p =  charter.documentClass.canonicalName
-              val cn = ClassName(p, t)
-              ParameterSpec.builder(n, cn).build()
-            }
-          }
-          addParameter(param)
-        }
-        addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
-        addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
-      }.build())
-      addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
-        initializer("id")
-      }.build())
-      properties.forEach {
-        val prop = when (it.type.isSupportedScalar()) {
-          true -> it.toProperty(isMutable = true)
-          false -> {
-            val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus("Document")
-            val p =  charter.documentClass.canonicalName
-            val cn = ClassName(p, t)
-            PropertySpec.builder(n, cn).apply {
-              mutable()
-              initializer(n)
-            }.build()
-          }
-        }
-        addProperty(prop)
-      }
-      addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName()).apply {
-        initializer("createdAt")
-      }.build())
-      addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName()).apply {
-        mutable()
-        initializer("updatedAt")
-      }.build())
-
+      documentPrimaryConstructor(charter, properties)
+      documentProperties(charter, properties)
       addDomainConverter(charter)
 
       val nestedDocumentVisitor = NestedDocumentVisitor(this, logger)
@@ -127,6 +80,67 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
             it.type, NestedDocumentVisitor.Data(parentCharter = charter)
           )
         }
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.documentPrimaryConstructor(
+    charter: LerasiumCharter,
+    properties: Sequence<KSPropertyDeclaration>
+  ) {
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      addParameter(ParameterSpec.builder("id", UUID::class).apply {
+        addAnnotation(Contextual::class)
+        addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
+          addMember("%S", "_id")
+        }.build())
+      }.build())
+      properties.forEach {
+        val param = when (it.type.isSupportedScalar()) {
+          true -> it.toParameter()
+          false -> {
+            val n = it.simpleName.getShortName()
+            val t = it.type.resolve().toClassName().simpleName.plus("Document")
+            val p = charter.documentClass.canonicalName
+            val cn = ClassName(p, t)
+            ParameterSpec.builder(n, cn).build()
+          }
+        }
+        addParameter(param)
+      }
+      addParameter(ParameterSpec("createdAt", LocalDateTime::class.asTypeName()))
+      addParameter(ParameterSpec("updatedAt", LocalDateTime::class.asTypeName()))
+    }.build())
+  }
+
+  private fun TypeSpec.Builder.documentProperties(
+    charter: LerasiumCharter,
+    properties: Sequence<KSPropertyDeclaration>,
+  ) {
+    addProperty(PropertySpec.builder("id", UUID::class.asTypeName()).apply {
+      initializer("id")
+    }.build())
+    properties.forEach {
+      val prop = when (it.type.isSupportedScalar()) {
+        true -> it.toProperty(isMutable = true)
+        false -> {
+          val n = it.simpleName.getShortName()
+          val t = it.type.resolve().toClassName().simpleName.plus("Document")
+          val p = charter.documentClass.canonicalName
+          val cn = ClassName(p, t)
+          PropertySpec.builder(n, cn).apply {
+            mutable()
+            initializer(n)
+          }.build()
+        }
+      }
+      addProperty(prop)
+    }
+    addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName()).apply {
+      initializer("createdAt")
+    }.build())
+    addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName()).apply {
+      mutable()
+      initializer("updatedAt")
     }.build())
   }
 

@@ -1,7 +1,7 @@
-package io.bkbn.lerasium.generated.persistence.entity
+package io.bkbn.lerasium.generated.persistence.table
 
-import io.bkbn.lerasium.core.model.Entity
-import io.bkbn.lerasium.generated.models.LettersResponse
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.Letters
 import java.util.UUID
 import kotlin.Boolean
 import kotlin.Double
@@ -9,8 +9,6 @@ import kotlin.Float
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.valueParameters
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -39,7 +37,7 @@ public object LettersTable : UUIDTable("letters") {
 
 public class LettersEntity(
   id: EntityID<UUID>,
-) : UUIDEntity(id), Entity<LettersResponse> {
+) : UUIDEntity(id), ConvertTo<Letters> {
   public var s: String? by LettersTable.s
 
   public var i: Int? by LettersTable.i
@@ -56,16 +54,15 @@ public class LettersEntity(
 
   public var updatedAt: LocalDateTime by LettersTable.updatedAt
 
-  public override fun toResponse(): LettersResponse = with(::LettersResponse) {
-    val propertiesByName = LettersEntity::class.memberProperties.associateBy { it.name }
-    val params = valueParameters.associateWith {
-      when (it.name) {
-        LettersResponse::id.name -> id.value
-        else -> propertiesByName[it.name]?.get(this@LettersEntity)
-      }
-    }
-    callBy(params)
-  }
+  public override fun to(): Letters = Letters(
+    id = this.id.value,
+    s = this.s,
+    i = this.i,
+    l = this.l,
+    b = this.b,
+    d = this.d,
+    f = this.f,
+  )
 
   public companion object : UUIDEntityClass<LettersEntity>(LettersTable)
 }
