@@ -19,6 +19,7 @@ import io.bkbn.lerasium.core.auth.Username
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toEntityClass
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
@@ -67,17 +68,24 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       .filter { it.isAnnotationPresent(ForeignKey::class) }
     addFunction(FunSpec.builder("create").apply {
       returns(charter.domainClass)
-      scalarProperties.forEach { addParameter(it.toParameter()) }
-      foreignKeys.forEach {
-        addParameter(ParameterSpec.builder(it.simpleName.getShortName(), UUID::class).build())
-      }
+      addParameter("request", charter.apiCreateRequestClass)
       addCodeBlock {
         addControlFlow("return %M", Transaction) {
           addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
           addControlFlow("val entity = %T.new", charter.entityClass) {
             scalarProperties.forEach {
               val n = it.simpleName.getShortName()
-              addStatement("this.%L = %L", n, n)
+              addStatement("this.%L = request.%L", n, n)
+            }
+            foreignKeys.forEach {
+              val n = it.simpleName.getShortName()
+              addStatement(
+                "this.%L = %T.findById(request.%L) ?: error(%P)",
+                n,
+                it.type.getDomain().toEntityClass(),
+                n,
+                "Invalid foreign key"
+              )
             }
             addStatement("this.createdAt = now")
             addStatement("this.updatedAt = now")
@@ -115,12 +123,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("update").apply {
       returns(charter.domainClass)
       addParameter("id", UUID::class)
-      scalarProperties.forEach { addParameter(it.toParameter(guaranteeNullable = true)) }
-      foreignKeys.forEach {
-        addParameter(
-          ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asTypeName().copy(nullable = true)).build()
-        )
-      }
+      addParameter("request", charter.apiUpdateRequestClass)
       addCodeBlock {
         addControlFlow("return %M", Transaction) {
           addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
@@ -131,7 +134,17 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           )
           scalarProperties.forEach {
             val n = it.simpleName.getShortName()
-            addStatement("%L?.let { entity.%L = it }", n, n)
+            addStatement("request.%L?.let { entity.%L = it }", n, n)
+          }
+          foreignKeys.forEach {
+            val n = it.simpleName.getShortName()
+            addStatement(
+              "request.%L?.let { entity.%L = %T.findById(it) ?: error(%P) }",
+              n,
+              n,
+              it.type.getDomain().toEntityClass(),
+              "Unable to get entity with id: \$it"
+            )
           }
           addStatement("entity.updatedAt = now")
           addStatement("entity.to()")
