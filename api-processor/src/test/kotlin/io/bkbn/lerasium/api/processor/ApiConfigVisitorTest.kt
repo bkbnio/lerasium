@@ -5,7 +5,7 @@ import io.bkbn.lerasium.api.processor.Specs.simpleSpecWithActor
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 
-class ConfigVisitorTest : DescribeSpec({
+class ApiConfigVisitorTest : DescribeSpec({
   describe("Config File Tests") {
     it("Can generate a simple config") {
       verifyGeneratedCode(

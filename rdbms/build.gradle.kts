@@ -20,6 +20,9 @@ dependencies {
 
   // Versions
   val exposedVersion: String by project
+  val hikariCPVersion: String by project
+  val flywayVersion: String by project
+  val postgresVersion: String by project
 
   // Lerasium
   api(projects.lerasiumPersistence)
@@ -29,4 +32,9 @@ dependencies {
   api("org.jetbrains.exposed:exposed-dao:$exposedVersion")
   api("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
   api("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
+
+  // Database
+  api("org.flywaydb:flyway-core:$flywayVersion")
+  api("com.zaxxer:HikariCP:$hikariCPVersion")
+  api("org.postgresql:postgresql:$postgresVersion")
 }

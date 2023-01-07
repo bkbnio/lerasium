@@ -37,6 +37,7 @@ object KotlinPoetUtils {
   const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
   const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"
   const val DOCUMENT_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.document"
+  const val PERSISTENCE_CONFIG_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.config"
 
   fun CodeBlock.Builder.addControlFlow(
     controlFlow: String,

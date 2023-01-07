@@ -19,7 +19,7 @@ import io.bkbn.lerasium.api.processor.Members.contentNegotiationMember
 import io.bkbn.lerasium.api.processor.Members.installMember
 import io.bkbn.lerasium.api.processor.Members.kotlinxJsonMember
 import io.bkbn.lerasium.api.processor.Members.ktorJsonMember
-import io.bkbn.lerasium.api.processor.visitor.ConfigVisitor
+import io.bkbn.lerasium.api.processor.visitor.ApiConfigVisitor
 import io.bkbn.lerasium.api.processor.visitor.ControllerVisitor
 import io.bkbn.lerasium.api.processor.visitor.DocumentationVisitor
 import io.bkbn.lerasium.api.processor.visitor.RootModelVisitor
@@ -102,7 +102,7 @@ class KtorProcessor(
       .filter { it.isAnnotationPresent(Actor::class) }
       .map { it.getDomain().name }
     fb.addConfigEntrypoint(actors.toList())
-    this.forEach { it.accept(ConfigVisitor(fb, logger), Unit) }
+    this.forEach { it.accept(ApiConfigVisitor(fb, logger), Unit) }
     val fs = fb.build()
     fs.writeTo(codeGenerator, false)
   }
