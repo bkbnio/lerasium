@@ -2,12 +2,12 @@ package io.bkbn.lerasium.generated.domain
 
 import kotlin.Int
 import kotlin.String
-import test.User as Domain
+import test.User
 
-public data class User(
+public data class UserDomain(
   public override val firstName: String,
   public override val lastName: String,
   public override val email: String,
   public override val password: String,
   public override val age: Int?,
-) : Domain
+) : User

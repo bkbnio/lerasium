@@ -1,42 +1,35 @@
 package io.bkbn.lerasium.generated.persistence.table
 
 import io.bkbn.lerasium.core.converter.ConvertTo
-import io.bkbn.lerasium.generated.domain.Country
+import io.bkbn.lerasium.generated.domain.UserDomain
+import io.bkbn.lerasium.generated.persistence.repository.CountryRepository
 import java.util.UUID
+import kotlin.Int
 import kotlin.String
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.komapper.`annotation`.KomapperCreatedAt
+import org.komapper.`annotation`.KomapperEntity
+import org.komapper.`annotation`.KomapperId
+import org.komapper.`annotation`.KomapperTable
+import org.komapper.`annotation`.KomapperUpdatedAt
+import org.komapper.`annotation`.KomapperVersion
 
-public object CountryTable : UUIDTable("country") {
-  public val name: Column<String> = varchar("name", 128)
-
-  public val createdAt: Column<LocalDateTime> = datetime("created_at")
-
-  public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
-}
-
-public class CountryEntity(
-  id: EntityID<UUID>,
-) : UUIDEntity(id), ConvertTo<Country> {
-  public var name: String by CountryTable.name
-
-  public var createdAt: LocalDateTime by CountryTable.createdAt
-
-  public var updatedAt: LocalDateTime by CountryTable.updatedAt
-
-  public val users: SizedIterable<UserEntity> by UserEntity referrersOn UserTable.country
-
-  public override fun to(): Country = Country(
-    id = this.id.value,
-    name = this.name,
-    users = this.users.map { it.to() },
+@KomapperEntity(aliases = ["user"])
+@KomapperTable(name = "user")
+public data class UserTable(
+  public val name: String,
+  public val country: UUID,
+  @KomapperId
+  public val id: UUID = UUID.randomUUID(),
+  @KomapperVersion
+  public val version: Int = 0,
+  @KomapperCreatedAt
+  public val createdAt: LocalDateTime? = null,
+  @KomapperUpdatedAt
+  public val updatedAt: LocalDateTime? = null,
+) : ConvertTo<UserDomain> {
+  public override suspend fun to(): UserDomain = UserDomain(
+    name = name,
+    country = CountryRepository.read(country),
   )
-
-  public companion object : UUIDEntityClass<CountryEntity>(CountryTable)
 }

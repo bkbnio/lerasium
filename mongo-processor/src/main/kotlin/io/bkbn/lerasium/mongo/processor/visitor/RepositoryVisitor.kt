@@ -8,8 +8,6 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
-import com.mongodb.client.MongoCollection
-import com.mongodb.client.MongoDatabase
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -34,19 +32,16 @@ import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.NestedLerasiumCharter
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
+import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.coroutine.CoroutineDatabase
 import java.util.UUID
 
 @OptIn(KspExperimental::class)
 class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   companion object {
-    private val GetCollection = MemberName("org.litote.kmongo", "getCollection")
-    private val FindOneById = MemberName("org.litote.kmongo", "findOneById")
-    private val DeleteOneById = MemberName("org.litote.kmongo", "deleteOneById")
-    private val EnsureIndex = MemberName("org.litote.kmongo", "ensureIndex")
-    private val EnsureUniqueIndex = MemberName("org.litote.kmongo", "ensureUniqueIndex")
-    private val Save = MemberName("org.litote.kmongo", "save")
     private val toLDT = MemberName("kotlinx.datetime", "toLocalDateTime")
+    private val RunBlocking = MemberName("kotlinx.coroutines", "runBlocking")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -65,7 +60,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addType(TypeSpec.objectBuilder(charter.domain.name.plus("Repository")).apply {
       addOriginatingKSFile(charter.classDeclaration.containingFile!!)
 
-      addProperty(PropertySpec.builder("db", MongoDatabase::class).apply {
+      addProperty(PropertySpec.builder("db", CoroutineDatabase::class).apply {
         addModifiers(KModifier.PRIVATE)
         initializer("%T.documentDatabase", ClassName(PERSISTENCE_CONFIG_PACKAGE_NAME, "MongoConfig"))
       }.build())
@@ -73,10 +68,10 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addProperty(
         PropertySpec.builder(
           "collection",
-          MongoCollection::class.asTypeName().parameterizedBy(charter.documentClass)
+          CoroutineCollection::class.asTypeName().parameterizedBy(charter.documentClass)
         ).apply {
           addModifiers(KModifier.PRIVATE)
-          initializer("db.%M()", GetCollection)
+          initializer("db.getCollection()")
         }.build()
       )
 
@@ -85,25 +80,27 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
       if (hasIndices) {
         addInitializerBlock(CodeBlock.builder().apply {
-          charter.classDeclaration.getAllProperties()
-            .filter { it.isAnnotationPresent(Index::class) }
-            .forEach { indexedProp ->
-              val index = indexedProp.getAnnotationsByType(Index::class).first()
-              val name = indexedProp.simpleName.getShortName()
-              when (index.unique) {
-                true -> addStatement("collection.%M(%T::$name)", EnsureUniqueIndex, charter.documentClass)
-                false -> addStatement("collection.%M(%T::$name)", EnsureIndex, charter.documentClass)
+          addControlFlow("%M", RunBlocking) {
+            charter.classDeclaration.getAllProperties()
+              .filter { it.isAnnotationPresent(Index::class) }
+              .forEach { indexedProp ->
+                val index = indexedProp.getAnnotationsByType(Index::class).first()
+                val name = indexedProp.simpleName.getShortName()
+                when (index.unique) {
+                  true -> addStatement("collection.ensureUniqueIndex(%T::$name)", charter.documentClass)
+                  false -> addStatement("collection.ensureIndex(%T::$name)", charter.documentClass)
+                }
               }
-            }
-          charter.classDeclaration.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
-            require(ci.fields.size > 1) {
-              "Composite index must have at least 2 fields, if applying single field index, use @Index"
-            }
-            val indexStatement = ci.fields.joinToString(separator = ", ") { "%T::$it" }
-            val args = ci.fields.map { charter.documentClass }.toTypedArray()
-            when (ci.unique) {
-              true -> addStatement("collection.%M($indexStatement)", EnsureUniqueIndex, *args)
-              false -> addStatement("collection.%M($indexStatement)", EnsureIndex, *args)
+            charter.classDeclaration.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
+              require(ci.fields.size > 1) {
+                "Composite index must have at least 2 fields, if applying single field index, use @Index"
+              }
+              val indexStatement = ci.fields.joinToString(separator = ", ") { "%T::$it" }
+              val args = ci.fields.map { charter.documentClass }.toTypedArray()
+              when (ci.unique) {
+                true -> addStatement("collection.ensureUniqueIndex($indexStatement)", *args)
+                false -> addStatement("collection.ensureIndex($indexStatement)", *args)
+              }
             }
           }
         }.build())
@@ -125,6 +122,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("create").apply {
       returns(charter.domainClass)
+      addModifiers(KModifier.SUSPEND)
       addParameter("request", charter.apiCreateRequestClass)
       addCodeBlock {
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
@@ -139,6 +137,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           addStatement("updatedAt = now,")
         }
       }
+      addStatement("collection.save(document)")
       addStatement("return document.to()")
     }.build())
   }
@@ -176,9 +175,10 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
   private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("read").apply {
+      addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
       addParameter("id", UUID::class)
-      addStatement("val document = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
+      addStatement("val document = collection.findOneById(id) ?: error(%P)", "Unable to get entity with id: \$id")
       addStatement("return document.to()")
     }.build())
   }
@@ -191,11 +191,12 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       .filterNot { it in scalarProps }
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("update").apply {
+      addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       addCodeBlock {
-        addStatement("val document = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
+        addStatement("val document = collection.findOneById(id) ?: error(%P)", "Unable to get entity with id: \$id")
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
         addControlFlow("document.apply") {
           scalarProps.forEach { prop ->
@@ -210,7 +211,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           }
         }
         addStatement("document.updatedAt = now")
-        addStatement("collection.%M(document)", Save)
+        addStatement("collection.save(document)")
         addStatement("return document.to()")
       }
     }.build())
@@ -243,8 +244,9 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
   private fun TypeSpec.Builder.addDeleteFunction() {
     addFunction(FunSpec.builder("delete").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("id", UUID::class)
-      addStatement("collection.%M(id)", DeleteOneById)
+      addStatement("collection.deleteOneById(id)")
     }.build())
   }
 }

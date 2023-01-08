@@ -1,15 +1,12 @@
 package io.bkbn.lerasium.generated.domain
 
-import io.bkbn.lerasium.core.serialization.Serializers
 import java.util.UUID
 import kotlin.String
-import kotlinx.serialization.Serializable
-import test.User as Domain
+import test.User
 
-public data class User(
+public data class UserDomain(
   public override val firstName: String,
   public override val lastName: String,
   public override val email: String,
-  @Serializable(with = Serializers.Uuid::class)
   public override val favoriteUuid: UUID,
-) : Domain
+) : User

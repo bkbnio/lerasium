@@ -15,6 +15,7 @@ dependencies {
   // Versions
   val kotlinxDatetimeVersion: String by project
   val kotlinxSerializationVersion: String by project
+  val komapperVersion: String by project
 
   // Lerasium
   ksp(projects.lerasiumCoreProcessor)
@@ -29,6 +30,10 @@ dependencies {
   ksp(projects.lerasiumMongoProcessor)
   implementation(projects.lerasiumMongo)
 
+  // Komapper
+  ksp(platform("org.komapper:komapper-platform:$komapperVersion"))
+  ksp("org.komapper:komapper-processor")
+
   // Date
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
@@ -36,10 +41,10 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
 
   // Logging (TODO Replace w/ Kermit!)
-  implementation("org.apache.logging.log4j:log4j-api-kotlin:1.1.0")
-  implementation("org.apache.logging.log4j:log4j-api:2.17.1")
-  implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-  implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+  implementation("org.apache.logging.log4j:log4j-api-kotlin:1.2.0")
+  implementation("org.apache.logging.log4j:log4j-api:2.19.0")
+  implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+  implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.19.0")
 }
 
 kotlin {

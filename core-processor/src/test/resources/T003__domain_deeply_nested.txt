@@ -1,10 +1,19 @@
 package io.bkbn.lerasium.generated.domain
 
 import kotlin.String
-import test.User.UserMetadata
-import test.User as Domain
+import test.User
 
-public data class User(
+public data class UserDomain(
   public override val email: String,
-  public override val metadata: UserMetadata,
-) : Domain
+  public override val metadata: User.UserMetadata,
+) : User {
+  public data class UserMetadata(
+    public override val firstName: String,
+    public override val lastName: String,
+    public override val otherStuffs: test.User.UserMetadata.OhBoiWeDeepInItNow,
+  ) : User.UserMetadata {
+    public data class OhBoiWeDeepInItNow(
+      public override val otherInfo: String,
+    ) : User.UserMetadata.OhBoiWeDeepInItNow
+  }
+}

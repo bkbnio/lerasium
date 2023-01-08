@@ -2,40 +2,61 @@ package io.bkbn.lerasium.generated.persistence.repository
 
 import io.bkbn.lerasium.generated.api.models.CountryModels.Create
 import io.bkbn.lerasium.generated.api.models.CountryModels.Update
-import io.bkbn.lerasium.generated.domain.Country
-import io.bkbn.lerasium.generated.persistence.table.CountryEntity
+import io.bkbn.lerasium.generated.domain.CountryDomain
+import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
+import io.bkbn.lerasium.generated.persistence.table.CountryTable
+import io.bkbn.lerasium.generated.persistence.table._CountryTable
+import io.bkbn.lerasium.generated.persistence.table.country
 import java.util.UUID
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.komapper.core.dsl.Meta
+import org.komapper.core.dsl.QueryDsl
+import org.komapper.core.dsl.query.andThen
+import org.komapper.core.dsl.query.single
+import org.komapper.r2dbc.R2dbcDatabase
 
 public object CountryRepository {
-  public fun create(request: Create): Country = transaction {
-    val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-    val entity = CountryEntity.new {
-      this.name = request.name
-      this.createdAt = now
-      this.updatedAt = now
+  private val db: R2dbcDatabase = PostgresConfig.database
+
+  private val resource: _CountryTable = Meta.country
+
+  public suspend fun create(request: Create): CountryDomain = db.withTransaction {
+    val result = db.runQuery {
+      QueryDsl.insert(resource).single(
+        CountryTable(
+          name = request.name,
+        )
+      )
     }
-    entity.to()
+    result.to()
   }
 
-  public fun read(id: UUID): Country = transaction {
-    val entity = CountryEntity.findById(id) ?: error("""Unable to get entity with id: $id""")
-    entity.to()
+  public suspend fun read(id: UUID): CountryDomain = db.withTransaction {
+    val result = db.runQuery {
+      val query = QueryDsl.from(resource).where {
+        resource.id eq id
+      }
+      query.single()
+    }
+    result.to()
   }
 
-  public fun update(id: UUID, request: Update): Country = transaction {
-    val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-    val entity = CountryEntity.findById(id) ?: error("""Unable to get entity with id: $id""")
-    request.name?.let { entity.name = it }
-    entity.updatedAt = now
-    entity.to()
+  public suspend fun update(id: UUID, request: Update): CountryDomain = db.withTransaction {
+    val result = db.runQuery {
+      QueryDsl.update(resource)
+        .set {
+          request.name?.let { v -> it.name to v }
+        }
+        .where {
+          resource.id eq id
+        }
+        .andThen(QueryDsl.from(resource).where { resource.id eq id }.single())
+    }
+    result.to()
   }
 
-  public fun delete(id: UUID) = transaction {
-    val entity = CountryEntity.findById(id) ?: error("""Unable to get entity with id: $id""")
-    entity.delete()
+  public suspend fun delete(id: UUID) = db.withTransaction {
+    db.runQuery {
+      QueryDsl.delete(resource).where { resource.id eq id }
+    }
   }
 }

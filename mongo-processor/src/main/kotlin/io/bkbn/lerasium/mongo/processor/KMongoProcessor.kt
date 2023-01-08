@@ -9,7 +9,6 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
-import com.mongodb.client.MongoDatabase
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.PropertySpec
@@ -24,7 +23,8 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import org.bson.UuidRepresentation
-import org.litote.kmongo.KMongo
+import org.litote.kmongo.coroutine.CoroutineDatabase
+import org.litote.kmongo.reactivestreams.KMongo
 
 class KMongoProcessor(
   private val codeGenerator: CodeGenerator,
@@ -73,7 +73,7 @@ class KMongoProcessor(
 
   private fun FileSpec.Builder.addMongoConfig() {
     addType(TypeSpec.objectBuilder("MongoConfig").apply {
-      addProperty(PropertySpec.builder("documentDatabase", MongoDatabase::class).apply {
+      addProperty(PropertySpec.builder("documentDatabase", CoroutineDatabase::class).apply {
         delegate(CodeBlock.builder().apply {
           addControlFlow("lazy") {
             addControlFlow("val clientSettingBuilder = %T.builder().apply", MongoClientSettings::class) {
@@ -86,7 +86,7 @@ class KMongoProcessor(
             }
             addStatement("val clientSettings = clientSettingBuilder.build()")
             addStatement("val mongoClient = %T.createClient(clientSettings)", KMongo::class)
-            addStatement("mongoClient.getDatabase(%S)", "test_db")
+            addStatement("%T(mongoClient.getDatabase(%S))", CoroutineDatabase::class, "test_db")
           }
         }.build())
       }.build())

@@ -2,10 +2,10 @@ package io.bkbn.lerasium.generated.domain
 
 import kotlin.String
 import kotlin.collections.List
+import test.Country
 import test.User
-import test.Country as Domain
 
-public data class Country(
+public data class CountryDomain(
   public override val name: String,
   public override val citizens: List<User>,
-) : Domain
+) : Country

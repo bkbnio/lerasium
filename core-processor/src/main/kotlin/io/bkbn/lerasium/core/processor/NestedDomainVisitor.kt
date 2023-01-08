@@ -1,4 +1,4 @@
-package io.bkbn.lerasium.mongo.processor.visitor
+package io.bkbn.lerasium.core.processor
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
@@ -9,29 +9,23 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.toClassName
 import io.bkbn.lerasium.core.Relation
-import io.bkbn.lerasium.core.converter.ConvertTo
 import io.bkbn.lerasium.utils.KSVisitorWithData
-import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
-import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.isDomain
 import io.bkbn.lerasium.utils.NestedLerasiumCharter
-import kotlinx.serialization.Serializable
 
 @OptIn(KspExperimental::class)
-class NestedDocumentVisitor(
+class NestedDomainVisitor(
   private val typeBuilder: TypeSpec.Builder,
   private val logger: KSPLogger
-) : KSVisitorWithData<NestedDocumentVisitor.Data>() {
+) : KSVisitorWithData<NestedDomainVisitor.Data>() {
 
   data class Data(
     val parentCharter: LerasiumCharter,
@@ -51,25 +45,24 @@ class NestedDocumentVisitor(
       visitedModels = data.visitedModels.plus(typeReference),
     )
 
-    typeBuilder.addChildDocument(charter, newData)
+    typeBuilder.addChildDomain(charter, newData)
   }
 
-  private fun TypeSpec.Builder.addChildDocument(charter: NestedLerasiumCharter, data: Data) {
+  private fun TypeSpec.Builder.addChildDomain(charter: NestedLerasiumCharter, data: Data) {
     val properties = charter.classDeclaration.getAllProperties()
       .filterNot { it.isAnnotationPresent(Relation::class) }
       .filterNot { it.type.isDomain() }
-    addType(TypeSpec.classBuilder(charter.classDeclaration.simpleName.getShortName().plus("Document")).apply {
-      addAnnotation(Serializable::class)
+    addType(TypeSpec.classBuilder(charter.classDeclaration.simpleName.getShortName()).apply {
       addModifiers(KModifier.DATA)
-      addSuperinterface(ConvertTo::class.asClassName().parameterizedBy(charter.domainClass))
+      addSuperinterface(charter.domainClass)
       primaryConstructor(FunSpec.constructorBuilder().apply {
         properties.forEach {
           val param = when (it.type.isSupportedScalar()) {
             true -> it.toParameter()
             false -> {
               val n = it.simpleName.getShortName()
-              val t = it.type.resolve().toClassName().simpleName.plus("Document")
-              val p =  charter.documentClass.canonicalName
+              val t = it.type.resolve().toClassName().simpleName
+              val p = charter.domainClass.canonicalName
               val cn = ClassName(p, t)
               ParameterSpec.builder(n, cn).build()
             }
@@ -79,49 +72,25 @@ class NestedDocumentVisitor(
       }.build())
       properties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
-          true -> it.toProperty(isMutable = true)
+          true -> it.toProperty(isOverride = true, serializable = false)
           false -> {
             val n = it.simpleName.getShortName()
-            val t = it.type.resolve().toClassName().simpleName.plus("Document")
-            val p =  charter.documentClass.canonicalName
+            val t = it.type.resolve().toClassName().simpleName
+            val p = charter.domainClass.canonicalName
             val cn = ClassName(p, t)
             PropertySpec.builder(n, cn).apply {
-              mutable()
               initializer(n)
+              addModifiers(KModifier.OVERRIDE)
             }.build()
           }
         }
         addProperty(prop)
       }
-
-      addDomainConverter(charter)
-
-      val childDocumentVisitor = NestedDocumentVisitor(this, logger)
+      val childDomainVisitor = NestedDomainVisitor(this, logger)
       charter.classDeclaration.getAllProperties()
         .filterNot { it.type.isSupportedScalar() }
         .filterNot { data.visitedModels.contains(it.type) }
-        .forEach { childDocumentVisitor.visitTypeReference(it.type, data) }
-    }.build())
-  }
-
-  private fun TypeSpec.Builder.addDomainConverter(charter: NestedLerasiumCharter) {
-    val scalarProps = charter.classDeclaration.getAllProperties()
-      .filter { it.type.isSupportedScalar() }
-    val nestedProps = charter.classDeclaration.getAllProperties()
-      .filterNot { it in scalarProps }
-    addFunction(FunSpec.builder("to").apply {
-      returns(charter.domainClass)
-      addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
-      addCodeBlock {
-        addObjectInstantiation(charter.domainClassImpl, returnInstance = true) {
-          scalarProps.forEach {
-            addStatement("${it.simpleName.getShortName()} = %L,", it.simpleName.getShortName())
-          }
-          nestedProps.forEach {
-            addStatement("${it.simpleName.getShortName()} = %L.to(),", it.simpleName.getShortName())
-          }
-        }
-      }
+        .forEach { childDomainVisitor.visitTypeReference(it.type, data) }
     }.build())
   }
 }

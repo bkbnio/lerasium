@@ -9,7 +9,6 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
@@ -34,7 +33,6 @@ object KotlinPoetUtils {
 
   // Persistence
   const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
-  const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
   const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"
   const val DOCUMENT_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.document"
   const val PERSISTENCE_CONFIG_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.config"
@@ -61,7 +59,7 @@ object KotlinPoetUtils {
   }
 
   fun CodeBlock.Builder.addObjectInstantiation(
-    type: TypeName,
+    type: ClassName,
     trailingComma: Boolean = false,
     returnInstance: Boolean = false,
     assignment: String? = null,
@@ -85,11 +83,9 @@ object KotlinPoetUtils {
     addCode(CodeBlock.builder().apply(init).build())
   }
 
-  fun Domain.toCreateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("CreateRequest"))
-  fun Domain.toUpdateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("UpdateRequest"))
-  fun Domain.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("Response"))
   fun Domain.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toTableClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Table"))
+  fun Domain.toRepositoryClass(): ClassName = ClassName(REPOSITORY_PACKAGE_NAME, name.plus("Repository"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
   fun String.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, this.plus("Response"))
@@ -103,9 +99,13 @@ object KotlinPoetUtils {
       type.toTypeName().copy(nullable = guaranteeNullable || this.type.resolve().isMarkedNullable)
     ).build()
 
-  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false, isOverride: Boolean = false) =
+  fun KSPropertyDeclaration.toProperty(
+    isMutable: Boolean = false,
+    isOverride: Boolean = false,
+    serializable: Boolean = true
+  ) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
-      if (type.resolve().toClassName().simpleName == "UUID") {
+      if (type.resolve().toClassName().simpleName == "UUID" && serializable) {
         addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
           addMember("with = %T::class", Serializers.Uuid::class)
         }.build())

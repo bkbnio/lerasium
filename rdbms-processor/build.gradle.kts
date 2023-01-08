@@ -22,7 +22,6 @@ dependencies {
   // Versions
   val kotlinPoetVersion: String by project
   val kspVersion: String by project
-  val kotlinxDatetimeVersion: String by project
 
   // Lerasium
   implementation(projects.lerasiumRdbms)
@@ -35,9 +34,6 @@ dependencies {
 
   // Symbol Processing
   implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
-
-  // Date
-  implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
   // Test Utils
   testImplementation(testFixtures(projects.lerasiumUtils))

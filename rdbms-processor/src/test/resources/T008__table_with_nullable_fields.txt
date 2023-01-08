@@ -1,7 +1,7 @@
 package io.bkbn.lerasium.generated.persistence.table
 
 import io.bkbn.lerasium.core.converter.ConvertTo
-import io.bkbn.lerasium.generated.domain.Letters
+import io.bkbn.lerasium.generated.domain.LettersDomain
 import java.util.UUID
 import kotlin.Boolean
 import kotlin.Double
@@ -10,59 +10,37 @@ import kotlin.Int
 import kotlin.Long
 import kotlin.String
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.komapper.`annotation`.KomapperCreatedAt
+import org.komapper.`annotation`.KomapperEntity
+import org.komapper.`annotation`.KomapperId
+import org.komapper.`annotation`.KomapperTable
+import org.komapper.`annotation`.KomapperUpdatedAt
+import org.komapper.`annotation`.KomapperVersion
 
-public object LettersTable : UUIDTable("letters") {
-  public val s: Column<String?> = varchar("s", 128).nullable()
-
-  public val i: Column<Int?> = integer("i").nullable()
-
-  public val l: Column<Long?> = long("l").nullable()
-
-  public val b: Column<Boolean?> = bool("b").nullable()
-
-  public val d: Column<Double?> = double("d").nullable()
-
-  public val f: Column<Float?> = float("f").nullable()
-
-  public val createdAt: Column<LocalDateTime> = datetime("created_at")
-
-  public val updatedAt: Column<LocalDateTime> = datetime("updated_at")
-}
-
-public class LettersEntity(
-  id: EntityID<UUID>,
-) : UUIDEntity(id), ConvertTo<Letters> {
-  public var s: String? by LettersTable.s
-
-  public var i: Int? by LettersTable.i
-
-  public var l: Long? by LettersTable.l
-
-  public var b: Boolean? by LettersTable.b
-
-  public var d: Double? by LettersTable.d
-
-  public var f: Float? by LettersTable.f
-
-  public var createdAt: LocalDateTime by LettersTable.createdAt
-
-  public var updatedAt: LocalDateTime by LettersTable.updatedAt
-
-  public override fun to(): Letters = Letters(
-    id = this.id.value,
-    s = this.s,
-    i = this.i,
-    l = this.l,
-    b = this.b,
-    d = this.d,
-    f = this.f,
+@KomapperEntity(aliases = ["letters"])
+@KomapperTable(name = "letters")
+public data class LettersTable(
+  public val s: String?,
+  public val i: Int?,
+  public val l: Long?,
+  public val b: Boolean?,
+  public val d: Double?,
+  public val f: Float?,
+  @KomapperId
+  public val id: UUID = UUID.randomUUID(),
+  @KomapperVersion
+  public val version: Int = 0,
+  @KomapperCreatedAt
+  public val createdAt: LocalDateTime? = null,
+  @KomapperUpdatedAt
+  public val updatedAt: LocalDateTime? = null,
+) : ConvertTo<LettersDomain> {
+  public override suspend fun to(): LettersDomain = LettersDomain(
+    s = s,
+    i = i,
+    l = l,
+    b = b,
+    d = d,
+    f = f,
   )
-
-  public companion object : UUIDEntityClass<LettersEntity>(LettersTable)
 }

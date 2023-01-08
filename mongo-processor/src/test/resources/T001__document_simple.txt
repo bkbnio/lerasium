@@ -1,7 +1,7 @@
 package io.bkbn.lerasium.generated.persistence.document
 
 import io.bkbn.lerasium.core.converter.ConvertTo
-import io.bkbn.lerasium.generated.domain.User
+import io.bkbn.lerasium.generated.domain.UserDomain
 import java.util.UUID
 import kotlin.String
 import kotlinx.datetime.LocalDateTime
@@ -17,8 +17,8 @@ public data class UserDocument(
   public var name: String,
   public val createdAt: LocalDateTime,
   public var updatedAt: LocalDateTime,
-) : ConvertTo<User> {
-  public override fun to(): User = User(
+) : ConvertTo<UserDomain> {
+  public override suspend fun to(): UserDomain = UserDomain(
     id = id,
     name = name,
   )

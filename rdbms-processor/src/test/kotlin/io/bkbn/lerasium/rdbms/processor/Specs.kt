@@ -278,4 +278,23 @@ object Specs {
       }
     """.trimIndent()
   )
+
+  val domainWithSensitiveField = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.persistence.Sensitive
+      import io.bkbn.lerasium.rdbms.Table
+
+      @Domain("User")
+      @Table
+      interface User {
+        val email: String
+        @Sensitive
+        val password: String
+      }
+    """.trimIndent()
+  )
 }

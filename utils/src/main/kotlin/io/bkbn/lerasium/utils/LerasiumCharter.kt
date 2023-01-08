@@ -16,7 +16,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 open class LerasiumCharter(val domain: Domain, val classDeclaration: KSClassDeclaration) {
   @OptIn(KspExperimental::class)
   open val isActor: Boolean = classDeclaration.isAnnotationPresent(Actor::class)
-  open val domainClass: ClassName = ClassName(DOMAIN_PACKAGE_NAME, domain.name)
+  open val domainClass: ClassName = ClassName(DOMAIN_PACKAGE_NAME, domain.name.plus("Domain"))
 
   // TODO Should not leak out of persistence layer
   val repositoryClass: ClassName = ClassName(REPOSITORY_PACKAGE_NAME, domain.name.plus("Repository"))

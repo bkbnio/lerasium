@@ -1,50 +1,50 @@
 package io.bkbn.lerasium.rdbms.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
-import com.squareup.kotlinpoet.ksp.toTypeName
-import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.persistence.CompositeIndex
-import io.bkbn.lerasium.persistence.Index
-import io.bkbn.lerasium.rdbms.Column
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.converter.ConvertTo
 import io.bkbn.lerasium.rdbms.ForeignKey
-import io.bkbn.lerasium.rdbms.ManyToMany
-import io.bkbn.lerasium.rdbms.OneToMany
-import io.bkbn.lerasium.rdbms.VarChar
-import io.bkbn.lerasium.utils.KotlinPoetUtils.toTableClass
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
+import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
+import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
+import io.bkbn.lerasium.utils.KotlinPoetUtils.toRepositoryClass
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
-import io.bkbn.lerasium.utils.StringUtils.camelToSnakeCase
+import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.UUIDTable
+import org.komapper.annotation.KomapperCreatedAt
+import org.komapper.annotation.KomapperEntity
+import org.komapper.annotation.KomapperId
+import org.komapper.annotation.KomapperTable
+import org.komapper.annotation.KomapperUpdatedAt
+import org.komapper.annotation.KomapperVersion
 import java.util.UUID
-import org.jetbrains.exposed.sql.Column as ExposedColumn
 
 @OptIn(KspExperimental::class)
 class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
 
   private companion object {
-    const val DEFAULT_VARCHAR_SIZE = 128
-    val exposedColumn = ClassName("org.jetbrains.exposed.sql", "Column")
-    val exposedDateTime = MemberName("org.jetbrains.exposed.sql.kotlin.datetime", "datetime")
+    val memberProps = MemberName("kotlin.reflect.full", "memberProperties")
+    val valueParams = MemberName("kotlin.reflect.full", "valueParameters")
   }
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -56,146 +56,103 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
     val domain = classDeclaration.getDomain()
     val charter = LerasiumCharter(classDeclaration = classDeclaration, domain = domain)
 
-    fileBuilder.addTable(charter)
+    fileBuilder.addEntity(charter)
   }
 
-  private fun FileSpec.Builder.addTable(charter: LerasiumCharter) {
-    val properties = charter.classDeclaration.getAllProperties()
-      .filterNot { it.isAnnotationPresent(OneToMany::class) }
-      .filterNot { it.isAnnotationPresent(ManyToMany::class) }
-      .filterNot { it.simpleName.getShortName() == "id" }
-    addType(TypeSpec.objectBuilder(charter.domain.name.plus("Table")).apply {
-      addOriginatingKSFile(charter.classDeclaration.containingFile!!)
-      superclass(UUIDTable::class)
-      addSuperclassConstructorParameter("%S", charter.domain.name.pascalToSnakeCase())
-      properties.forEach { property ->
-        val columnAnnotation: Column? = property.getAnnotationsByType(Column::class).firstOrNull()
-        val fieldName = property.simpleName.asString()
-        val columnName = columnAnnotation?.name ?: fieldName
-        val columnType = if (property.isAnnotationPresent(ForeignKey::class)) {
-          ExposedColumn::class.asTypeName()
-            .parameterizedBy(EntityID::class.asTypeName().parameterizedBy(UUID::class.asTypeName()))
-        } else {
-          property.toColumnType()
-        }
-        addProperty(PropertySpec.builder(fieldName, columnType).apply {
-          setColumnInitializer(columnName, property)
-        }.build())
-      }
-      addProperty(
-        PropertySpec.builder("createdAt", exposedColumn.parameterizedBy(LocalDateTime::class.asTypeName())).apply {
-          initializer("%M(%S)", exposedDateTime, "created_at")
-        }.build()
-      )
-      addProperty(
-        PropertySpec.builder("updatedAt", exposedColumn.parameterizedBy(LocalDateTime::class.asTypeName())).apply {
-          initializer("%M(%S)", exposedDateTime, "updated_at")
-        }.build()
-      )
-
-      if (charter.classDeclaration.isAnnotationPresent(CompositeIndex::class)) {
-        addInitializerBlock(CodeBlock.builder().apply {
-          charter.classDeclaration.getAnnotationsByType(CompositeIndex::class).forEach { ci ->
-            require(ci.fields.size > 1) {
-              "Composite index must have at least 2 fields, if applying single field index, use @Index"
-            }
-            addStatement("index(%L, %L)", ci.unique, ci.fields.joinToString(", "))
-          }
-        }.build())
-      }
+  private fun FileSpec.Builder.addEntity(charter: LerasiumCharter) {
+    addType(TypeSpec.classBuilder(charter.domain.name.plus("Table")).apply {
+      addSuperinterface(ConvertTo::class.asClassName().parameterizedBy(charter.domainClass))
+      addModifiers(KModifier.DATA)
+      addAnnotation(AnnotationSpec.builder(KomapperEntity::class).apply {
+        addMember("aliases = [%S]", charter.domain.name.decapitalized())
+      }.build())
+      addAnnotation(AnnotationSpec.builder(KomapperTable::class).apply {
+        addMember("name = %S", charter.domain.name.pascalToSnakeCase())
+      }.build())
+      addPrimaryConstructor(charter)
+      addProperties(charter)
+      addDomainConverter(charter)
     }.build())
   }
 
-  private fun KSPropertyDeclaration.toColumnType(): TypeName {
-    val columnBase = ClassName("org.jetbrains.exposed.sql", "Column")
-    return columnBase.parameterizedBy(type.toTypeName())
+  private fun TypeSpec.Builder.addPrimaryConstructor(charter: LerasiumCharter) {
+    val scalarProps = charter.classDeclaration.getAllProperties()
+      .filterNot { it.simpleName.getShortName() == "id" }
+      .filter { it.type.isSupportedScalar() }
+    val foreignKeyProps = charter.classDeclaration.getAllProperties()
+      .filter { it.isAnnotationPresent(ForeignKey::class) }
+    primaryConstructor(FunSpec.constructorBuilder().apply {
+      scalarProps.forEach { prop -> addParameter(prop.toParameter()) }
+      foreignKeyProps.forEach { prop -> addParameter(prop.simpleName.getShortName(), UUID::class) }
+      addParameter(ParameterSpec.builder("id", UUID::class).apply {
+        addAnnotation(KomapperId::class)
+        defaultValue("%T.randomUUID()", UUID::class)
+      }.build())
+      addParameter(ParameterSpec.builder("version", Int::class).apply {
+        addAnnotation(KomapperVersion::class)
+        defaultValue("0")
+      }.build())
+      addParameter(ParameterSpec.builder("createdAt", LocalDateTime::class.asTypeName().copy(nullable = true)).apply {
+        addAnnotation(KomapperCreatedAt::class)
+        defaultValue("null")
+      }.build())
+      addParameter(ParameterSpec.builder("updatedAt", LocalDateTime::class.asTypeName().copy(nullable = true)).apply {
+        addAnnotation(KomapperUpdatedAt::class)
+        defaultValue("null")
+      }.build())
+    }.build())
   }
 
-  private fun PropertySpec.Builder.setColumnInitializer(fieldName: String, property: KSPropertyDeclaration) {
-    val columnName = fieldName.camelToSnakeCase()
-    if (property.isAnnotationPresent(ForeignKey::class)) {
-      handleForeignKey(property)
-    } else {
-      when (property.type.resolve().declaration.simpleName.getShortName()) {
-        "String" -> handleString(columnName, property)
-        "Int" -> handleInt(columnName, property)
-        "Long" -> handleLong(columnName, property)
-        "Boolean" -> handleBoolean(columnName, property)
-        "Double" -> handleDouble(columnName, property)
-        "Float" -> handleFloat(columnName, property)
-        "UUID" -> handleUuid(columnName, property)
-        else -> TODO("${property.type} is not yet supported for Table definitions")
-      }
+  private fun TypeSpec.Builder.addProperties(charter: LerasiumCharter) {
+    val scalarProps = charter.classDeclaration.getAllProperties()
+      .filterNot { it.simpleName.getShortName() == "id" }
+      .filter { it.type.isSupportedScalar() }
+    val foreignKeyProps = charter.classDeclaration.getAllProperties()
+      .filter { it.isAnnotationPresent(ForeignKey::class) }
+    scalarProps.forEach { prop -> addProperty(prop.toProperty()) }
+    foreignKeyProps.forEach { prop ->
+      addProperty(PropertySpec.builder(prop.simpleName.getShortName(), UUID::class).apply {
+        initializer(prop.simpleName.getShortName())
+      }.build())
     }
+    addProperty(PropertySpec.builder("id", UUID::class).apply {
+      initializer("id")
+    }.build())
+    addProperty(PropertySpec.builder("version", Int::class).apply {
+      initializer("version")
+    }.build())
+    addProperty(PropertySpec.builder("createdAt", LocalDateTime::class.asTypeName().copy(nullable = true)).apply {
+      initializer("createdAt")
+    }.build())
+    addProperty(PropertySpec.builder("updatedAt", LocalDateTime::class.asTypeName().copy(nullable = true)).apply {
+      initializer("updatedAt")
+    }.build())
   }
 
-  private fun PropertySpec.Builder.handleString(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("varchar(%S, %L)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    if (property.isAnnotationPresent(Index::class)) {
-      val index = property.getAnnotationsByType(Index::class).first()
-      when (index.unique) {
-        true -> format.append(".uniqueIndex()")
-        false -> format.append(".index()")
+  private fun TypeSpec.Builder.addDomainConverter(charter: LerasiumCharter) {
+    val scalarProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isSupportedScalar() }
+    val foreignKeyProps = charter.classDeclaration.getAllProperties()
+      .filter { it.isAnnotationPresent(ForeignKey::class) }
+    val relationProps = charter.classDeclaration.getAllProperties()
+      .filter { it.isAnnotationPresent(Relation::class) }
+    addFunction(FunSpec.builder("to").apply {
+      addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
+      returns(charter.domainClass)
+      addCodeBlock {
+        addObjectInstantiation(charter.domainClass, returnInstance = true) {
+          scalarProps.forEach { prop ->
+            addStatement("%L = %L,", prop.simpleName.getShortName(), prop.simpleName.getShortName())
+          }
+          foreignKeyProps.forEach { prop ->
+            val name = prop.simpleName.getShortName()
+            addStatement("%L = %T.read(%L),", name, prop.type.getDomain().toRepositoryClass(), name)
+          }
+          relationProps.forEach { prop ->
+            addStatement("%L = emptyList(),", prop.simpleName.getShortName())
+          }
+        }
       }
-    }
-    initializer(format.toString(), columnName, determineVarCharSize(property))
-  }
-
-  private fun determineVarCharSize(property: KSPropertyDeclaration): Int {
-    val varCharAnnotation = property.getAnnotationsByType(VarChar::class).firstOrNull()
-    return varCharAnnotation?.size ?: DEFAULT_VARCHAR_SIZE
-  }
-
-  private fun PropertySpec.Builder.handleInt(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("integer(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleLong(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("long(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleBoolean(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("bool(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleDouble(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("double(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleFloat(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("float(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleUuid(columnName: String, property: KSPropertyDeclaration) {
-    val format = StringBuilder()
-    format.append("uuid(%S)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), columnName)
-  }
-
-  private fun PropertySpec.Builder.handleForeignKey(property: KSPropertyDeclaration) {
-    val name = property.simpleName.getShortName()
-    val domain = (property.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
-    val format = StringBuilder()
-    format.append("reference(%S, %T)")
-    if (property.type.resolve().toString().contains("?")) format.append(".nullable()")
-    initializer(format.toString(), name, domain.toTableClass())
+    }.build())
   }
 }
