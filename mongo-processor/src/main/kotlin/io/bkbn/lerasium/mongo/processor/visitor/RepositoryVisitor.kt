@@ -125,6 +125,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("create").apply {
       returns(charter.domainClass)
+      addModifiers(KModifier.SUSPEND)
       addParameter("request", charter.apiCreateRequestClass)
       addCodeBlock {
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
@@ -139,6 +140,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           addStatement("updatedAt = now,")
         }
       }
+      addStatement("collection.%M(document)", Save)
       addStatement("return document.to()")
     }.build())
   }
@@ -176,6 +178,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
   private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("read").apply {
+      addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
       addParameter("id", UUID::class)
       addStatement("val document = collection.%M(id) ?: error(%P)", FindOneById, "Unable to get entity with id: \$id")
@@ -191,6 +194,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       .filterNot { it in scalarProps }
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("update").apply {
+      addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
@@ -243,6 +247,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
   private fun TypeSpec.Builder.addDeleteFunction() {
     addFunction(FunSpec.builder("delete").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("id", UUID::class)
       addStatement("collection.%M(id)", DeleteOneById)
     }.build())
