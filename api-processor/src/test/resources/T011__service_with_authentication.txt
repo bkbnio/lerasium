@@ -14,26 +14,26 @@ import kotlin.String
 import kotlin.Unit
 
 public object UserService {
-  public fun create(request: Create): Response {
+  public suspend fun create(request: Create): Response {
     val result = UserRepository.create(request)
     return Response.from(result)
   }
 
-  public fun read(id: UUID): Response {
+  public suspend fun read(id: UUID): Response {
     val result = UserRepository.read(id)
     return Response.from(result)
   }
 
-  public fun update(id: UUID, request: Update): Response {
+  public suspend fun update(id: UUID, request: Update): Response {
     val result = UserRepository.update(id, request)
     return Response.from(result)
   }
 
-  public fun delete(id: UUID): Unit {
+  public suspend fun delete(id: UUID): Unit {
     UserRepository.delete(id)
   }
 
-  public fun authenticate(request: LoginRequest): String {
+  public suspend fun authenticate(request: LoginRequest): String {
     val actor = UserRepository.authenticate(request.username, request.password)
     val unsignedToken = JWT.create().apply {
       withAudience("http://0.0.0.0:8080/hello")

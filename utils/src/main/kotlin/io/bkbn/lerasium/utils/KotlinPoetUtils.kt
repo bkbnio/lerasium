@@ -34,7 +34,6 @@ object KotlinPoetUtils {
 
   // Persistence
   const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
-  const val ENTITY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.entity"
   const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"
   const val DOCUMENT_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.document"
   const val PERSISTENCE_CONFIG_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.config"
@@ -85,11 +84,9 @@ object KotlinPoetUtils {
     addCode(CodeBlock.builder().apply(init).build())
   }
 
-  fun Domain.toCreateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("CreateRequest"))
-  fun Domain.toUpdateRequestClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("UpdateRequest"))
-  fun Domain.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, name.plus("Response"))
   fun Domain.toEntityClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Entity"))
   fun Domain.toTableClass(): ClassName = ClassName(TABLE_PACKAGE_NAME, name.plus("Table"))
+  fun Domain.toRepositoryClass(): ClassName = ClassName(REPOSITORY_PACKAGE_NAME, name.plus("Repository"))
   fun Domain.toApiDocumentationClass(): ClassName = ClassName(API_DOCS_PACKAGE_NAME, name.plus("Documentation"))
 
   fun String.toResponseClass(): ClassName = ClassName(API_MODELS_PACKAGE_NAME, this.plus("Response"))

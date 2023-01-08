@@ -15,39 +15,27 @@ import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReview
 import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
 import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
 import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
-import io.bkbn.lerasium.generated.persistence.table.AuthorTable
-import io.bkbn.lerasium.generated.persistence.table.BookReviewTable
-import io.bkbn.lerasium.generated.persistence.table.BookTable
-import io.bkbn.lerasium.generated.persistence.table.UserEntity
-import io.bkbn.lerasium.generated.persistence.table.UserTable
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.EngineMain
 import io.ktor.server.routing.routing
 import kotlinx.datetime.LocalDateTime
 import org.apache.logging.log4j.kotlin.logger
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URI
 import kotlin.reflect.typeOf
 
 fun main(args: Array<String>) {
   val logger = logger("main")
   logger.info { "Initializing database and performing any necessary migrations" }
-  PostgresConfig.relationalDatabase
+  PostgresConfig.database
   PostgresConfig.flyway.clean()
 
-  transaction {
-    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
-    println("-------------")
-    statements.forEach { println(it.plus("\n")) }
-    println("-------------")
-  }
+//  transaction {
+//    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
+//    println("-------------")
+//    statements.forEach { println(it.plus("\n")) }
+//    println("-------------")
+//  }
 
   PostgresConfig.flyway.migrate()
 
@@ -98,14 +86,14 @@ fun Application.module() {
   }
 }
 
-object Testerino {
-  private val byFirstName: (String) -> Expression<Boolean> = { firstName -> UserTable.firstName eq firstName }
-  private val byEmail: (String) -> Expression<Boolean> = { email -> UserTable.email eq email }
-  private val composition: SqlExpressionBuilder.(String, String) -> Op<Boolean> =
-    { email, firstName -> byFirstName(firstName) and byEmail(email) }
-
-  fun readByEmail(email: String, firstName: String) = transaction {
-    val users = UserEntity.find { composition(email, firstName) }
-    users.first()
-  }
-}
+//object Testerino {
+//  private val byFirstName: (String) -> Expression<Boolean> = { firstName -> UserTable.firstName eq firstName }
+//  private val byEmail: (String) -> Expression<Boolean> = { email -> UserTable.email eq email }
+//  private val composition: SqlExpressionBuilder.(String, String) -> Op<Boolean> =
+//    { email, firstName -> byFirstName(firstName) and byEmail(email) }
+//
+//  fun readByEmail(email: String, firstName: String) = transaction {
+//    val users = UserEntity.find { composition(email, firstName) }
+//    users.first()
+//  }
+//}

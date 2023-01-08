@@ -9,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.processor.Members.hmac256Member
@@ -51,6 +52,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
 
   private fun TypeSpec.Builder.addCreateFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("create").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("request", charter.apiCreateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
@@ -62,6 +64,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
 
   private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("read").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("id", UUID::class)
       returns(charter.apiResponseClass)
       addCodeBlock {
@@ -73,6 +76,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("update").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       returns(charter.apiResponseClass)
@@ -85,6 +89,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
 
   private fun TypeSpec.Builder.addDeleteFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("delete").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("id", UUID::class)
       addCodeBlock {
         addStatement("%T.delete(id)", charter.repositoryClass)
@@ -94,6 +99,7 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
 
   private fun TypeSpec.Builder.addAuthenticationFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("authenticate").apply {
+      addModifiers(KModifier.SUSPEND)
       addParameter("request", LoginRequest::class)
       returns(String::class)
       addCodeBlock {
