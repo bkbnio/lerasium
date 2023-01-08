@@ -153,7 +153,7 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("to").apply {
       returns(charter.domainClass)
-      addModifiers(KModifier.OVERRIDE)
+      addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
       addCodeBlock {
         addObjectInstantiation(charter.domainClass, returnInstance = true) {
           addStatement("id = id,")

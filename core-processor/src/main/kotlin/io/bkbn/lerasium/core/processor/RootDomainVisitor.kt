@@ -1,5 +1,9 @@
+@file:OptIn(KspExperimental::class)
+
 package io.bkbn.lerasium.core.processor
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -17,6 +21,8 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -25,8 +31,9 @@ import io.bkbn.lerasium.utils.LerasiumUtils.getCollectionType
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomainOrNull
 import io.bkbn.lerasium.utils.LerasiumUtils.isCollection
+import io.bkbn.lerasium.utils.LerasiumUtils.isDomain
 
-class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
+class RootDomainVisitor(private val fileBuilder: FileSpec.Builder, private val logger: KSPLogger) : KSVisitorVoid() {
   private lateinit var containingFile: KSFile
 
   override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -45,8 +52,16 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
 
   private fun FileSpec.Builder.addDomainModels(charter: LerasiumCharter) {
     val properties = charter.classDeclaration.getAllProperties()
-    addType(TypeSpec.classBuilder(charter.domain.name).apply {
-      addAliasedImport(charter.classDeclaration.toClassName(), "Domain")
+      .filter {
+        it.type.isDomain()
+          || it.type.isSupportedScalar()
+          || (it.type.isCollection() && it.type.getCollectionType().isDomain())
+      }
+    val nestedProps = charter.classDeclaration.getAllProperties()
+      .filterNot { it.type.isSupportedScalar() }
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filterNot { it.type.isDomain() }
+    addType(TypeSpec.classBuilder(charter.domain.name.plus("Domain")).apply {
       addSuperinterface(charter.classDeclaration.toClassName())
       addModifiers(KModifier.DATA)
       primaryConstructor(FunSpec.constructorBuilder().apply {
@@ -69,10 +84,15 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
           }
           addParameter(param)
         }
+        nestedProps.forEach { prop ->
+          val n = prop.simpleName.getShortName()
+          val t = prop.type.resolve().toClassName()
+          addParameter(ParameterSpec.builder(n, t).build())
+        }
       }.build())
       properties.forEach {
         val prop = when (it.type.isSupportedScalar()) {
-          true -> it.toProperty(isOverride = true)
+          true -> it.toProperty(isOverride = true, serializable = false)
           false -> {
             val n = it.simpleName.getShortName()
             val domain = it.getDomainOrNull()
@@ -95,6 +115,25 @@ class DomainVisitor(private val fileBuilder: FileSpec.Builder, private val logge
         }
         addProperty(prop)
       }
+      nestedProps.forEach { prop ->
+        val n = prop.simpleName.getShortName()
+        val t = prop.type.resolve().toClassName()
+        addProperty(PropertySpec.builder(n, t).apply {
+          addModifiers(KModifier.OVERRIDE)
+          initializer(n)
+        }.build())
+      }
+
+      val nestedDomainVisitor = NestedDomainVisitor(this, logger)
+      charter.classDeclaration.getAllProperties()
+        .filterNot { it.type.isSupportedScalar() }
+        .filterNot { it.type.isCollection() }
+        .filterNot { (it.type.resolve().declaration as KSClassDeclaration).isAnnotationPresent(Domain::class) }
+        .forEach {
+          nestedDomainVisitor.visitTypeReference(
+            it.type, NestedDomainVisitor.Data(parentCharter = charter)
+          )
+        }
     }.build())
   }
 

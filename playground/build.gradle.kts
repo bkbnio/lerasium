@@ -21,7 +21,7 @@ dependencies {
   ksp(projects.lerasiumCoreProcessor)
   implementation(projects.lerasiumCore)
 
-  ksp(projects.lerasiumRdbmsProcessorKomapper)
+  ksp(projects.lerasiumRdbmsProcessor)
   implementation(projects.lerasiumRdbms)
 
   ksp(projects.lerasiumApiProcessor)

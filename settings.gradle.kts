@@ -9,8 +9,7 @@ include("persistence")
 
 // Exposed (RDBMS)
 include("rdbms")
-include("rdbms-processor-exposed")
-include("rdbms-processor-komapper")
+include("rdbms-processor")
 
 // KMongo (NoSQL)
 include("mongo")

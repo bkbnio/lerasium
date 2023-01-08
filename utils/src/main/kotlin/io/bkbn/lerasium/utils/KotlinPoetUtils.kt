@@ -9,7 +9,6 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
@@ -60,7 +59,7 @@ object KotlinPoetUtils {
   }
 
   fun CodeBlock.Builder.addObjectInstantiation(
-    type: TypeName,
+    type: ClassName,
     trailingComma: Boolean = false,
     returnInstance: Boolean = false,
     assignment: String? = null,
@@ -100,9 +99,13 @@ object KotlinPoetUtils {
       type.toTypeName().copy(nullable = guaranteeNullable || this.type.resolve().isMarkedNullable)
     ).build()
 
-  fun KSPropertyDeclaration.toProperty(isMutable: Boolean = false, isOverride: Boolean = false) =
+  fun KSPropertyDeclaration.toProperty(
+    isMutable: Boolean = false,
+    isOverride: Boolean = false,
+    serializable: Boolean = true
+  ) =
     PropertySpec.builder(simpleName.getShortName(), type.toTypeName()).apply {
-      if (type.resolve().toClassName().simpleName == "UUID") {
+      if (type.resolve().toClassName().simpleName == "UUID" && serializable) {
         addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
           addMember("with = %T::class", Serializers.Uuid::class)
         }.build())

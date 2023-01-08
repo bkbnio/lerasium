@@ -32,8 +32,8 @@ class DomainProcessor(
 
     symbols.forEach {
       val domain = it.getDomain()
-      val fb = FileSpec.builder(DOMAIN_PACKAGE_NAME, domain.name)
-      it.accept(DomainVisitor(fb, logger), Unit)
+      val fb = FileSpec.builder(DOMAIN_PACKAGE_NAME, domain.name.plus("Domain"))
+      it.accept(RootDomainVisitor(fb, logger), Unit)
       val fs = fb.build()
       fs.writeTo(codeGenerator, false)
     }
