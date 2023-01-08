@@ -113,7 +113,6 @@ class NestedDocumentVisitor(
       returns(charter.domainClass)
       addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
       addCodeBlock {
-        val returnType = ClassName(charter.domainClassImpl.canonicalName, charter.domainClass.simpleName)
         addObjectInstantiation(charter.domainClassImpl, returnInstance = true) {
           scalarProps.forEach {
             addStatement("${it.simpleName.getShortName()} = %L,", it.simpleName.getShortName())

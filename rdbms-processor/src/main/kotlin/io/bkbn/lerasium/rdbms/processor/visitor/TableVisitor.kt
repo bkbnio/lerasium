@@ -72,10 +72,6 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       addPrimaryConstructor(charter)
       addProperties(charter)
       addDomainConverter(charter)
-//      addEntityTypeInfo(charter)
-//      addDomainConverter(charter)
-//      addEntityProperties(charter)
-//      addRelations(charter)
     }.build())
   }
 

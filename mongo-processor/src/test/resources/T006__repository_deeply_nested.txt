@@ -1,10 +1,8 @@
 package io.bkbn.lerasium.generated.persistence.repository
 
-import com.mongodb.client.MongoCollection
-import com.mongodb.client.MongoDatabase
 import io.bkbn.lerasium.generated.api.models.UserModels.Create
 import io.bkbn.lerasium.generated.api.models.UserModels.Update
-import io.bkbn.lerasium.generated.domain.User
+import io.bkbn.lerasium.generated.domain.UserDomain
 import io.bkbn.lerasium.generated.persistence.config.MongoConfig
 import io.bkbn.lerasium.generated.persistence.document.UserDocument
 import io.bkbn.lerasium.generated.persistence.document.UserDocument.UserPreferencesDocument
@@ -15,17 +13,15 @@ import kotlin.Unit
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.litote.kmongo.deleteOneById
-import org.litote.kmongo.findOneById
-import org.litote.kmongo.getCollection
-import org.litote.kmongo.save
+import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.coroutine.CoroutineDatabase
 
 public object UserRepository {
-  private val db: MongoDatabase = MongoConfig.documentDatabase
+  private val db: CoroutineDatabase = MongoConfig.documentDatabase
 
-  private val collection: MongoCollection<UserDocument> = db.getCollection()
+  private val collection: CoroutineCollection<UserDocument> = db.getCollection()
 
-  public fun create(request: Create): User {
+  public suspend fun create(request: Create): UserDomain {
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     val document = UserDocument(
       id = UUID.randomUUID(),
@@ -45,15 +41,16 @@ public object UserRepository {
       createdAt = now,
       updatedAt = now,
     )
+    collection.save(document)
     return document.to()
   }
 
-  public fun read(id: UUID): User {
+  public suspend fun read(id: UUID): UserDomain {
     val document = collection.findOneById(id) ?: error("""Unable to get entity with id: $id""")
     return document.to()
   }
 
-  public fun update(id: UUID, request: Update): User {
+  public suspend fun update(id: UUID, request: Update): UserDomain {
     val document = collection.findOneById(id) ?: error("""Unable to get entity with id: $id""")
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     document.apply {
@@ -76,7 +73,7 @@ public object UserRepository {
     return document.to()
   }
 
-  public fun delete(id: UUID): Unit {
+  public suspend fun delete(id: UUID): Unit {
     collection.deleteOneById(id)
   }
 }

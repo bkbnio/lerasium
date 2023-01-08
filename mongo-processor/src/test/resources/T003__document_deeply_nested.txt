@@ -1,7 +1,7 @@
 package io.bkbn.lerasium.generated.persistence.document
 
 import io.bkbn.lerasium.core.converter.ConvertTo
-import io.bkbn.lerasium.generated.domain.User
+import io.bkbn.lerasium.generated.domain.UserDomain
 import java.util.UUID
 import kotlin.Boolean
 import kotlinx.datetime.LocalDateTime
@@ -20,8 +20,8 @@ public data class UserDocument(
   public var preferences: UserPreferencesDocument,
   public val createdAt: LocalDateTime,
   public var updatedAt: LocalDateTime,
-) : ConvertTo<User> {
-  public override fun to(): User = User(
+) : ConvertTo<UserDomain> {
+  public override suspend fun to(): UserDomain = UserDomain(
     id = id,
     preferences = preferences.to(),
   )
@@ -30,28 +30,27 @@ public data class UserDocument(
   public data class UserPreferencesDocument(
     public var stuff: UserStuffDocument,
   ) : ConvertTo<UserPreferences> {
-    public override fun to(): UserPreferences = object : UserPreferences {
-      override val stuff: UserStuff
-        get() = this@UserPreferencesDocument.stuff.to()
-    }
+    public override suspend fun to(): UserPreferences = UserDomain.UserPreferences(
+      stuff = stuff.to(),
+    )
 
     @Serializable
     public data class UserStuffDocument(
       public var info: UserInfoDocument,
     ) : ConvertTo<UserStuff> {
-      public override fun to(): UserStuff = object : UserStuff {
-        override val info: UserInfo
-          get() = this@UserStuffDocument.info.to()
-      }
+      public override suspend fun to(): UserStuff =
+          io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff(
+        info = info.to(),
+      )
 
       @Serializable
       public data class UserInfoDocument(
         public var isCool: Boolean,
       ) : ConvertTo<UserInfo> {
-        public override fun to(): UserInfo = object : UserInfo {
-          override val isCool: Boolean
-            get() = this@UserInfoDocument.isCool
-        }
+        public override suspend fun to(): UserInfo =
+            io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff.UserInfo(
+          isCool = isCool,
+        )
       }
     }
   }

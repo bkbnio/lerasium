@@ -1,0 +1,32 @@
+package io.bkbn.lerasium.generated.persistence.config
+
+import kotlin.String
+import org.flywaydb.core.Flyway
+import org.komapper.r2dbc.R2dbcDatabase
+
+public object PostgresConfig {
+  private const val USER: String = "test_user"
+
+  private const val PASSWORD: String = "test_password"
+
+  private const val SYNC_CONNECTION_URI: String = """jdbc:postgresql://localhost:5432/test_db"""
+
+  private const val ASYNC_CONNECTION_URI: String =
+      """r2dbc:postgresql://$USER:$PASSWORD@localhost:5432/test_db"""
+
+  public val flyway: Flyway by lazy {
+    val config = Flyway.configure().apply {
+      cleanDisabled(false)
+      dataSource(SYNC_CONNECTION_URI, USER, PASSWORD)
+      locations("db/migration")
+    }
+    config.load() ?:
+        error("Problem Loading Flyway!! Please verify Database Connection / Migration Info")
+  }
+
+
+  public val database: R2dbcDatabase by lazy {
+    R2dbcDatabase(ASYNC_CONNECTION_URI)
+  }
+
+}

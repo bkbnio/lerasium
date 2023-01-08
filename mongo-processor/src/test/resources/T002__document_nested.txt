@@ -1,7 +1,7 @@
 package io.bkbn.lerasium.generated.persistence.document
 
 import io.bkbn.lerasium.core.converter.ConvertTo
-import io.bkbn.lerasium.generated.domain.User
+import io.bkbn.lerasium.generated.domain.UserDomain
 import java.util.UUID
 import kotlin.Boolean
 import kotlin.Int
@@ -22,8 +22,8 @@ public data class UserDocument(
   public var preferences: UserPreferencesDocument,
   public val createdAt: LocalDateTime,
   public var updatedAt: LocalDateTime,
-) : ConvertTo<User> {
-  public override fun to(): User = User(
+) : ConvertTo<UserDomain> {
+  public override suspend fun to(): UserDomain = UserDomain(
     id = id,
     name = name,
     age = age,
@@ -35,11 +35,9 @@ public data class UserDocument(
     public var status: String,
     public var subscribed: Boolean,
   ) : ConvertTo<UserPreferences> {
-    public override fun to(): UserPreferences = object : UserPreferences {
-      override val status: String
-        get() = this@UserPreferencesDocument.status
-      override val subscribed: Boolean
-        get() = this@UserPreferencesDocument.subscribed
-    }
+    public override suspend fun to(): UserPreferences = UserDomain.UserPreferences(
+      status = status,
+      subscribed = subscribed,
+    )
   }
 }

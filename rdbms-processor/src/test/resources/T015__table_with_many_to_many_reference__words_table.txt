@@ -1,0 +1,32 @@
+package io.bkbn.lerasium.generated.persistence.table
+
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.WordsDomain
+import java.util.UUID
+import kotlin.Int
+import kotlin.String
+import kotlinx.datetime.LocalDateTime
+import org.komapper.`annotation`.KomapperCreatedAt
+import org.komapper.`annotation`.KomapperEntity
+import org.komapper.`annotation`.KomapperId
+import org.komapper.`annotation`.KomapperTable
+import org.komapper.`annotation`.KomapperUpdatedAt
+import org.komapper.`annotation`.KomapperVersion
+
+@KomapperEntity(aliases = ["words"])
+@KomapperTable(name = "words")
+public data class WordsTable(
+  public val word: String,
+  @KomapperId
+  public val id: UUID = UUID.randomUUID(),
+  @KomapperVersion
+  public val version: Int = 0,
+  @KomapperCreatedAt
+  public val createdAt: LocalDateTime? = null,
+  @KomapperUpdatedAt
+  public val updatedAt: LocalDateTime? = null,
+) : ConvertTo<WordsDomain> {
+  public override suspend fun to(): WordsDomain = WordsDomain(
+    word = word,
+  )
+}

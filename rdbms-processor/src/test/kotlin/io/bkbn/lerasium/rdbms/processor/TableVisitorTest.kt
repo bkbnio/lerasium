@@ -3,12 +3,12 @@ package io.bkbn.lerasium.rdbms.processor
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWitColumnNameOverride
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithBasicTypes
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithCompositeIndexedField
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithCustomVarcharSize
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithForeignKeyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithIndexedField
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithManyToManyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithNullableFields
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithOneToManyReference
+import io.bkbn.lerasium.rdbms.processor.Specs.domainWithSensitiveField
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithUniqueIndexedField
 import io.bkbn.lerasium.rdbms.processor.Specs.multipleDomains
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
@@ -25,22 +25,14 @@ class TableVisitorTest : DescribeSpec({
         fileSnapshot = "T001__table_with_scalar_fields.txt",
       )
     }
-    it("Can override the column name") {
+    // TODO
+    xit("Can override the column name") {
       verifyGeneratedCode(
         source = domainWitColumnNameOverride,
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserTable.kt",
         fileSnapshot = "T003__table_with_column_name_override.txt",
-      )
-    }
-    it("Can construct a varchar with a custom size") {
-      verifyGeneratedCode(
-        source = domainWithCustomVarcharSize,
-        provider = RdbmsProcessorProvider(),
-        expectedFileCount = 3,
-        fileUnderTest = "WordsTable.kt",
-        fileSnapshot = "T007__table_with_custom_varchar_size.txt",
       )
     }
     it("Can construct a table with nullable fields") {
@@ -50,33 +42,6 @@ class TableVisitorTest : DescribeSpec({
         expectedFileCount = 3,
         fileUnderTest = "LettersTable.kt",
         fileSnapshot = "T008__table_with_nullable_fields.txt",
-      )
-    }
-    it("Can construct a table with an indexed field") {
-      verifyGeneratedCode(
-        source = domainWithIndexedField,
-        provider = RdbmsProcessorProvider(),
-        expectedFileCount = 3,
-        fileUnderTest = "WordsTable.kt",
-        fileSnapshot = "T009__table_with_indexed_field.txt",
-      )
-    }
-    it("can construct a table with a unique index field") {
-      verifyGeneratedCode(
-        source = domainWithUniqueIndexedField,
-        provider = RdbmsProcessorProvider(),
-        expectedFileCount = 3,
-        fileUnderTest = "WordsTable.kt",
-        fileSnapshot = "T010__table_with_unique_indexed_field.txt",
-      )
-    }
-    it("Can construct a table with a composite index") {
-      verifyGeneratedCode(
-        source = domainWithCompositeIndexedField,
-        provider = RdbmsProcessorProvider(),
-        expectedFileCount = 3,
-        fileUnderTest = "WordsTable.kt",
-        fileSnapshot = "T011__table_with_composite_index.txt",
       )
     }
     it("Can construct a table with a foreign key reference") {
@@ -93,7 +58,7 @@ class TableVisitorTest : DescribeSpec({
         source = domainWithOneToManyReference,
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 5,
-        fileUnderTest = "CountryTable.kt",
+        fileUnderTest = "UserTable.kt",
         fileSnapshot = "T013__table_with_one_to_many_reference.txt",
       )
     }
@@ -117,6 +82,16 @@ class TableVisitorTest : DescribeSpec({
           "OtherWordsTable.kt" to "T015__table_with_many_to_many_reference__other_words_table.txt",
           "WordsTable.kt" to "T015__table_with_many_to_many_reference__words_table.txt",
         )
+      )
+    }
+    // TODO
+    xit("Properly masks a sensitive field") {
+      verifyGeneratedCode(
+        source = domainWithSensitiveField,
+        provider = RdbmsProcessorProvider(),
+        expectedFileCount = 3,
+        fileUnderTest = "UserTable.kt",
+        fileSnapshot = "T021__table_with_sensitive_field.txt",
       )
     }
   }

@@ -17,7 +17,7 @@ class DomainVisitorTest : DescribeSpec({
         source = simpleDomain,
         provider = DomainProcessorProvider(),
         expectedFileCount = 1,
-        fileUnderTest = "User.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T001__domain_simple.txt"
       )
     }
@@ -26,7 +26,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithNestedModel,
         provider = DomainProcessorProvider(),
         expectedFileCount = 1,
-        fileUnderTest = "User.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T002__domain_nested.txt"
       )
     }
@@ -35,7 +35,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithDeeplyNestedModel,
         provider = DomainProcessorProvider(),
         expectedFileCount = 1,
-        fileUnderTest = "User.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T003__domain_deeply_nested.txt"
       )
     }
@@ -44,7 +44,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithSensitiveField,
         provider = DomainProcessorProvider(),
         expectedFileCount = 1,
-        fileUnderTest = "User.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T004__domain_sensitive_field.txt"
       )
     }
@@ -53,7 +53,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithUuidField,
         provider = DomainProcessorProvider(),
         expectedFileCount = 1,
-        fileUnderTest = "User.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T005__domain_uuid_field.txt"
       )
     }
@@ -62,7 +62,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithOneToManyReference,
         provider = DomainProcessorProvider(),
         expectedFileCount = 2,
-        fileUnderTest = "Country.kt",
+        fileUnderTest = "CountryDomain.kt",
         fileSnapshot = "T006__domain_one_to_many.txt"
       )
     }
@@ -71,7 +71,7 @@ class DomainVisitorTest : DescribeSpec({
         source = domainWithSimpleReference,
         provider = DomainProcessorProvider(),
         expectedFileCount = 2,
-        fileUnderTest = "Country.kt",
+        fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T007__domain_simple_reference.txt"
       )
     }
