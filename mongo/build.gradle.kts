@@ -22,5 +22,5 @@ dependencies {
   api(projects.lerasiumPersistence)
 
   // KMongo
-  api("org.litote.kmongo:kmongo-serialization:$kmongoVersion")
+  api("org.litote.kmongo:kmongo-coroutine-serialization:$kmongoVersion")
 }
