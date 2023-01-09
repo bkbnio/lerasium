@@ -19,6 +19,10 @@ include("mongo-processor")
 include("api")
 include("api-processor")
 
+// Permissions
+include("permissions")
+include("permissions-processor")
+
 // Playground
 include("playground")
 

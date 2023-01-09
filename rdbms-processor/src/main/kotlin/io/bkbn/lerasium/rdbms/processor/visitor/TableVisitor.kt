@@ -17,11 +17,13 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.converter.ConvertTo
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
+import io.bkbn.lerasium.utils.KotlinPoetUtils.isEnum
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
@@ -31,8 +33,10 @@ import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
 import kotlinx.datetime.LocalDateTime
+import org.komapper.annotation.EnumType
 import org.komapper.annotation.KomapperCreatedAt
 import org.komapper.annotation.KomapperEntity
+import org.komapper.annotation.KomapperEnum
 import org.komapper.annotation.KomapperId
 import org.komapper.annotation.KomapperTable
 import org.komapper.annotation.KomapperUpdatedAt
@@ -81,9 +85,18 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       .filter { it.type.isSupportedScalar() }
     val foreignKeyProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(ForeignKey::class) }
+    val enumProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isEnum() }
     primaryConstructor(FunSpec.constructorBuilder().apply {
       scalarProps.forEach { prop -> addParameter(prop.toParameter()) }
       foreignKeyProps.forEach { prop -> addParameter(prop.simpleName.getShortName(), UUID::class) }
+      enumProps.forEach { prop ->
+        addParameter(ParameterSpec.builder(prop.simpleName.getShortName(), prop.type.toTypeName()).apply {
+          addAnnotation(AnnotationSpec.builder(KomapperEnum::class).apply {
+            addMember("type = %T.NAME", EnumType::class)
+          }.build())
+        }.build())
+      }
       addParameter(ParameterSpec.builder("id", UUID::class).apply {
         addAnnotation(KomapperId::class)
         defaultValue("%T.randomUUID()", UUID::class)
@@ -109,9 +122,16 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       .filter { it.type.isSupportedScalar() }
     val foreignKeyProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(ForeignKey::class) }
+    val enumProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isEnum() }
     scalarProps.forEach { prop -> addProperty(prop.toProperty()) }
     foreignKeyProps.forEach { prop ->
       addProperty(PropertySpec.builder(prop.simpleName.getShortName(), UUID::class).apply {
+        initializer(prop.simpleName.getShortName())
+      }.build())
+    }
+    enumProps.forEach { prop ->
+      addProperty(PropertySpec.builder(prop.simpleName.getShortName(), prop.type.toTypeName()).apply {
         initializer(prop.simpleName.getShortName())
       }.build())
     }
@@ -136,6 +156,8 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
       .filter { it.isAnnotationPresent(ForeignKey::class) }
     val relationProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(Relation::class) }
+    val enumProps = charter.classDeclaration.getAllProperties()
+      .filter { it.type.isEnum() }
     addFunction(FunSpec.builder("to").apply {
       addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
       returns(charter.domainClass)
@@ -150,6 +172,9 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           }
           relationProps.forEach { prop ->
             addStatement("%L = emptyList(),", prop.simpleName.getShortName())
+          }
+          enumProps.forEach { prop ->
+            addStatement("%L = %L,", prop.simpleName.getShortName(), prop.simpleName.getShortName())
           }
         }
       }
