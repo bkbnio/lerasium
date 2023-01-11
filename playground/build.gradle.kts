@@ -30,9 +30,6 @@ dependencies {
   ksp(projects.lerasiumMongoProcessor)
   implementation(projects.lerasiumMongo)
 
-  ksp(projects.lerasiumPermissionsProcessor)
-  implementation(projects.lerasiumPermissions)
-
   // Komapper
   ksp(platform("org.komapper:komapper-platform:$komapperVersion"))
   ksp("org.komapper:komapper-processor")
