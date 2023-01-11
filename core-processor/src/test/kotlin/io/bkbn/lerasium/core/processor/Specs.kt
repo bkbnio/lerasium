@@ -154,4 +154,31 @@ object Specs {
       }
     """.trimIndent()
   )
+
+  val domainWithEnum = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.core.Sensitive
+      import kotlinx.serialization.Serializable
+      import java.util.UUID
+
+      @Domain("User")
+      interface User {
+        val firstName: String
+        val lastName: String
+        val email: String
+        val gender: Gender
+
+        @Serializable
+        enum class Gender {
+          MALE,
+          FEMALE,
+          OTHER
+        }
+      }
+    """.trimIndent()
+  )
 }

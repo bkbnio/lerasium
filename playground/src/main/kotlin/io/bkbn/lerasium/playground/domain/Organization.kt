@@ -3,17 +3,12 @@ package io.bkbn.lerasium.playground.domain
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.Relation
-import io.bkbn.lerasium.core.domain.LerasiumDomain
-import io.bkbn.lerasium.rdbms.OneToMany
+import io.bkbn.lerasium.rdbms.ManyToMany
 import io.bkbn.lerasium.rdbms.Table
 
 @Api
-@Domain("Author")
+@Domain("Organization")
 @Table
-interface Author : LerasiumDomain {
+interface Organization {
   val name: String
-
-  @Relation
-  @OneToMany("author")
-  val books: List<Book>
 }

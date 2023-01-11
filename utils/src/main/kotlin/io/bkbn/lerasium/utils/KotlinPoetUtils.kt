@@ -1,5 +1,6 @@
 package io.bkbn.lerasium.utils
 
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -125,4 +126,6 @@ object KotlinPoetUtils {
     "UUID" -> true
     else -> false
   }
+
+  fun KSTypeReference.isEnum(): Boolean = (resolve().declaration as KSClassDeclaration).classKind.name == "ENUM_CLASS"
 }

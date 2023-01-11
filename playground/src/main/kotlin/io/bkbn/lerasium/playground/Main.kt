@@ -9,10 +9,10 @@ import io.bkbn.kompendium.oas.info.Info
 import io.bkbn.kompendium.oas.info.License
 import io.bkbn.kompendium.oas.server.Server
 import io.bkbn.lerasium.generated.api.config.lerasiumConfig
-import io.bkbn.lerasium.generated.api.controller.AuthorController.authorHandler
-import io.bkbn.lerasium.generated.api.controller.BookController.bookHandler
-import io.bkbn.lerasium.generated.api.controller.BookReviewController.bookReviewHandler
-import io.bkbn.lerasium.generated.api.controller.ProfileController.profileHandler
+import io.bkbn.lerasium.generated.api.controller.OrganizationController.organizationHandler
+import io.bkbn.lerasium.generated.api.controller.OrganizationRoleController.organizationRoleHandler
+import io.bkbn.lerasium.generated.api.controller.ProjectController.projectHandler
+import io.bkbn.lerasium.generated.api.controller.RepositoryController.repositoryHandler
 import io.bkbn.lerasium.generated.api.controller.UserController.userHandler
 import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
 import io.ktor.server.application.Application
@@ -26,21 +26,9 @@ import kotlin.reflect.typeOf
 
 fun main(args: Array<String>) {
   val logger = logger("main")
-  logger.info { "Initializing database and performing any necessary migrations" }
-  PostgresConfig.database
+  logger.info { "Performing migrations" }
   PostgresConfig.flyway.clean()
-
-//  transaction {
-//    val statements = SchemaUtils.createStatements(AuthorTable, BookTable, UserTable, BookReviewTable)
-//    println("-------------")
-//    statements.forEach { println(it.plus("\n")) }
-//    println("-------------")
-//  }
-
   PostgresConfig.flyway.migrate()
-
-  // Inject some dummy data
-  // TODO
 
   logger.info { "Launching API" }
   EngineMain.main(args)
@@ -79,21 +67,9 @@ fun Application.module() {
   routing {
     redoc("The Playground")
     userHandler()
-    bookHandler()
-    bookReviewHandler()
-    authorHandler()
-    profileHandler()
+    organizationHandler()
+    organizationRoleHandler()
+    projectHandler()
+    repositoryHandler()
   }
 }
-
-//object Testerino {
-//  private val byFirstName: (String) -> Expression<Boolean> = { firstName -> UserTable.firstName eq firstName }
-//  private val byEmail: (String) -> Expression<Boolean> = { email -> UserTable.email eq email }
-//  private val composition: SqlExpressionBuilder.(String, String) -> Op<Boolean> =
-//    { email, firstName -> byFirstName(firstName) and byEmail(email) }
-//
-//  fun readByEmail(email: String, firstName: String) = transaction {
-//    val users = UserEntity.find { composition(email, firstName) }
-//    users.first()
-//  }
-//}

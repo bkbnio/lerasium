@@ -1,6 +1,7 @@
 package io.bkbn.lerasium.core.processor
 
 import io.bkbn.lerasium.core.processor.Specs.domainWithDeeplyNestedModel
+import io.bkbn.lerasium.core.processor.Specs.domainWithEnum
 import io.bkbn.lerasium.core.processor.Specs.domainWithNestedModel
 import io.bkbn.lerasium.core.processor.Specs.domainWithOneToManyReference
 import io.bkbn.lerasium.core.processor.Specs.domainWithSensitiveField
@@ -73,6 +74,15 @@ class DomainVisitorTest : DescribeSpec({
         expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T007__domain_simple_reference.txt"
+      )
+    }
+    it("Can build a domain with an enum type") {
+      verifyGeneratedCode(
+        source = domainWithEnum,
+        provider = DomainProcessorProvider(),
+        expectedFileCount = 1,
+        fileUnderTest = "UserDomain.kt",
+        fileSnapshot = "T008__domain_enum.txt"
       )
     }
   }
