@@ -39,4 +39,9 @@ object LerasiumUtils {
 
   fun KSTypeReference.getCollectionType() = resolve().arguments.firstOrNull()?.type
     ?: error("Error resolving collection type for ${toTypeName()}")
+
+  fun KSClassDeclaration.findCompanionObject() = declarations
+    .map { it as? KSClassDeclaration }
+    .filterNotNull()
+    .find { it.isCompanionObject }
 }

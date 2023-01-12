@@ -1,5 +1,7 @@
 package io.bkbn.lerasium.utils
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
@@ -10,10 +12,16 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.auth.RbacPolicyProvider
 import io.bkbn.lerasium.core.serialization.Serializers
+import io.bkbn.lerasium.utils.LerasiumUtils.getCollectionType
+import io.bkbn.lerasium.utils.LerasiumUtils.isCollection
+import io.bkbn.lerasium.utils.LerasiumUtils.isDomain
 import kotlinx.serialization.Serializable
 
 object KotlinPoetUtils {
@@ -128,4 +136,28 @@ object KotlinPoetUtils {
   }
 
   fun KSTypeReference.isEnum(): Boolean = (resolve().declaration as KSClassDeclaration).classKind.name == "ENUM_CLASS"
+
+  @OptIn(KspExperimental::class)
+  fun KSClassDeclaration.collectProperties(): PropertyWrapper {
+    val scalars = getAllProperties()
+      .filterNot { it.isPolicy() }
+      .filter { it.type.isSupportedScalar() }
+    val domain = getAllProperties().filter {
+      it.type.isDomain() || (it.type.isCollection() && it.type.getCollectionType().isDomain())
+    }
+    // TODO Cleaner way?
+    val nestedProps = getAllProperties()
+      .filterNot { it.isPolicy() }
+      .filterNot { it.type.isSupportedScalar() }
+      .filterNot { it.isAnnotationPresent(Relation::class) }
+      .filterNot { it.type.isDomain() }
+      .filterNot { it.type.isCollection() && it.type.getCollectionType().isDomain() }
+      .filterNot { it.type.isEnum() }
+    val enums = getAllProperties().filter { it.type.isEnum() }
+    return PropertyWrapper(scalars, domain, nestedProps, enums)
+  }
+
+  private fun KSPropertyDeclaration.isPolicy(): Boolean = type.resolve().toClassName().let {
+    it == RbacPolicyProvider::class.asClassName()
+  }
 }

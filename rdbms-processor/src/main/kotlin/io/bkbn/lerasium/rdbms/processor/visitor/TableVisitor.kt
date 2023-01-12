@@ -17,14 +17,14 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.converter.ConvertTo
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
-import io.bkbn.lerasium.utils.KotlinPoetUtils.isEnum
-import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
+import io.bkbn.lerasium.utils.KotlinPoetUtils.collectProperties
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toParameter
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toProperty
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toRepositoryClass
@@ -65,6 +65,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
 
   private fun FileSpec.Builder.addEntity(charter: LerasiumCharter) {
     addType(TypeSpec.classBuilder(charter.domain.name.plus("Table")).apply {
+      addOriginatingKSFile(charter.classDeclaration.containingFile!!)
       addSuperinterface(ConvertTo::class.asClassName().parameterizedBy(charter.domainClass))
       addModifiers(KModifier.DATA)
       addAnnotation(AnnotationSpec.builder(KomapperEntity::class).apply {
@@ -80,17 +81,14 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun TypeSpec.Builder.addPrimaryConstructor(charter: LerasiumCharter) {
-    val scalarProps = charter.classDeclaration.getAllProperties()
-      .filterNot { it.simpleName.getShortName() == "id" }
-      .filter { it.type.isSupportedScalar() }
+    val properties = charter.classDeclaration.collectProperties()
     val foreignKeyProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(ForeignKey::class) }
-    val enumProps = charter.classDeclaration.getAllProperties()
-      .filter { it.type.isEnum() }
     primaryConstructor(FunSpec.constructorBuilder().apply {
-      scalarProps.forEach { prop -> addParameter(prop.toParameter()) }
+      properties.scalars.filterNot { it.simpleName.getShortName() == "id" }
+        .forEach { prop -> addParameter(prop.toParameter()) }
       foreignKeyProps.forEach { prop -> addParameter(prop.simpleName.getShortName(), UUID::class) }
-      enumProps.forEach { prop ->
+      properties.enums.forEach { prop ->
         addParameter(ParameterSpec.builder(prop.simpleName.getShortName(), prop.type.toTypeName()).apply {
           addAnnotation(AnnotationSpec.builder(KomapperEnum::class).apply {
             addMember("type = %T.NAME", EnumType::class)
@@ -117,20 +115,16 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun TypeSpec.Builder.addProperties(charter: LerasiumCharter) {
-    val scalarProps = charter.classDeclaration.getAllProperties()
-      .filterNot { it.simpleName.getShortName() == "id" }
-      .filter { it.type.isSupportedScalar() }
+    val properties = charter.classDeclaration.collectProperties()
     val foreignKeyProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(ForeignKey::class) }
-    val enumProps = charter.classDeclaration.getAllProperties()
-      .filter { it.type.isEnum() }
-    scalarProps.forEach { prop -> addProperty(prop.toProperty()) }
+    properties.scalars.forEach { prop -> addProperty(prop.toProperty()) }
     foreignKeyProps.forEach { prop ->
       addProperty(PropertySpec.builder(prop.simpleName.getShortName(), UUID::class).apply {
         initializer(prop.simpleName.getShortName())
       }.build())
     }
-    enumProps.forEach { prop ->
+    properties.enums.forEach { prop ->
       addProperty(PropertySpec.builder(prop.simpleName.getShortName(), prop.type.toTypeName()).apply {
         initializer(prop.simpleName.getShortName())
       }.build())
@@ -150,20 +144,17 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
   }
 
   private fun TypeSpec.Builder.addDomainConverter(charter: LerasiumCharter) {
-    val scalarProps = charter.classDeclaration.getAllProperties()
-      .filter { it.type.isSupportedScalar() }
+    val properties = charter.classDeclaration.collectProperties()
     val foreignKeyProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(ForeignKey::class) }
     val relationProps = charter.classDeclaration.getAllProperties()
       .filter { it.isAnnotationPresent(Relation::class) }
-    val enumProps = charter.classDeclaration.getAllProperties()
-      .filter { it.type.isEnum() }
     addFunction(FunSpec.builder("to").apply {
       addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
       returns(charter.domainClass)
       addCodeBlock {
         addObjectInstantiation(charter.domainClass, returnInstance = true) {
-          scalarProps.forEach { prop ->
+          properties.scalars.forEach { prop ->
             addStatement("%L = %L,", prop.simpleName.getShortName(), prop.simpleName.getShortName())
           }
           foreignKeyProps.forEach { prop ->
@@ -173,7 +164,7 @@ class TableVisitor(private val fileBuilder: FileSpec.Builder, private val logger
           relationProps.forEach { prop ->
             addStatement("%L = emptyList(),", prop.simpleName.getShortName())
           }
-          enumProps.forEach { prop ->
+          properties.enums.forEach { prop ->
             addStatement("%L = %L,", prop.simpleName.getShortName(), prop.simpleName.getShortName())
           }
         }

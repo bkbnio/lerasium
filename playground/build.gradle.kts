@@ -40,6 +40,8 @@ dependencies {
   // Serialization
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
 
+  implementation("io.bkbn:bouncer-core:0.1.1")
+
   // Logging (TODO Replace w/ Kermit!)
   implementation("org.apache.logging.log4j:log4j-api-kotlin:1.2.0")
   implementation("org.apache.logging.log4j:log4j-api:2.19.0")

@@ -1,0 +1,96 @@
+package io.bkbn.lerasium.generated.persistence.repository
+
+import io.bkbn.lerasium.core.auth.CrudAction
+import io.bkbn.lerasium.generated.api.models.OrganizationModels.Create
+import io.bkbn.lerasium.generated.api.models.OrganizationModels.Update
+import io.bkbn.lerasium.generated.domain.OrganizationDomain
+import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
+import io.bkbn.lerasium.generated.persistence.table.OrganizationTable
+import io.bkbn.lerasium.generated.persistence.table._OrganizationTable
+import io.bkbn.lerasium.generated.persistence.table.organization
+import io.bkbn.lerasium.generated.persistence.table.organizationRole
+import io.bkbn.lerasium.generated.persistence.table.user
+import java.util.UUID
+import kotlin.Boolean
+import org.komapper.core.dsl.Meta
+import org.komapper.core.dsl.QueryDsl
+import org.komapper.core.dsl.query.andThen
+import org.komapper.core.dsl.query.single
+import org.komapper.r2dbc.R2dbcDatabase
+import test.Organization
+
+public object OrganizationRepository {
+  private val db: R2dbcDatabase = PostgresConfig.database
+
+  private val resource: _OrganizationTable = Meta.organization
+
+  public suspend fun create(request: Create): OrganizationDomain = db.withTransaction {
+    val result = db.runQuery {
+      QueryDsl.insert(resource).single(
+        OrganizationTable(
+          name = request.name,
+        )
+      )
+    }
+    result.to()
+  }
+
+  public suspend fun read(id: UUID): OrganizationDomain = db.withTransaction {
+    val result = db.runQuery {
+      val query = QueryDsl.from(resource).where {
+        resource.id eq id
+      }
+      query.single()
+    }
+    result.to()
+  }
+
+  public suspend fun update(id: UUID, request: Update): OrganizationDomain = db.withTransaction {
+    val result = db.runQuery {
+      QueryDsl.update(resource)
+        .set {
+          request.name?.let { v -> it.name to v }
+        }
+        .where {
+          resource.id eq id
+        }
+        .andThen(QueryDsl.from(resource).where { resource.id eq id }.single())
+    }
+    result.to()
+  }
+
+  public suspend fun delete(id: UUID) = db.withTransaction {
+    db.runQuery {
+      QueryDsl.delete(resource).where { resource.id eq id }
+    }
+  }
+
+  public suspend fun userRbacEnforcement(
+    actorId: UUID,
+    resourceId: UUID,
+    action: CrudAction,
+  ): Boolean {
+    val actorMeta = Meta.user
+    val roleMeta = Meta.organizationRole
+    val authorization = db.runQuery {
+      QueryDsl.from(actorMeta)
+      .where {
+        actorMeta.id eq actorId
+      }
+      .innerJoin(roleMeta) {
+        roleMeta.user eq actorMeta.id
+      }
+      .innerJoin(resource) {
+        resource.id eq roleMeta.organization
+      }
+      .where {
+        resource.id eq resourceId
+      }
+      .include(resource, actorMeta, roleMeta)
+    }
+    val actor = authorization[actorMeta].single().to()
+    val role = authorization[roleMeta].single().to()
+    val entity = authorization[resource].single().to()
+    return Organization.userRbac.policy.enforce(actor, action, role.role, entity)
+  }
+}

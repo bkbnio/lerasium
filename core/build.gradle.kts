@@ -22,6 +22,7 @@ dependencies {
 
   api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinxSerializationVersion")
   api("io.konform:konform-jvm:$konformVersion")
+  api("io.bkbn:bouncer-core:0.1.1")
 }
 
 testing {

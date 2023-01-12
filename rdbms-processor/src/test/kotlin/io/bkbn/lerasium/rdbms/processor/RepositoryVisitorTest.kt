@@ -4,6 +4,7 @@ import io.bkbn.lerasium.rdbms.processor.Specs.domainWithBasicTypes
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithForeignKeyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithManyToManyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithOneToManyReference
+import io.bkbn.lerasium.rdbms.processor.Specs.domainWithRbacPolicy
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -43,6 +44,15 @@ class RepositoryVisitorTest : DescribeSpec({
         expectedFileCount = 3,
         fileUnderTest = "CountryRepository.kt",
         fileSnapshot = "T019__repository_for_domain_with_many_to_many.txt",
+      )
+    }
+    it("Can create the necessary query for a rbac policy") {
+      verifyGeneratedCode(
+        source = domainWithRbacPolicy,
+        provider = RdbmsProcessorProvider(),
+        expectedFileCount = 7,
+        fileUnderTest = "OrganizationRepository.kt",
+        fileSnapshot = "T022__repository_with_rbac_policy.txt",
       )
     }
   }
