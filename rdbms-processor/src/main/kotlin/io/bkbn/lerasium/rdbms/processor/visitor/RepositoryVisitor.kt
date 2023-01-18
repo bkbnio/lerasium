@@ -144,7 +144,6 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   }
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
-    val props = charter.classDeclaration.collectProperties()
     val scalarProperties = charter.classDeclaration.getAllProperties()
       .filterNot { it.simpleName.getShortName() == "id" }
       .filterNot { it.type.isDomain() }
