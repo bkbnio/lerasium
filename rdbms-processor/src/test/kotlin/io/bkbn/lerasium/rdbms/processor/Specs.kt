@@ -357,4 +357,68 @@ object Specs {
       }
     """.trimIndent()
   )
+
+  val domainWithRbacForeignKey = SourceFile.kotlin(
+    name = "Spec.kt",
+    contents = """
+      package test
+
+      import io.bkbn.lerasium.core.Domain
+      import io.bkbn.lerasium.rdbms.Table
+      import io.bkbn.lerasium.rdbms.ForeignKey
+      import io.bkbn.lerasium.core.auth.CrudAction
+      import io.bkbn.bouncer.core.rbacPolicy
+      import io.bkbn.lerasium.core.auth.RbacPolicyProvider
+
+      @Domain("User")
+      @Table
+      @Policy("user")
+      interface User {
+        val email: String
+        val password: String
+      }
+
+      @Api
+      @Domain("OrganizationRole")
+      @Table
+      interface OrganizationRole {
+        @ForeignKey
+        val organization: Organization
+        @ForeignKey
+        val user: User
+        val role: Type
+
+        @Serializable
+        enum class Type {
+          ADMIN,
+          MAINTAINER,
+          CONTRIBUTOR
+        }
+      }
+
+      @Api
+      @Domain("Organization")
+      @Table
+      interface Organization {
+        val name: String
+      }
+
+      @Api
+      @Domain("Repository")
+      @Table
+      interface Repository {
+        @ForeignKey
+        val organization: Organization
+        val name: String
+
+        companion object {
+          val userOrgRbac = object : RbacPolicyProvider<User, CrudAction, OrganizationRole, OrganizationRole.Type, Repository> {
+            override val policy: RbacPolicy<User, CrudAction, OrganizationRole.Type, Repository> = rbacPolicy {
+              can("Org admin can delete a repository", CrudAction.DELETE, OrganizationRole.Type.ADMIN) { _, _, _ -> true }
+            }
+          }
+        }
+      }
+    """.trimIndent()
+  )
 }

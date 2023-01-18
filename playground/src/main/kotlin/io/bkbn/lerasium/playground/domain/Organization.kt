@@ -1,5 +1,6 @@
 package io.bkbn.lerasium.playground.domain
 
+import io.bkbn.bouncer.core.RbacPolicy
 import io.bkbn.bouncer.core.rbacPolicy
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
@@ -16,7 +17,7 @@ interface Organization {
   companion object {
     val userRbac =
       object : RbacPolicyProvider<User, CrudAction, OrganizationRole, OrganizationRole.Type, Organization> {
-        override val policy = rbacPolicy<User, CrudAction, OrganizationRole.Type, Organization> {
+        override val policy: RbacPolicy<User, CrudAction, OrganizationRole.Type, Organization> = rbacPolicy {
           can(
             "Admin can always delete an organization",
             CrudAction.DELETE,

@@ -4,6 +4,7 @@ import io.bkbn.lerasium.rdbms.processor.Specs.domainWithBasicTypes
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithForeignKeyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithManyToManyReference
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithOneToManyReference
+import io.bkbn.lerasium.rdbms.processor.Specs.domainWithRbacForeignKey
 import io.bkbn.lerasium.rdbms.processor.Specs.domainWithRbacPolicy
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
@@ -53,6 +54,15 @@ class RepositoryVisitorTest : DescribeSpec({
         expectedFileCount = 7,
         fileUnderTest = "OrganizationRepository.kt",
         fileSnapshot = "T022__repository_with_rbac_policy.txt",
+      )
+    }
+    it("Can create the necessary query for a rbac policy on foreign key") {
+      verifyGeneratedCode(
+        source = domainWithRbacForeignKey,
+        provider = RdbmsProcessorProvider(),
+        expectedFileCount = 9,
+        fileUnderTest = "RepositoryRepository.kt",
+        fileSnapshot = "T023__repository_with_rbac_policy_on_foreign_key.txt",
       )
     }
   }

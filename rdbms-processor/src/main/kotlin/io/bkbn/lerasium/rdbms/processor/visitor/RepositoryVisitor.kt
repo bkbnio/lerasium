@@ -285,7 +285,15 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     val actorDomain = actor.type!!.getDomain()
     val roleDomain = roleResource.type!!.getDomain()
     val roleResourceActorProp = roleResource.findMatchingProperty(actor)
-    val roleResourceResourceProp = roleResource.findMatchingProperty(resource)
+    var roleResourceResourceProp = roleResource.findMatchingPropertyOrNull(resource)
+
+    val isForeignKey = if (roleResourceResourceProp == null) {
+      roleResourceResourceProp = roleResource.findCommonForeignKey(resource)
+      true
+    } else {
+      false
+    }
+
     val roleResourceRoleProp = roleResource.findMatchingProperty(role)
     addCodeBlock {
       addStatement(
@@ -303,7 +311,12 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
           addStatement("roleMeta.%L eq actorMeta.id", roleResourceActorProp.simpleName.getShortName())
         }
         addControlFlow(".innerJoin(resource)") {
-          addStatement("resource.id eq roleMeta.%L", roleResourceResourceProp.simpleName.getShortName())
+          val name = roleResourceResourceProp.simpleName.getShortName()
+          if (isForeignKey) {
+            addStatement("resource.%L eq roleMeta.%L", name, name)
+          } else {
+            addStatement("resource.id eq roleMeta.%L", name)
+          }
         }
         addControlFlow(".where") {
           addStatement("resource.id eq resourceId")
@@ -328,12 +341,25 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun KSTypeArgument.isTable(): Boolean =
     ((this.type as KSTypeReference).resolve().declaration as KSClassDeclaration).isAnnotationPresent(Table::class)
 
-  private fun KSTypeArgument.findMatchingProperty(typeArg: KSTypeArgument) =
-    ((this.type as KSTypeReference).resolve().declaration as KSClassDeclaration)
-      .getAllProperties()
-      .filter {
-        it.type.resolve().declaration as KSClassDeclaration ==
-          ((typeArg.type as KSTypeReference).resolve().declaration as KSClassDeclaration)
-      }
-      .first()
+  private fun KSTypeArgument.findMatchingProperty(typeArg: KSTypeArgument) = findMatchingPropertyOrNull(typeArg)
+    ?: error("Could not find matching property for type argument ${typeArg.type}")
+
+  private fun KSTypeArgument.findMatchingPropertyOrNull(typeArg: KSTypeArgument) = this.toClassDeclaration()
+    .getAllProperties()
+    .filter {
+      it.type.resolve().declaration as KSClassDeclaration ==
+        ((typeArg.type as KSTypeReference).resolve().declaration as KSClassDeclaration)
+    }.firstOrNull()
+
+  private fun KSTypeArgument.findCommonForeignKey(typeArg: KSTypeArgument) = this.toClassDeclaration()
+    .getAllProperties()
+    .filter {
+      it.toClassDeclaration() in typeArg.toClassDeclaration().getAllProperties().map { p -> p.toClassDeclaration() }
+    }.firstOrNull()
+    ?: error("Could not find matching property for type argument ${typeArg.type}")
+
+  private fun KSTypeArgument.toClassDeclaration() =
+    (this.type as KSTypeReference).resolve().declaration as KSClassDeclaration
+
+  private fun KSPropertyDeclaration.toClassDeclaration() = this.type.resolve().declaration as KSClassDeclaration
 }
