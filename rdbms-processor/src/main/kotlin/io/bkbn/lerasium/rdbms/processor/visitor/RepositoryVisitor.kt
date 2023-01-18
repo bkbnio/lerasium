@@ -24,6 +24,8 @@ import io.bkbn.lerasium.core.auth.CrudAction
 import io.bkbn.lerasium.core.auth.Password
 import io.bkbn.lerasium.core.auth.RbacPolicyProvider
 import io.bkbn.lerasium.core.auth.Username
+import io.bkbn.lerasium.core.exception.UnauthorizedException
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.utils.KotlinPoetUtils.PERSISTENCE_CONFIG_PACKAGE_NAME
@@ -31,6 +33,7 @@ import io.bkbn.lerasium.utils.KotlinPoetUtils.TABLE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
+import io.bkbn.lerasium.utils.KotlinPoetUtils.collectProperties
 import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.findCompanionObject
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
@@ -78,6 +81,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addReadFunction(charter)
       addUpdateFunction(charter)
       addDeleteFunction()
+      addPolicyEnforcement(charter)
       if (charter.isActor) addAuthenticationFunction(charter)
       charter.classDeclaration.findCompanionObject()?.let { addPermissionQueries(charter) }
     }.build())
@@ -122,9 +126,11 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("read").apply {
       addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addCodeBlock {
         addControlFlow("return db.withTransaction") {
+          addStatement("policyEnforcement(context, id, %T.READ)", CrudAction::class)
           addControlFlow("val result = db.runQuery") {
             addControlFlow("val query = %T.from(resource).where", QueryDsl::class) {
               addStatement("resource.id eq id")
@@ -138,6 +144,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   }
 
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
+    val props = charter.classDeclaration.collectProperties()
     val scalarProperties = charter.classDeclaration.getAllProperties()
       .filterNot { it.simpleName.getShortName() == "id" }
       .filterNot { it.type.isDomain() }
@@ -147,10 +154,12 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       addCodeBlock {
         addControlFlow("return db.withTransaction") {
+          addStatement("policyEnforcement(context, id, %T.UPDATE)", CrudAction::class)
           addControlFlow("val result = db.runQuery") {
             addStatement("%T.update(resource)", QueryDsl::class)
             indent()
@@ -179,9 +188,11 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun TypeSpec.Builder.addDeleteFunction() {
     addFunction(FunSpec.builder("delete").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addCodeBlock {
         addControlFlow("return db.withTransaction") {
+          addStatement("policyEnforcement(context, id, %T.DELETE)", CrudAction::class)
           addControlFlow("db.runQuery") {
             addStatement("%T.delete(resource).where { resource.id eq id }", QueryDsl::class)
           }
@@ -215,6 +226,26 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }.build())
   }
 
+  private fun TypeSpec.Builder.addPolicyEnforcement(charter: LerasiumCharter) {
+    addFunction(FunSpec.builder("policyEnforcement").apply {
+      val rbacPolicies = charter.classDeclaration.findCompanionObject()
+        ?.getAllProperties()
+        ?.filter { it.type.resolve().toClassName() == RbacPolicyProvider::class.asClassName() }
+        ?.toList()
+        ?: emptyList()
+      if (rbacPolicies.isEmpty()) {
+        addComment("No policies were identified for resource, block will be empty")
+      }
+      addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
+      addParameter("resource", UUID::class)
+      addParameter("action", CrudAction::class)
+      rbacPolicies.forEach { prop ->
+        addStatement("%L(%L, %L, %L)", "${prop.simpleName.getShortName()}Enforcement", "context", "resource", "action")
+      }
+    }.build())
+  }
+
   private fun TypeSpec.Builder.addPermissionQueries(charter: LerasiumCharter) {
     val companionObject = charter.classDeclaration.findCompanionObject()
       ?: error("Need companion object to construct permission queries")
@@ -237,37 +268,21 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
     addFunction(FunSpec.builder("${rbacDeclaration.simpleName.getShortName()}Enforcement").apply {
       addModifiers(KModifier.SUSPEND)
-      addParameter("actorId", UUID::class)
+      addParameter("context", RequestContext::class)
       addParameter("resourceId", UUID::class)
       addParameter("action", CrudAction::class)
-      returns(Boolean::class)
 
       if (actor.isTable() && roleResource.isTable() && resource.isTable()) {
         addRbacPolicyJoinQuery(charter, rbacDeclaration)
       } else {
-        // TODO
+        TODO()
       }
 
     }.build())
   }
 
-  /*
-  val authzz = db.runQuery {
-      QueryDsl.from(a)
-        .where { a.id eq ctx.actorId }
-        .innerJoin(r) { r.userId eq a.id }
-        .innerJoin(resource) { resource.id eq r.organizationId }
-        .include(resource, a, r)
-    }
-
-    val actor = authz[actorMeta].single().to()
-    val role = authz[roleMeta].single().to()
-    val entity = authz[resource].single().to()
-
-    return Organization.userRbac.policy.enforce(actor, action, role.role, entity)
-   */
   private fun FunSpec.Builder.addRbacPolicyJoinQuery(charter: LerasiumCharter, rbacDeclaration: KSPropertyDeclaration) {
-    val (actor, action, roleResource, role, resource) = rbacDeclaration.type.resolve().arguments
+    val (actor, _, roleResource, role, resource) = rbacDeclaration.type.resolve().arguments
     val actorDomain = actor.type!!.getDomain()
     val roleDomain = roleResource.type!!.getDomain()
     val roleResourceActorProp = roleResource.findMatchingProperty(actor)
@@ -283,7 +298,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addControlFlow("val authorization = db.runQuery") {
         addStatement("%T.from(actorMeta)", QueryDsl::class)
         addControlFlow(".where") {
-          addStatement("actorMeta.id eq actorId")
+          addStatement("actorMeta.id eq context.actorId")
         }
         addControlFlow(".innerJoin(roleMeta)") {
           addStatement("roleMeta.%L eq actorMeta.id", roleResourceActorProp.simpleName.getShortName())
@@ -300,12 +315,14 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addStatement("val actor = authorization[actorMeta].single().to()")
       addStatement("val role = authorization[roleMeta].single().to()")
       addStatement("val entity = authorization[resource].single().to()")
-      addStatement(
-        "return %T.%L.policy.enforce(actor, action, role.%L, entity)",
+      addControlFlow(
+        "if(!%T.%L.policy.enforce(actor, action, role.%L, entity))",
         charter.classDeclaration.toClassName(),
         rbacDeclaration.simpleName.getShortName(),
         roleResourceRoleProp.simpleName.getShortName()
-      )
+      ) {
+        addStatement("throw %T(%S)", UnauthorizedException::class, "Actor is not authorized to perform this action")
+      }
     }
   }
 
