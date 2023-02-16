@@ -39,7 +39,7 @@ dependencies {
   api("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 
   // Komapper
-  api("org.postgresql:r2dbc-postgresql:1.0.0.RELEASE")
+  api("org.postgresql:r2dbc-postgresql:1.0.1.RELEASE")
   platform("org.komapper:komapper-platform:$komapperVersion").let {
     api(it)
     // ksp(it)
