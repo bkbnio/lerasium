@@ -57,6 +57,5 @@ kotlin {
 }
 
 application {
-  @Suppress("DEPRECATION")
-  mainClassName = "io.bkbn.lerasium.playground.MainKt"
+  mainClass.set("io.bkbn.lerasium.playground.MainKt")
 }
