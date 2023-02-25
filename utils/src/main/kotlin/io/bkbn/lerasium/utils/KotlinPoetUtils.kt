@@ -40,6 +40,9 @@ object KotlinPoetUtils {
   // Domain
   const val DOMAIN_PACKAGE_NAME = "$BASE_PACKAGE_NAME.domain"
 
+  // Policy
+  const val POLICY_PACKAGE_NAME = "$BASE_PACKAGE_NAME.policy"
+
   // Persistence
   const val REPOSITORY_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.repository"
   const val TABLE_PACKAGE_NAME = "$BASE_PERSISTENCE_PACKAGE_NAME.table"

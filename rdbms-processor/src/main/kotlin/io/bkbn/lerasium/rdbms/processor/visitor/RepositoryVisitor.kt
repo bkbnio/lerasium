@@ -14,9 +14,12 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import io.bkbn.lerasium.core.Relation
@@ -25,10 +28,13 @@ import io.bkbn.lerasium.core.auth.Password
 import io.bkbn.lerasium.core.auth.RbacPolicyProvider
 import io.bkbn.lerasium.core.auth.Username
 import io.bkbn.lerasium.core.exception.UnauthorizedException
+import io.bkbn.lerasium.core.request.ActorRequestContext
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
 import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
 import io.bkbn.lerasium.utils.KotlinPoetUtils.PERSISTENCE_CONFIG_PACKAGE_NAME
+import io.bkbn.lerasium.utils.KotlinPoetUtils.POLICY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.TABLE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
@@ -97,6 +103,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addParameter("request", charter.apiCreateRequestClass)
       addCodeBlock {
         addControlFlow("return db.withTransaction") {
@@ -116,6 +123,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
             unindent()
             addStatement(")")
           }
+          addStatement("policyEnforcement(context, result.id, %T.READ)", CrudAction::class)
           addStatement("result.to()")
         }
       }
@@ -235,12 +243,23 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       if (rbacPolicies.isEmpty()) {
         addComment("No policies were identified for resource, block will be empty")
       }
-      addModifiers(KModifier.SUSPEND)
+      addModifiers(KModifier.SUSPEND, KModifier.PRIVATE)
       addParameter("context", RequestContext::class)
       addParameter("resource", UUID::class)
       addParameter("action", CrudAction::class)
-      rbacPolicies.forEach { prop ->
-        addStatement("%L(%L, %L, %L)", "${prop.simpleName.getShortName()}Enforcement", "context", "resource", "action")
+      addCodeBlock {
+        addControlFlow("when (context)") {
+          addStatement("is %T -> TODO()", AnonymousRequestContext::class)
+          addControlFlow("is %T<*> -> when (context.actor)", ActorRequestContext::class) {
+            rbacPolicies.forEach { prop ->
+              val (actor) = prop.type.resolve().arguments
+              val actorEnum = ClassName(POLICY_PACKAGE_NAME, "Actor")
+              val name = actor.type!!.resolve().toClassName().simpleName.uppercase()
+              val enforcement = "${prop.simpleName.getShortName()}Enforcement"
+              addStatement("%T.%L -> %L(%L, %L, %L)", actorEnum, name, enforcement, "context", "resource", "action")
+            }
+          }
+        }
       }
     }.build())
   }
@@ -266,8 +285,8 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     // todo check if resource matches charter?
 
     addFunction(FunSpec.builder("${rbacDeclaration.simpleName.getShortName()}Enforcement").apply {
-      addModifiers(KModifier.SUSPEND)
-      addParameter("context", RequestContext::class)
+      addModifiers(KModifier.SUSPEND, KModifier.PRIVATE)
+      addParameter("context", ActorRequestContext::class.asTypeName().parameterizedBy(STAR))
       addParameter("resourceId", UUID::class)
       addParameter("action", CrudAction::class)
 

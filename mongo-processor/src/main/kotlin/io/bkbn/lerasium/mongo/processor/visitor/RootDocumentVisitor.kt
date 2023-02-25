@@ -23,6 +23,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addObjectInstantiation
 import io.bkbn.lerasium.utils.KotlinPoetUtils.isSupportedScalar
@@ -153,6 +154,7 @@ class RootDocumentVisitor(private val fileBuilder: FileSpec.Builder, private val
       .filterNot { it.simpleName.getShortName() == "id" }
     addFunction(FunSpec.builder("to").apply {
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
       addCodeBlock {
         addObjectInstantiation(charter.domainClass, returnInstance = true) {

@@ -12,6 +12,7 @@ object Members {
   val deleteMember = MemberName("io.ktor.server.routing", "delete")
   val callMember = MemberName("io.ktor.server.application", "call")
   val receiveMember = MemberName("io.ktor.server.request", "receive")
+  val principalMember = MemberName("io.ktor.server.auth", "principal")
   val respondMember = MemberName("io.ktor.server.response", "respond")
   val installMember = MemberName("io.ktor.server.application", "install")
   val getAllParametersMember = MemberName("io.bkbn.lerasium.api.util.ApiDocumentationUtils", "getAllParameters")
@@ -22,4 +23,5 @@ object Members {
   val ktorJsonMember = MemberName("io.ktor.serialization.kotlinx.json", "json")
   val kotlinxJsonMember = MemberName("kotlinx.serialization.json", "Json")
   val authenticationMember = MemberName("io.ktor.server.auth", "authentication")
+  val toRequestContextMember = MemberName("io.bkbn.lerasium.api.util.RequestContextUtils", "toContext")
 }

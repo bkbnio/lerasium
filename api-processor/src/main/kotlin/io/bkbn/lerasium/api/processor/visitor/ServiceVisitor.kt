@@ -15,6 +15,7 @@ import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import io.bkbn.lerasium.api.processor.Members.hmac256Member
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumCharter
@@ -53,10 +54,11 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   private fun TypeSpec.Builder.addCreateFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("create").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("request", charter.apiCreateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.create(request)", charter.repositoryClass)
+        addStatement("val result = %T.create(context, request)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -65,10 +67,11 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   private fun TypeSpec.Builder.addReadFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("read").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.read(id)", charter.repositoryClass)
+        addStatement("val result = %T.read(context, id)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -77,11 +80,12 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   private fun TypeSpec.Builder.addUpdateFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       returns(charter.apiResponseClass)
       addCodeBlock {
-        addStatement("val result = %T.update(id, request)", charter.repositoryClass)
+        addStatement("val result = %T.update(context, id, request)", charter.repositoryClass)
         addStatement("return %T.from(result)", charter.apiResponseClass)
       }
     }.build())
@@ -90,9 +94,10 @@ class ServiceVisitor(private val fileBuilder: FileSpec.Builder, private val logg
   private fun TypeSpec.Builder.addDeleteFunction(charter: LerasiumCharter) {
     addFunction(FunSpec.builder("delete").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addCodeBlock {
-        addStatement("%T.delete(id)", charter.repositoryClass)
+        addStatement("%T.delete(context, id)", charter.repositoryClass)
       }
     }.build())
   }

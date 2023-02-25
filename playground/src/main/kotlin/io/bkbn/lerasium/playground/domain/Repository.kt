@@ -10,8 +10,10 @@ import io.bkbn.lerasium.core.auth.AbacPolicyProvider
 import io.bkbn.lerasium.core.auth.CrudAction
 import io.bkbn.lerasium.core.auth.RbacPolicyProvider
 import io.bkbn.lerasium.core.domain.LerasiumDomain
+import io.bkbn.lerasium.core.model.ModelProvider
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
+import java.util.UUID
 
 @Api
 @Domain("Repository")
@@ -21,7 +23,7 @@ interface Repository : LerasiumDomain {
   val isPublic: Boolean
 
   @ForeignKey
-  val organization: Organization
+  val organization: ModelProvider<UUID, Organization>
 
   companion object {
     val anonymousAbac = object : AbacPolicyProvider<Unit, CrudAction, Repository> {
@@ -30,10 +32,16 @@ interface Repository : LerasiumDomain {
       }
     }
 
-    val userOrgRbac = object : RbacPolicyProvider<User, CrudAction, OrganizationRole, OrganizationRole.Type, Repository> {
-      override val policy: RbacPolicy<User, CrudAction, OrganizationRole.Type, Repository> = rbacPolicy {
-        can("Org admin can delete a repository", CrudAction.DELETE, OrganizationRole.Type.ADMIN) { _, _, _ -> true }
+    val userOrgRbac =
+      object : RbacPolicyProvider<User, CrudAction, OrganizationRole, OrganizationRole.Type, Repository> {
+        override val policy: RbacPolicy<User, CrudAction, OrganizationRole.Type, Repository> = rbacPolicy {
+          can(
+            "Org admin can create a new repository",
+            CrudAction.CREATE,
+            OrganizationRole.Type.ADMIN
+          ) { _, _, _ -> true }
+          can("Org admin can delete a repository", CrudAction.DELETE, OrganizationRole.Type.ADMIN) { _, _, _ -> true }
+        }
       }
-    }
   }
 }
