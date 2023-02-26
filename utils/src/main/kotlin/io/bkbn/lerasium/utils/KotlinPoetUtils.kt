@@ -145,9 +145,7 @@ object KotlinPoetUtils {
     val scalars = getAllProperties()
       .filterNot { it.isPolicy() }
       .filter { it.type.isSupportedScalar() }
-    val domain = getAllProperties().filter {
-      it.type.isDomain() || (it.type.isCollection() && it.type.getCollectionType().isDomain())
-    }
+    val relations = getAllProperties().filter { it.isAnnotationPresent(Relation::class) }
     // TODO Cleaner way?
     val nestedProps = getAllProperties()
       .filterNot { it.isPolicy() }
@@ -157,7 +155,12 @@ object KotlinPoetUtils {
       .filterNot { it.type.isCollection() && it.type.getCollectionType().isDomain() }
       .filterNot { it.type.isEnum() }
     val enums = getAllProperties().filter { it.type.isEnum() }
-    return PropertyWrapper(scalars, domain, nestedProps, enums)
+    return PropertyWrapper(
+      scalars = scalars,
+      relations = relations,
+      nested = nestedProps,
+      enums = enums
+    )
   }
 
   private fun KSPropertyDeclaration.isPolicy(): Boolean = type.resolve().toClassName().let {

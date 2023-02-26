@@ -249,7 +249,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addParameter("action", CrudAction::class)
       addCodeBlock {
         addControlFlow("when (context)") {
-          addStatement("is %T -> TODO()", AnonymousRequestContext::class)
+          addStatement("is %T -> {}", AnonymousRequestContext::class)
           addControlFlow("is %T<*> -> when (context.actor)", ActorRequestContext::class) {
             rbacPolicies.forEach { prop ->
               val (actor) = prop.type.resolve().arguments
@@ -303,8 +303,8 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     val (actor, _, roleResource, role, resource) = rbacDeclaration.type.resolve().arguments
     val actorDomain = actor.type!!.getDomain()
     val roleDomain = roleResource.type!!.getDomain()
-    val roleResourceActorProp = roleResource.findMatchingProperty(actor)
-    var roleResourceResourceProp = roleResource.findMatchingPropertyOrNull(resource)
+    val roleResourceActorProp = roleResource.findMatchingDomainProperty(actor)
+    var roleResourceResourceProp = roleResource.findMatchingDomainPropertyOrNull(resource)
 
     val isForeignKey = if (roleResourceResourceProp == null) {
       roleResourceResourceProp = roleResource.findCommonForeignKey(resource)
@@ -314,6 +314,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     }
 
     val roleResourceRoleProp = roleResource.findMatchingProperty(role)
+
     addCodeBlock {
       addStatement(
         "val actorMeta = %T.%M",
@@ -363,10 +364,21 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun KSTypeArgument.findMatchingProperty(typeArg: KSTypeArgument) = findMatchingPropertyOrNull(typeArg)
     ?: error("Could not find matching property for type argument ${typeArg.type}")
 
+  private fun KSTypeArgument.findMatchingDomainProperty(typeArg: KSTypeArgument) = findMatchingDomainPropertyOrNull(typeArg)
+    ?: error("Could not find matching property for type argument ${typeArg.type}")
+
   private fun KSTypeArgument.findMatchingPropertyOrNull(typeArg: KSTypeArgument) = this.toClassDeclaration()
     .getAllProperties()
     .filter {
       it.type.resolve().declaration as KSClassDeclaration ==
+        ((typeArg.type as KSTypeReference).resolve().declaration as KSClassDeclaration)
+    }.firstOrNull()
+
+  private fun KSTypeArgument.findMatchingDomainPropertyOrNull(typeArg: KSTypeArgument) = this.toClassDeclaration()
+    .getAllProperties()
+    .filter { it.isAnnotationPresent(Relation::class) }
+    .filter {
+      it.type.resolve().arguments.map { ta -> ta.type }[1]!!.resolve().declaration ==
         ((typeArg.type as KSTypeReference).resolve().declaration as KSClassDeclaration)
     }.firstOrNull()
 

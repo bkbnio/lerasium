@@ -140,7 +140,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
         }
       }
       addStatement("collection.save(document)")
-      addStatement("return document.to(context)")
+      addStatement("return document.to()")
     }.build())
   }
 
@@ -182,7 +182,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addStatement("val document = collection.findOneById(id) ?: error(%P)", "Unable to get entity with id: \$id")
-      addStatement("return document.to(context)")
+      addStatement("return document.to()")
     }.build())
   }
 
@@ -216,7 +216,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
         }
         addStatement("document.updatedAt = now")
         addStatement("collection.save(document)")
-        addStatement("return document.to(context)")
+        addStatement("return document.to()")
       }
     }.build())
   }

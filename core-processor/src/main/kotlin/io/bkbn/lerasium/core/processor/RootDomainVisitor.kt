@@ -67,10 +67,9 @@ class RootDomainVisitor(private val fileBuilder: FileSpec.Builder, private val l
     val properties = charter.classDeclaration.collectProperties()
     primaryConstructor(FunSpec.constructorBuilder().apply {
       properties.scalars.map { it.toParameter() }.forEach { addParameter(it) }
-      properties.domain.map {
+      properties.relations.map {
         val n = it.simpleName.getShortName()
-        val domainType = it.getDomainType()
-        ParameterSpec.builder(n, domainType).build()
+        ParameterSpec.builder(n,  it.type.toTypeName()).build()
       }.forEach { addParameter(it) }
       properties.nested.map { prop ->
         val n = prop.simpleName.getShortName()
@@ -90,10 +89,9 @@ class RootDomainVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun TypeSpec.Builder.domainProperties(charter: LerasiumCharter) {
     val properties = charter.classDeclaration.collectProperties()
     properties.scalars.map { it.toProperty(isOverride = true, serializable = false) }.forEach { addProperty(it) }
-    properties.domain.map {
+    properties.relations.map {
       val n = it.simpleName.getShortName()
-      val domainType = it.getDomainType()
-      PropertySpec.builder(n, domainType).apply {
+      PropertySpec.builder(n,  it.type.toTypeName()).apply {
         addModifiers(KModifier.OVERRIDE)
         initializer(n)
       }.build()

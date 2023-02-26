@@ -6,11 +6,12 @@ import io.bkbn.bouncer.core.abacPolicy
 import io.bkbn.bouncer.core.rbacPolicy
 import io.bkbn.lerasium.api.Api
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.auth.AbacPolicyProvider
 import io.bkbn.lerasium.core.auth.CrudAction
 import io.bkbn.lerasium.core.auth.RbacPolicyProvider
 import io.bkbn.lerasium.core.domain.LerasiumDomain
-import io.bkbn.lerasium.core.model.ModelProvider
+import io.bkbn.lerasium.core.model.DomainProvider
 import io.bkbn.lerasium.rdbms.ForeignKey
 import io.bkbn.lerasium.rdbms.Table
 import java.util.UUID
@@ -22,8 +23,9 @@ interface Repository : LerasiumDomain {
   val name: String
   val isPublic: Boolean
 
+  @Relation
   @ForeignKey
-  val organization: ModelProvider<UUID, Organization>
+  val organization: DomainProvider<UUID, Organization>
 
   companion object {
     val anonymousAbac = object : AbacPolicyProvider<Unit, CrudAction, Repository> {

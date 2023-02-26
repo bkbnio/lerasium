@@ -17,7 +17,7 @@ import io.bkbn.lerasium.rdbms.Table
 @Api
 @Actor
 @Domain("User")
-@Table
+@Table(name = "users")
 interface User : LerasiumDomain {
   @GetBy(unique = true)
   @Username

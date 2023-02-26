@@ -369,6 +369,8 @@ object Specs {
       import io.bkbn.lerasium.core.auth.CrudAction
       import io.bkbn.bouncer.core.rbacPolicy
       import io.bkbn.lerasium.core.auth.RbacPolicyProvider
+      import io.bkbn.lerasium.core.Relation
+      import io.bkbn.lerasium.core.model.DomainProvider
 
       @Domain("User")
       @Table
@@ -382,10 +384,15 @@ object Specs {
       @Domain("OrganizationRole")
       @Table
       interface OrganizationRole {
+
+        @Relation
         @ForeignKey
-        val organization: Organization
+        val organization: DomainProvider<UUID, Organization>
+
+        @Relation
         @ForeignKey
-        val user: User
+        val user: DomainProvider<UUID, User>
+
         val role: Type
 
         @Serializable
@@ -407,6 +414,7 @@ object Specs {
       @Domain("Repository")
       @Table
       interface Repository {
+        @Relation
         @ForeignKey
         val organization: Organization
         val name: String

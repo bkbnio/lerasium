@@ -1,7 +1,6 @@
 package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -22,7 +21,6 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
-import io.bkbn.lerasium.core.Domain
 import io.bkbn.lerasium.core.converter.ConvertFrom
 import io.bkbn.lerasium.core.model.IORequest
 import io.bkbn.lerasium.core.model.IOResponse
@@ -75,7 +73,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
   }
 
   private fun TypeSpec.Builder.addCreateRequestModel(charter: LerasiumCharter) {
-    val props = charter.classDeclaration.collectProperties()
+    val props = charter.classDeclaration.collectProperties().filterId()
     addType(TypeSpec.classBuilder("Create").apply {
       addOriginatingKSFile(containingFile)
       addModifiers(KModifier.DATA)
@@ -83,7 +81,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
       addSuperinterface(IORequest.Create::class)
       primaryConstructor(FunSpec.constructorBuilder().apply {
         props.scalars.forEach { addParameter(it.toParameter()) }
-        props.domain.forEach {
+        props.relations.forEach {
           val n = it.simpleName.getShortName()
           addParameter(
             ParameterSpec.builder(n, UUID::class).apply {
@@ -103,7 +101,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
       }.build())
 
       props.scalars.forEach { addProperty(it.toProperty()) }
-      props.domain.forEach {
+      props.relations.forEach {
         val n = it.simpleName.getShortName()
         addProperty(PropertySpec.builder(n, UUID::class).apply {
           initializer(n)
@@ -145,7 +143,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
           }.build()
         )
       }
-      props.domain.forEach {
+      props.relations.forEach {
         addProperty(
           PropertySpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
             .apply {
@@ -178,7 +176,7 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
           ParameterSpec.builder(it.simpleName.getShortName(), it.type.toTypeName().copy(nullable = true)).build()
         )
       }
-      propWrapper.domain.forEach {
+      propWrapper.relations.forEach {
         addParameter(
           ParameterSpec.builder(it.simpleName.getShortName(), UUID::class.asClassName().copy(nullable = true))
             .apply {
@@ -211,11 +209,9 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
       addSuperinterface(IOResponse::class.asTypeName())
       responsePrimaryConstructor(props)
       props.scalars.forEach { addProperty(it.toProperty()) }
-      props.domain.forEach {
+      props.relations.forEach {
         val n = it.simpleName.getShortName()
-        val domain = (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
-        val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("Models.Response"))
-        addProperty(PropertySpec.builder(n, responseClass).apply {
+        addProperty(PropertySpec.builder(n, UUID::class).apply {
           initializer(n)
         }.build())
       }
@@ -258,11 +254,13 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
   ) {
     primaryConstructor(FunSpec.constructorBuilder().apply {
       propWrapper.scalars.forEach { addParameter(it.toParameter()) }
-      propWrapper.domain.forEach {
+      propWrapper.relations.forEach {
         val n = it.simpleName.getShortName()
-        val domain = (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
-        val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("Models.Response"))
-        addParameter(ParameterSpec.builder(n, responseClass).build())
+        addParameter(ParameterSpec.builder(n, UUID::class).apply {
+          addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
+            addMember("with = %T::class", Serializers.Uuid::class)
+          }.build())
+        }.build())
       }
       propWrapper.nested.forEach {
         val n = it.simpleName.getShortName()
@@ -281,11 +279,9 @@ class RootModelVisitor(private val fileBuilder: FileSpec.Builder, private val lo
     filteredProps.scalars.forEach {
       addStatement("${it.simpleName.getShortName()} = input.${it.simpleName.getShortName()},")
     }
-    filteredProps.domain.forEach {
+    filteredProps.relations.forEach {
       val n = it.simpleName.getShortName()
-      val domain = (it.type.resolve().declaration as KSClassDeclaration).getAnnotationsByType(Domain::class).first()
-      val responseClass = ClassName(API_MODELS_PACKAGE_NAME, domain.name.plus("Models.Response"))
-      addStatement("$n = ${responseClass.simpleName}.from(input.${n}),")
+      addStatement("$n = input.$n.id,")
     }
     filteredProps.nested.forEach {
       val n = it.simpleName.getShortName()

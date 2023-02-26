@@ -17,7 +17,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = simpleDomain,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T001__domain_simple.txt"
       )
@@ -26,7 +26,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithNestedModel,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T002__domain_nested.txt"
       )
@@ -35,7 +35,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithDeeplyNestedModel,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T003__domain_deeply_nested.txt"
       )
@@ -44,7 +44,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithSensitiveField,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T004__domain_sensitive_field.txt"
       )
@@ -53,7 +53,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithUuidField,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T005__domain_uuid_field.txt"
       )
@@ -80,7 +80,7 @@ class DomainVisitorTest : DescribeSpec({
       verifyGeneratedCode(
         source = domainWithEnum,
         provider = DomainProcessorProvider(),
-        expectedFileCount = 1,
+        expectedFileCount = 2,
         fileUnderTest = "UserDomain.kt",
         fileSnapshot = "T008__domain_enum.txt"
       )
