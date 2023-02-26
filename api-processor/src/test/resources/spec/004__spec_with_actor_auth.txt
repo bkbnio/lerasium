@@ -1,0 +1,17 @@
+package test
+
+import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.auth.Username
+import io.bkbn.lerasium.core.auth.Password
+import io.bkbn.lerasium.core.auth.Actor
+import io.bkbn.lerasium.core.Domain
+
+@Api
+@Actor
+@Domain("User")
+interface User {
+  @Username
+  val username: String
+  @Password
+  val password: String
+}

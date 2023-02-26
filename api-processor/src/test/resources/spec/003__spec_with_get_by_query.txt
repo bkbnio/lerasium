@@ -1,0 +1,14 @@
+package test
+
+import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.api.GetBy
+import io.bkbn.lerasium.core.Domain
+
+@Api
+@Domain("User")
+interface UserDomain {
+  @GetBy(true)
+  val email: String
+  @GetBy
+  val firstName: String
+}

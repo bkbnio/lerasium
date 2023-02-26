@@ -1,0 +1,13 @@
+package test
+
+import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Sensitive
+
+@Api
+@Domain("User")
+interface User {
+  val name: String
+  @Sensitive
+  val password: String
+}

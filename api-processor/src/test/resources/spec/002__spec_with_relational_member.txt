@@ -1,0 +1,21 @@
+package test
+
+import io.bkbn.lerasium.api.Api
+import java.util.UUID
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
+
+@Api
+@Domain("Country")
+interface Country {
+  val name: String
+  @Relation
+  val users: User
+}
+
+@Api
+@Domain("User")
+interface User {
+  val name: String
+  val country: Country
+}
