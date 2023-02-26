@@ -1,0 +1,14 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.rdbms.Table
+
+@Table
+@Domain("User")
+interface User {
+  val name: String
+  val count: Int
+  val isFact: Boolean
+  val size: Long
+  val pointyNum: Float
+}

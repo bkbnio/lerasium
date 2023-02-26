@@ -11,7 +11,7 @@ class DocumentVisitorTest : DescribeSpec({
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "snapshot/T001__document_simple.txt",
+        fileSnapshot = "snapshot/007__document_simple.txt",
       )
     }
     it("Can generate a simple nested document") {
@@ -20,7 +20,7 @@ class DocumentVisitorTest : DescribeSpec({
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "snapshot/T002__document_nested.txt",
+        fileSnapshot = "snapshot/008__document_nested.txt",
       )
     }
     it("Can generate a deeply nested document") {
@@ -29,7 +29,7 @@ class DocumentVisitorTest : DescribeSpec({
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "snapshot/T003__document_deeply_nested.txt",
+        fileSnapshot = "snapshot/009__document_deeply_nested.txt",
       )
     }
   }

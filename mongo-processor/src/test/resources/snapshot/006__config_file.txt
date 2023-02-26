@@ -1,0 +1,20 @@
+package io.bkbn.lerasium.generated.persistence.config
+
+import com.mongodb.ConnectionString
+import com.mongodb.MongoClientSettings
+import org.bson.UuidRepresentation
+import org.litote.kmongo.coroutine.CoroutineDatabase
+import org.litote.kmongo.reactivestreams.KMongo
+
+public object MongoConfig {
+  public val documentDatabase: CoroutineDatabase by lazy {
+    val clientSettingBuilder = MongoClientSettings.builder().apply {
+      applyConnectionString(ConnectionString("mongodb://test_user:test_password@localhost:27017"))
+      uuidRepresentation(UuidRepresentation.STANDARD)
+    }
+    val clientSettings = clientSettingBuilder.build()
+    val mongoClient = KMongo.createClient(clientSettings)
+    CoroutineDatabase(mongoClient.getDatabase("test_db"))
+  }
+
+}

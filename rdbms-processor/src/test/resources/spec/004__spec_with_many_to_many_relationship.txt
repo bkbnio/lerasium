@@ -1,0 +1,35 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.rdbms.ForeignKey
+import io.bkbn.lerasium.rdbms.ManyToMany
+import io.bkbn.lerasium.rdbms.Table
+
+@Domain("User")
+@Table
+interface User {
+  val name: String
+  @Relation
+  @ManyToMany(BookReview::class)
+  val books: List<Book>
+}
+
+@Domain("Book")
+@Table
+interface Book {
+  val title: String
+  @Relation
+  @ManyToMany(BookReview::class)
+  val readers: List<User>
+}
+
+@Domain("BookReview")
+@Table
+interface BookReview {
+  @ForeignKey
+  val reader: User
+  @ForeignKey
+  val book: Book
+  val rating: Int
+}

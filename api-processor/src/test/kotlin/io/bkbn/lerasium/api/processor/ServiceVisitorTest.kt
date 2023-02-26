@@ -1,6 +1,5 @@
 package io.bkbn.lerasium.api.processor
 
-import io.bkbn.lerasium.api.processor.Specs.simpleSpecWithActor
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 

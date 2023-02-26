@@ -1,0 +1,43 @@
+package io.bkbn.lerasium.generated.persistence.document
+
+import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.generated.domain.UserDomain
+import java.util.UUID
+import kotlin.Boolean
+import kotlin.Int
+import kotlin.String
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import test.UserPreferences
+
+@Serializable
+public data class UserDocument(
+  @Contextual
+  @SerialName("_id")
+  public val id: UUID,
+  public var name: String,
+  public var age: Int,
+  public var preferences: UserPreferencesDocument,
+  public val createdAt: LocalDateTime,
+  public var updatedAt: LocalDateTime,
+) : ConvertTo<UserDomain> {
+  public override suspend fun to(): UserDomain = UserDomain(
+    id = id,
+    name = name,
+    age = age,
+    preferences = preferences.to(),
+  )
+
+  @Serializable
+  public data class UserPreferencesDocument(
+    public var status: String,
+    public var subscribed: Boolean,
+  ) : ConvertTo<UserPreferences> {
+    public override suspend fun to(): UserPreferences = UserDomain.UserPreferences(
+      status = status,
+      subscribed = subscribed,
+    )
+  }
+}
