@@ -1,8 +1,5 @@
 package io.bkbn.lerasium.mongo.processor
 
-import io.bkbn.lerasium.mongo.processor.Specs.domainWithDeeplyNestedDocument
-import io.bkbn.lerasium.mongo.processor.Specs.domainWithDocument
-import io.bkbn.lerasium.mongo.processor.Specs.domainWithNestedDocument
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -10,29 +7,29 @@ class DocumentVisitorTest : DescribeSpec({
   describe("KMongo Document Visitor Tests") {
     it("Can generate a simple document") {
       verifyGeneratedCode(
-        source = domainWithDocument,
+        source = "spec/001__domain_with_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "T001__document_simple.txt",
+        fileSnapshot = "snapshot/T001__document_simple.txt",
       )
     }
     it("Can generate a simple nested document") {
       verifyGeneratedCode(
-        source = domainWithNestedDocument,
+        source = "spec/002__domain_with_nested_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "T002__document_nested.txt",
+        fileSnapshot = "snapshot/T002__document_nested.txt",
       )
     }
     it("Can generate a deeply nested document") {
       verifyGeneratedCode(
-        source = domainWithDeeplyNestedDocument,
+        source = "spec/003__domain_with_deeply_nested_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserDocument.kt",
-        fileSnapshot = "T003__document_deeply_nested.txt",
+        fileSnapshot = "snapshot/T003__document_deeply_nested.txt",
       )
     }
   }

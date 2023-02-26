@@ -1,5 +1,6 @@
 package io.bkbn.lerasium.generated.persistence.repository
 
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.generated.api.models.UserModels.Create
 import io.bkbn.lerasium.generated.api.models.UserModels.Update
 import io.bkbn.lerasium.generated.domain.UserDomain
@@ -21,16 +22,15 @@ public object UserRepository {
 
   init {
     runBlocking {
-      collection.ensureIndex(UserDocument::name, UserDocument::favoriteFood)
+      collection.ensureUniqueIndex(UserDocument::name)
     }
   }
 
-  public suspend fun create(request: Create): UserDomain {
+  public suspend fun create(context: RequestContext, request: Create): UserDomain {
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     val document = UserDocument(
       id = UUID.randomUUID(),
       name = request.name,
-      favoriteFood = request.favoriteFood,
       createdAt = now,
       updatedAt = now,
     )
@@ -38,24 +38,27 @@ public object UserRepository {
     return document.to()
   }
 
-  public suspend fun read(id: UUID): UserDomain {
+  public suspend fun read(context: RequestContext, id: UUID): UserDomain {
     val document = collection.findOneById(id) ?: error("""Unable to get entity with id: $id""")
     return document.to()
   }
 
-  public suspend fun update(id: UUID, request: Update): UserDomain {
+  public suspend fun update(
+    context: RequestContext,
+    id: UUID,
+    request: Update,
+  ): UserDomain {
     val document = collection.findOneById(id) ?: error("""Unable to get entity with id: $id""")
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     document.apply {
       request.name?.let { name = it }
-      request.favoriteFood?.let { favoriteFood = it }
     }
     document.updatedAt = now
     collection.save(document)
     return document.to()
   }
 
-  public suspend fun delete(id: UUID): Unit {
+  public suspend fun delete(context: RequestContext, id: UUID): Unit {
     collection.deleteOneById(id)
   }
 }

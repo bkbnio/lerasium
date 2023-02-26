@@ -1,0 +1,14 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+
+@Domain("User")
+interface User {
+  val email: String
+  val metadata: Metadata
+
+  interface Metadata {
+    val firstName: String
+    val lastName: String
+  }
+}

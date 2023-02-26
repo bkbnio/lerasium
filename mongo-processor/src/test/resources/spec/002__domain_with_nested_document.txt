@@ -1,0 +1,17 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.mongo.Document
+
+@Document
+@Domain("User")
+interface User {
+  val name: String
+  val age: Int
+  val preferences: UserPreferences
+}
+
+interface UserPreferences {
+  val status: String
+  val subscribed: Boolean
+}

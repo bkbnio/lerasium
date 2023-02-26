@@ -7,11 +7,11 @@ class ConfigFileTest : DescribeSpec({
   describe("KMongo Config File Tests") {
     it("Can generate a config file") {
       verifyGeneratedCode(
-        source = Specs.domainWithDocument,
+        source = "spec/001__domain_with_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "MongoConfig.kt",
-        fileSnapshot = "T009__config_file.txt",
+        fileSnapshot = "snapshot/006__config_file.txt",
       )
     }
   }

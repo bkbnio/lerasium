@@ -1,0 +1,23 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.mongo.Document
+
+@Document
+@Domain("User")
+interface User {
+  val preferences: UserPreferences
+}
+
+interface UserPreferences {
+  val stuff: UserStuff
+}
+
+interface UserStuff {
+  val info: UserInfo
+}
+
+
+interface UserInfo {
+  val isCool: Boolean
+}
