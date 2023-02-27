@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Released
 
+## [0.5.0] - February 27th, 2023
+### Added
+
+- Repositories are now non-blocking
+- Authn and Authz MVP for relational databases
+
+### Changed
+
+- Komapper instead of exposed
+
 ## [0.4.0] - January 6th, 2023
 
 ### Added
