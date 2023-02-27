@@ -1,5 +1,9 @@
 package io.bkbn.lerasium.generated.persistence.repository
 
+import io.bkbn.lerasium.core.auth.CrudAction
+import io.bkbn.lerasium.core.request.ActorRequestContext
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.generated.api.models.CountryModels.Create
 import io.bkbn.lerasium.generated.api.models.CountryModels.Update
 import io.bkbn.lerasium.generated.domain.CountryDomain
@@ -8,6 +12,7 @@ import io.bkbn.lerasium.generated.persistence.table.CountryTable
 import io.bkbn.lerasium.generated.persistence.table._CountryTable
 import io.bkbn.lerasium.generated.persistence.table.country
 import java.util.UUID
+import kotlin.Unit
 import org.komapper.core.dsl.Meta
 import org.komapper.core.dsl.QueryDsl
 import org.komapper.core.dsl.query.andThen
@@ -19,7 +24,8 @@ public object CountryRepository {
 
   private val resource: _CountryTable = Meta.country
 
-  public suspend fun create(request: Create): CountryDomain = db.withTransaction {
+  public suspend fun create(context: RequestContext, request: Create): CountryDomain =
+      db.withTransaction {
     val result = db.runQuery {
       QueryDsl.insert(resource).single(
         CountryTable(
@@ -27,10 +33,12 @@ public object CountryRepository {
         )
       )
     }
+    policyEnforcement(context, result.id, CrudAction.READ)
     result.to()
   }
 
-  public suspend fun read(id: UUID): CountryDomain = db.withTransaction {
+  public suspend fun read(context: RequestContext, id: UUID): CountryDomain = db.withTransaction {
+    policyEnforcement(context, id, CrudAction.READ)
     val result = db.runQuery {
       val query = QueryDsl.from(resource).where {
         resource.id eq id
@@ -40,7 +48,12 @@ public object CountryRepository {
     result.to()
   }
 
-  public suspend fun update(id: UUID, request: Update): CountryDomain = db.withTransaction {
+  public suspend fun update(
+    context: RequestContext,
+    id: UUID,
+    request: Update,
+  ): CountryDomain = db.withTransaction {
+    policyEnforcement(context, id, CrudAction.UPDATE)
     val result = db.runQuery {
       QueryDsl.update(resource)
         .set {
@@ -54,9 +67,23 @@ public object CountryRepository {
     result.to()
   }
 
-  public suspend fun delete(id: UUID) = db.withTransaction {
+  public suspend fun delete(context: RequestContext, id: UUID) = db.withTransaction {
+    policyEnforcement(context, id, CrudAction.DELETE)
     db.runQuery {
       QueryDsl.delete(resource).where { resource.id eq id }
+    }
+  }
+
+  private suspend fun policyEnforcement(
+    context: RequestContext,
+    resource: UUID,
+    action: CrudAction,
+  ): Unit {
+    // No policies were identified for resource, block will be empty
+    when (context) {
+      is AnonymousRequestContext -> {}
+      is ActorRequestContext<*> -> when (context.actor) {
+      }
     }
   }
 }

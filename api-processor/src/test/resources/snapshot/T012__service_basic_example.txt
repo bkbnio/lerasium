@@ -1,5 +1,6 @@
 package io.bkbn.lerasium.generated.api.service
 
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.generated.api.models.UserModels.Create
 import io.bkbn.lerasium.generated.api.models.UserModels.Response
 import io.bkbn.lerasium.generated.api.models.UserModels.Update
@@ -8,22 +9,26 @@ import java.util.UUID
 import kotlin.Unit
 
 public object UserService {
-  public suspend fun create(request: Create): Response {
-    val result = UserRepository.create(request)
+  public suspend fun create(context: RequestContext, request: Create): Response {
+    val result = UserRepository.create(context, request)
     return Response.from(result)
   }
 
-  public suspend fun read(id: UUID): Response {
-    val result = UserRepository.read(id)
+  public suspend fun read(context: RequestContext, id: UUID): Response {
+    val result = UserRepository.read(context, id)
     return Response.from(result)
   }
 
-  public suspend fun update(id: UUID, request: Update): Response {
-    val result = UserRepository.update(id, request)
+  public suspend fun update(
+    context: RequestContext,
+    id: UUID,
+    request: Update,
+  ): Response {
+    val result = UserRepository.update(context, id, request)
     return Response.from(result)
   }
 
-  public suspend fun delete(id: UUID): Unit {
-    UserRepository.delete(id)
+  public suspend fun delete(context: RequestContext, id: UUID): Unit {
+    UserRepository.delete(context, id)
   }
 }

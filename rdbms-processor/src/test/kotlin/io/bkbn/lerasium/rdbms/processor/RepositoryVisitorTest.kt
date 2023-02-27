@@ -25,7 +25,7 @@ class RepositoryVisitorTest : DescribeSpec({
     }
     it("Can create a repository for a domain with a one-to-many relationship") {
       verifyGeneratedCode(
-        source = "003__spec_with_one_to_many_relationship.txt",
+        source = "spec/003__spec_with_one_to_many_relationship.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "CountryRepository.kt",
@@ -34,7 +34,7 @@ class RepositoryVisitorTest : DescribeSpec({
     }
     xit("Can create a repository for a domain with a many-to-many relationship") {
       verifyGeneratedCode(
-        source = "004__spec_with_many_to_many_relationship.txt",
+        source = "spec/004__spec_with_many_to_many_relationship.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "CountryRepository.kt",
@@ -43,7 +43,7 @@ class RepositoryVisitorTest : DescribeSpec({
     }
     it("Can create the necessary query for a rbac policy") {
       verifyGeneratedCode(
-        source = "005__spec_with_rbac_policy.txt",
+        source = "spec/005__spec_with_rbac_policy.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 7,
         fileUnderTest = "OrganizationRepository.kt",
@@ -52,7 +52,7 @@ class RepositoryVisitorTest : DescribeSpec({
     }
     it("Can create the necessary query for a rbac policy on foreign key") {
       verifyGeneratedCode(
-        source = "006__spec_with_rbac_foreign_key.txt",
+        source = "spec/006__spec_with_rbac_foreign_key.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 9,
         fileUnderTest = "RepositoryRepository.kt",

@@ -1,12 +1,12 @@
 package io.bkbn.lerasium.generated.persistence.table
 
 import io.bkbn.lerasium.core.converter.ConvertTo
+import io.bkbn.lerasium.core.model.DomainProvider
 import io.bkbn.lerasium.generated.domain.UserDomain
-import io.bkbn.lerasium.generated.persistence.repository.CountryRepository
 import java.util.UUID
 import kotlin.Int
 import kotlin.String
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 import org.komapper.`annotation`.KomapperCreatedAt
 import org.komapper.`annotation`.KomapperEntity
 import org.komapper.`annotation`.KomapperId
@@ -24,12 +24,12 @@ public data class UserTable(
   @KomapperVersion
   public val version: Int = 0,
   @KomapperCreatedAt
-  public val createdAt: LocalDateTime? = null,
+  public val createdAt: Instant? = null,
   @KomapperUpdatedAt
-  public val updatedAt: LocalDateTime? = null,
+  public val updatedAt: Instant? = null,
 ) : ConvertTo<UserDomain> {
   public override suspend fun to(): UserDomain = UserDomain(
     name = name,
-    country = CountryRepository.read(country),
+    country = DomainProvider.from(country),
   )
 }

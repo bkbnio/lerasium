@@ -1,0 +1,15 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.rdbms.Table
+
+@Domain("Letters")
+@Table
+interface Letters {
+  val s: String?
+  val i: Int?
+  val l: Long?
+  val b: Boolean?
+  val d: Double?
+  val f: Float?
+}

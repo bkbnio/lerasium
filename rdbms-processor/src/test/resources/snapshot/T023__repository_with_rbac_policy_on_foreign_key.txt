@@ -2,6 +2,8 @@ package io.bkbn.lerasium.generated.persistence.repository
 
 import io.bkbn.lerasium.core.auth.CrudAction
 import io.bkbn.lerasium.core.exception.UnauthorizedException
+import io.bkbn.lerasium.core.request.ActorRequestContext
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
 import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.generated.api.models.RepositoryModels.Create
 import io.bkbn.lerasium.generated.api.models.RepositoryModels.Update
@@ -12,6 +14,7 @@ import io.bkbn.lerasium.generated.persistence.table._RepositoryTable
 import io.bkbn.lerasium.generated.persistence.table.organizationRole
 import io.bkbn.lerasium.generated.persistence.table.repository
 import io.bkbn.lerasium.generated.persistence.table.user
+import io.bkbn.lerasium.generated.policy.Actor
 import java.util.UUID
 import kotlin.Unit
 import org.komapper.core.dsl.Meta
@@ -26,7 +29,8 @@ public object RepositoryRepository {
 
   private val resource: _RepositoryTable = Meta.repository
 
-  public suspend fun create(request: Create): RepositoryDomain = db.withTransaction {
+  public suspend fun create(context: RequestContext, request: Create): RepositoryDomain =
+      db.withTransaction {
     val result = db.runQuery {
       QueryDsl.insert(resource).single(
         RepositoryTable(
@@ -35,6 +39,7 @@ public object RepositoryRepository {
         )
       )
     }
+    policyEnforcement(context, result.id, CrudAction.READ)
     result.to()
   }
 
@@ -77,16 +82,21 @@ public object RepositoryRepository {
     }
   }
 
-  public suspend fun policyEnforcement(
+  private suspend fun policyEnforcement(
     context: RequestContext,
     resource: UUID,
     action: CrudAction,
   ): Unit {
-    userOrgRbacEnforcement(context, resource, action)
+    when (context) {
+      is AnonymousRequestContext -> {}
+      is ActorRequestContext<*> -> when (context.actor) {
+        Actor.USER -> userOrgRbacEnforcement(context, resource, action)
+      }
+    }
   }
 
-  public suspend fun userOrgRbacEnforcement(
-    context: RequestContext,
+  private suspend fun userOrgRbacEnforcement(
+    context: ActorRequestContext<*>,
     resourceId: UUID,
     action: CrudAction,
   ): Unit {

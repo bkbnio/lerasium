@@ -25,7 +25,7 @@ class ModelVisitorTest : DescribeSpec({
     }
     it("Can generate a nested model") {
       verifyGeneratedCode(
-        source = "spec/005__spect_with_nested_model.txt",
+        source = "spec/005__spec_with_nested_model.txt",
         provider = KtorProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserModels.kt",

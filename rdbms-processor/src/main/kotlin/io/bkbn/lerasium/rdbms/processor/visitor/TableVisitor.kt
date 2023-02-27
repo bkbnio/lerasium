@@ -34,7 +34,6 @@ import io.bkbn.lerasium.utils.LerasiumCharter
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.bkbn.lerasium.utils.StringUtils.pascalToSnakeCase
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.komapper.annotation.EnumType
 import org.komapper.annotation.KomapperCreatedAt

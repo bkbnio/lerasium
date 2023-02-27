@@ -1,0 +1,24 @@
+package test
+
+import java.util.UUID
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.rdbms.ForeignKey
+import io.bkbn.lerasium.rdbms.Table
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.model.DomainProvider
+import java.util.UUID
+
+@Domain("Country")
+@Table
+interface Country {
+  val name: String
+}
+
+@Domain("User")
+@Table
+interface User {
+  val name: String
+  @Relation
+  @ForeignKey
+  val country: DomainProvider<UUID, Country>
+}

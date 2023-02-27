@@ -1,17 +1,30 @@
 package test
 
-import io.bkbn.lerasium.core.Domain
-import io.bkbn.lerasium.rdbms.Table
-import io.bkbn.lerasium.rdbms.ForeignKey
-import io.bkbn.lerasium.core.auth.CrudAction
+import io.bkbn.bouncer.core.RbacPolicy
 import io.bkbn.bouncer.core.rbacPolicy
+import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.auth.CrudAction
 import io.bkbn.lerasium.core.auth.RbacPolicyProvider
+import io.bkbn.lerasium.rdbms.Table
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.model.DomainProvider
+import io.bkbn.lerasium.core.model.ForeignKey
+import kotlinx.serialization.Serializable
+import io.bkbn.lerasium.core.auth.Actor
+import io.bkbn.lerasium.core.auth.Password
+import io.bkbn.lerasium.core.auth.Username
 
+@Api
+@Actor
 @Domain("User")
-@Table
-@Policy("user")
-interface User {
+@Table(name = "users")
+interface User : LerasiumDomain {
+  @Username
   val email: String
+
+  @Password
+  @Sensitive
   val password: String
 }
 
@@ -19,10 +32,15 @@ interface User {
 @Domain("OrganizationRole")
 @Table
 interface OrganizationRole {
+
+  @Relation
   @ForeignKey
-  val organization: Organization
+  val organization: DomainProvider<UUID, Organization>
+
+  @Relation
   @ForeignKey
-  val user: User
+  val user: DomainProvider<UUID, User>
+
   val role: Type
 
   @Serializable
@@ -42,7 +60,7 @@ interface Organization {
   companion object {
     val userRbac =
       object : RbacPolicyProvider<User, CrudAction, OrganizationRole, OrganizationRole.Type, Organization> {
-        override val policy = rbacPolicy<User, CrudAction, OrganizationRole.Type, Organization> {
+        override val policy: RbacPolicy<User, CrudAction, OrganizationRole.Type, Organization> = rbacPolicy {
           can(
             "Admin can always delete an organization",
             CrudAction.DELETE,
@@ -52,3 +70,4 @@ interface Organization {
       }
   }
 }
+

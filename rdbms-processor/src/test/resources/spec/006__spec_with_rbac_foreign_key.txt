@@ -53,7 +53,7 @@ interface Organization {
 interface Repository {
   @Relation
   @ForeignKey
-  val organization: Organization
+  val organization: DomainProvider<UUID, Organization>
   val name: String
 
   companion object {

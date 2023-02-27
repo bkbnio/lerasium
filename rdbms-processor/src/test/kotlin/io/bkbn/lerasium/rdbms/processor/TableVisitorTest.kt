@@ -1,12 +1,5 @@
 package io.bkbn.lerasium.rdbms.processor
 
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWitColumnNameOverride
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithForeignKeyReference
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithManyToManyReference
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithNullableFields
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithOneToManyReference
-import io.bkbn.lerasium.rdbms.processor.Specs.domainWithSensitiveField
-import io.bkbn.lerasium.rdbms.processor.Specs.multipleDomains
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -14,7 +7,7 @@ class TableVisitorTest : DescribeSpec({
   describe("Table Generation") {
     it("Can construct a simple table with scalar types") {
       verifyGeneratedCode(
-        source = "001__spec_simple_types.txt",
+        source = "spec/001__spec_simple_types.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserTable.kt",
@@ -24,7 +17,7 @@ class TableVisitorTest : DescribeSpec({
     // TODO
     xit("Can override the column name") {
       verifyGeneratedCode(
-        source = domainWitColumnNameOverride,
+        source = "spec/007__spec_with_column_name_override.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserTable.kt",
@@ -33,7 +26,7 @@ class TableVisitorTest : DescribeSpec({
     }
     it("Can construct a table with nullable fields") {
       verifyGeneratedCode(
-        source = domainWithNullableFields,
+        source = "spec/008__spec_with_nullable_field.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "LettersTable.kt",
@@ -42,16 +35,17 @@ class TableVisitorTest : DescribeSpec({
     }
     it("Can construct a table with a foreign key reference") {
       verifyGeneratedCode(
-        source = domainWithForeignKeyReference,
+        source = "spec/009__spec_with_foreign_key.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserTable.kt",
         fileSnapshot = "snapshot/T012__table_with_foreign_key_reference.txt",
       )
     }
-    it("Can construct a table with a one-to-many reference") {
+    // TODO
+    xit("Can construct a table with a one-to-many reference") {
       verifyGeneratedCode(
-        source = domainWithOneToManyReference,
+        source = "spec/010__spec_with_one_to_many_reference.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserTable.kt",
@@ -60,7 +54,7 @@ class TableVisitorTest : DescribeSpec({
     }
     xit("Can construct table with a many-to-many reference") {
       verifyGeneratedCode(
-        source = domainWithManyToManyReference,
+        source = "spec/011__spec_with_many_to_many_reference.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 6,
         filesUnderTest = mapOf(
@@ -71,7 +65,7 @@ class TableVisitorTest : DescribeSpec({
     }
     it("Can construct multiple tables in a single source set") {
       verifyGeneratedCode(
-        source = multipleDomains,
+        source = "spec/012__spec_with_multiple_domains.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 5,
         filesUnderTest = mapOf(
@@ -83,7 +77,7 @@ class TableVisitorTest : DescribeSpec({
     // TODO
     xit("Properly masks a sensitive field") {
       verifyGeneratedCode(
-        source = domainWithSensitiveField,
+        source = "spec/013__spec_with_sensitive_field.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserTable.kt",

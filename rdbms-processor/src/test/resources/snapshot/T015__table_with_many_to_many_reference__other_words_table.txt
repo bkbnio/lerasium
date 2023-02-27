@@ -5,7 +5,7 @@ import io.bkbn.lerasium.generated.domain.OtherWordsDomain
 import java.util.UUID
 import kotlin.Int
 import kotlin.String
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 import org.komapper.`annotation`.KomapperCreatedAt
 import org.komapper.`annotation`.KomapperEntity
 import org.komapper.`annotation`.KomapperId
@@ -22,9 +22,9 @@ public data class OtherWordsTable(
   @KomapperVersion
   public val version: Int = 0,
   @KomapperCreatedAt
-  public val createdAt: LocalDateTime? = null,
+  public val createdAt: Instant? = null,
   @KomapperUpdatedAt
-  public val updatedAt: LocalDateTime? = null,
+  public val updatedAt: Instant? = null,
 ) : ConvertTo<OtherWordsDomain> {
   public override suspend fun to(): OtherWordsDomain = OtherWordsDomain(
     wordy = wordy,

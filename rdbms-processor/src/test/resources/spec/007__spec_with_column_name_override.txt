@@ -1,0 +1,12 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.rdbms.Column
+import io.bkbn.lerasium.rdbms.Table
+
+@Table
+@Domain("User")
+interface User {
+  @Column("super_important_field")
+  val userInfo: String
+}

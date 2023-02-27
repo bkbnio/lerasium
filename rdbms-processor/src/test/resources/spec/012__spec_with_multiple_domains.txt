@@ -1,0 +1,19 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.rdbms.VarChar
+import io.bkbn.lerasium.rdbms.Table
+
+@Domain("Words")
+@Table
+interface Words {
+  @VarChar(256)
+  val word: String
+}
+
+@Domain("OtherWords")
+@Table
+interface OtherWords {
+  @VarChar(128)
+  val wordy: String
+}
