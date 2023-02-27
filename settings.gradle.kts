@@ -4,24 +4,20 @@ rootProject.name = "lerasium"
 include("core")
 include("core-processor")
 
-// Persistence
+// Persistence TODO Remove?
 include("persistence")
 
-// Exposed (RDBMS)
+// RDBMS
 include("rdbms")
 include("rdbms-processor")
 
-// KMongo (NoSQL)
+// Mongo
 include("mongo")
 include("mongo-processor")
 
-// Ktor (API)
+// API
 include("api")
 include("api-processor")
-
-// Permissions
-include("permissions")
-include("permissions-processor")
 
 // Playground
 include("playground")

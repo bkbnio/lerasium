@@ -8,6 +8,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.ksp.toTypeName
 import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.auth.Actor
 import io.bkbn.lerasium.core.validation.DomainValidation
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
 
@@ -21,6 +22,8 @@ object LerasiumUtils {
       it
     } ?: error("$this is not annotated with a valid domain!")
   }
+
+  fun KSClassDeclaration.isActor(): Boolean = this.isAnnotationPresent(Actor::class)
 
   fun KSTypeReference.getDomain(): Domain = getDomainOrNull() ?: error("Domain cannot be null")
 
@@ -39,4 +42,9 @@ object LerasiumUtils {
 
   fun KSTypeReference.getCollectionType() = resolve().arguments.firstOrNull()?.type
     ?: error("Error resolving collection type for ${toTypeName()}")
+
+  fun KSClassDeclaration.findCompanionObject() = declarations
+    .map { it as? KSClassDeclaration }
+    .filterNotNull()
+    .find { it.isCompanionObject }
 }

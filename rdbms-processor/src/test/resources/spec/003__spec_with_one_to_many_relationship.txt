@@ -1,0 +1,25 @@
+package test
+
+import java.util.UUID
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.rdbms.ForeignKey
+import io.bkbn.lerasium.rdbms.OneToMany
+import io.bkbn.lerasium.rdbms.Table
+
+@Domain("Country")
+@Table
+interface Country {
+  val name: String
+  @Relation
+  @OneToMany("country")
+  val users: List<User>
+}
+
+@Domain("User")
+@Table
+interface User {
+  val name: String
+  @ForeignKey
+  val country: Country
+}

@@ -1,0 +1,46 @@
+package io.bkbn.lerasium.generated.persistence.config
+
+import io.r2dbc.spi.ConnectionFactories
+import io.r2dbc.spi.ConnectionFactoryOptions
+import kotlin.String
+import org.flywaydb.core.Flyway
+import org.komapper.dialect.postgresql.r2dbc.PostgreSqlR2dbcDialect
+import org.komapper.r2dbc.R2dbcDatabase
+
+public object PostgresConfig {
+  private const val USER: String = "test_user"
+
+  private const val PASSWORD: String = "test_password"
+
+  private const val SYNC_CONNECTION_URI: String = """jdbc:postgresql://localhost:5432/test_db"""
+
+  private const val ASYNC_CONNECTION_URI: String =
+      """r2dbc:postgresql://$USER:$PASSWORD@localhost:5432/test_db"""
+
+  public val flyway: Flyway by lazy {
+    val config = Flyway.configure().apply {
+      cleanDisabled(false)
+      dataSource(SYNC_CONNECTION_URI, USER, PASSWORD)
+      locations("db/migration")
+    }
+    config.load() ?:
+        error("Problem Loading Flyway!! Please verify Database Connection / Migration Info")
+  }
+
+
+  public val database: R2dbcDatabase by lazy {
+    val connectionFactoryOptionBuilder = ConnectionFactoryOptions.builder().apply {
+      option(ConnectionFactoryOptions.DRIVER, "pool")
+      option(ConnectionFactoryOptions.PROTOCOL, "postgresql")
+      option(ConnectionFactoryOptions.HOST, "localhost")
+      option(ConnectionFactoryOptions.PORT, 5432)
+      option(ConnectionFactoryOptions.USER, "test_user")
+      option(ConnectionFactoryOptions.PASSWORD, "test_password")
+      option(ConnectionFactoryOptions.DATABASE, "test_db")
+    }
+    val connectionFactoryOptions = connectionFactoryOptionBuilder.build()
+    val pooledConnectionFactory = ConnectionFactories.get(connectionFactoryOptions)
+    R2dbcDatabase(connectionFactory = pooledConnectionFactory, dialect = PostgreSqlR2dbcDialect())
+  }
+
+}

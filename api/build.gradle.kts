@@ -21,6 +21,9 @@ dependencies {
   val ktorVersion: String by project
   val kompendiumVersion: String by project
 
+  // Lerasium
+  api(projects.lerasiumCore)
+
   // Ktor
   api("io.ktor:ktor-server-core:$ktorVersion")
   api("io.ktor:ktor-server-cio:$ktorVersion")

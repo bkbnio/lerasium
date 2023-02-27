@@ -45,6 +45,22 @@ object TestUtils {
   }
 
   fun verifyGeneratedCode(
+    source: String,
+    provider: SymbolProcessorProvider,
+    expectedFileCount: Int,
+    fileUnderTest: String,
+    fileSnapshot: String
+  ) {
+    verifyGeneratedCode(
+      source = SourceFile.kotlin("Spec.kt", getFileSnapshot(source)),
+      provider = provider,
+      expectedFileCount = expectedFileCount,
+      fileUnderTest = fileUnderTest,
+      fileSnapshot = fileSnapshot
+    )
+  }
+
+  fun verifyGeneratedCode(
     source: SourceFile,
     provider: SymbolProcessorProvider,
     expectedFileCount: Int,
@@ -66,6 +82,21 @@ object TestUtils {
     result.kspGeneratedSources shouldHaveSize expectedFileCount
     result.getFileContents(fileUnderTest) shouldBe getFileSnapshot(fileSnapshot)
   }
+
+  fun verifyGeneratedCode(
+    source: String,
+    provider: SymbolProcessorProvider,
+    expectedFileCount: Int,
+    filesUnderTest: Map<String, String>
+  ) {
+    verifyGeneratedCode(
+      source = SourceFile.kotlin("Spec.kt", getFileSnapshot(source)),
+      provider = provider,
+      expectedFileCount = expectedFileCount,
+      filesUnderTest = filesUnderTest
+    )
+  }
+
 
   fun verifyGeneratedCode(
     source: SourceFile,

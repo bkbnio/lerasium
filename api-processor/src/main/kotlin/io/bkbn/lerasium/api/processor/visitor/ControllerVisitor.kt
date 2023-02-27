@@ -1,4 +1,3 @@
-
 package io.bkbn.lerasium.api.processor.visitor
 
 import com.google.devtools.ksp.KspExperimental
@@ -22,14 +21,16 @@ import io.bkbn.lerasium.api.processor.Members.callMember
 import io.bkbn.lerasium.api.processor.Members.deleteMember
 import io.bkbn.lerasium.api.processor.Members.getMember
 import io.bkbn.lerasium.api.processor.Members.postMember
+import io.bkbn.lerasium.api.processor.Members.principalMember
 import io.bkbn.lerasium.api.processor.Members.putMember
 import io.bkbn.lerasium.api.processor.Members.receiveMember
 import io.bkbn.lerasium.api.processor.Members.respondMember
 import io.bkbn.lerasium.api.processor.Members.routeMember
+import io.bkbn.lerasium.api.processor.Members.toRequestContextMember
 import io.bkbn.lerasium.api.processor.authSlug
-import io.bkbn.lerasium.api.processor.hasQueries
 import io.bkbn.lerasium.core.Relation
 import io.bkbn.lerasium.core.model.LoginRequest
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addCodeBlock
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.KotlinPoetUtils.toApiDocumentationClass
@@ -39,6 +40,7 @@ import io.bkbn.lerasium.utils.StringUtils.capitalized
 import io.bkbn.lerasium.utils.StringUtils.decapitalized
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.routing.Route
 import java.util.Locale
 import java.util.UUID
@@ -152,13 +154,14 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun CodeBlock.Builder.addCreateRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", postMember) {
+        addContextCall()
         addStatement(
           "val request = %M.%M<%T>()",
           callMember,
           receiveMember,
           charter.apiCreateRequestClass
         )
-        addStatement("val result = %T.create(request)", charter.apiServiceClass)
+        addStatement("val result = %T.create(context, request)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
@@ -167,8 +170,9 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun CodeBlock.Builder.addReadRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", getMember) {
+        addContextCall()
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("val result = %T.read(id)", charter.apiServiceClass)
+        addStatement("val result = %T.read(context, id)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
@@ -177,9 +181,10 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun CodeBlock.Builder.addUpdateRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", putMember) {
+        addContextCall()
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
         addStatement("val request = %M.%M<%T>()", callMember, receiveMember, charter.apiUpdateRequestClass)
-        addStatement("val result = %T.update(id, request)", charter.apiServiceClass)
+        addStatement("val result = %T.update(context, id, request)", charter.apiServiceClass)
         addStatement("%M.%M(result)", callMember, respondMember)
       }
     }.build())
@@ -188,8 +193,9 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun CodeBlock.Builder.addDeleteRoute(charter: LerasiumCharter) {
     add(CodeBlock.builder().apply {
       addControlFlow("%M", deleteMember) {
+        addContextCall()
         addStatement("val id = %T.fromString(%M.parameters[%S])", UUID::class, callMember, "id")
-        addStatement("%T.delete(id)", charter.apiServiceClass)
+        addStatement("%T.delete(context, id)", charter.apiServiceClass)
         addStatement("%M.%M(%T.NoContent)", callMember, respondMember, HttpStatusCode::class)
       }
     }.build())
@@ -252,4 +258,15 @@ class ControllerVisitor(private val fileBuilder: FileSpec.Builder, private val l
 
   private fun LerasiumCharter.documentationMemberName(methodName: String) =
     MemberName(domain.toApiDocumentationClass(), methodName)
+
+  private fun CodeBlock.Builder.addContextCall() {
+    addStatement(
+      "val context = %M.%M<%T>()?.%M() ?: %T",
+      callMember,
+      principalMember,
+      JWTPrincipal::class,
+      toRequestContextMember,
+      AnonymousRequestContext::class
+    )
+  }
 }

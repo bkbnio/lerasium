@@ -3,10 +3,6 @@ package io.bkbn.lerasium.api.processor
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
-import io.bkbn.lerasium.api.processor.Specs.minimalSpec
-import io.bkbn.lerasium.api.processor.Specs.simpleSpecWithActor
-import io.bkbn.lerasium.api.processor.Specs.simpleSpecWithQuery
-import io.bkbn.lerasium.api.processor.Specs.simpleSpecWithRelation
 import io.bkbn.lerasium.utils.TestUtils.verifyGeneratedCode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -72,38 +68,38 @@ class ControllerVisitorTest : DescribeSpec({
   describe("Controller Generation") {
     it("Can build an API with simple CRUD functionality") {
       verifyGeneratedCode(
-        source = minimalSpec,
+        source = "spec/001__spec_with_single_field.txt",
         provider = KtorProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserController.kt",
-        fileSnapshot = "T003__controller_simple_crud.txt",
+        fileSnapshot = "snapshot/T003__controller_simple_crud.txt",
       )
     }
     xit("Can build a route to access a relational member") {
       verifyGeneratedCode(
-        source = simpleSpecWithRelation,
+        source = "spec/002__spec_with_relational_member.txt",
         provider = KtorProcessorProvider(),
         expectedFileCount = 9,
         fileUnderTest = "CountryController.kt",
-        fileSnapshot = "T004__controller_with_relational_member.txt",
+        fileSnapshot = "snapshot/T004__controller_with_relational_member.txt",
       )
     }
     xit("Can build routes for getBy queries") {
       verifyGeneratedCode(
-        source = simpleSpecWithQuery,
+        source = "spec/003__spec_with_get_by_query.txt",
         provider = KtorProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserController.kt",
-        fileSnapshot = "T005__controller_with_get_by_query.txt",
+        fileSnapshot = "snapshot/T005__controller_with_get_by_query.txt",
       )
     }
     it("Can build routes for actor authentication") {
       verifyGeneratedCode(
-        source = simpleSpecWithActor,
+        source = "spec/004__spec_with_actor_auth.txt",
         provider = KtorProcessorProvider(),
         expectedFileCount = 5,
         fileUnderTest = "UserController.kt",
-        fileSnapshot = "T006__controller_with_actor_auth.txt",
+        fileSnapshot = "snapshot/T006__controller_with_actor_auth.txt",
       )
     }
   }

@@ -1,0 +1,14 @@
+package io.bkbn.lerasium.generated.domain
+
+import io.bkbn.lerasium.core.model.DomainProvider
+import java.util.UUID
+import kotlin.String
+import test.Country
+import test.User
+
+public data class UserDomain(
+  public override val firstName: String,
+  public override val lastName: String,
+  public override val email: String,
+  public override val country: DomainProvider<UUID, Country>,
+) : User

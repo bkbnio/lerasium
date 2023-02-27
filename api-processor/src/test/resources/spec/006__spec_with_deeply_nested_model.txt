@@ -1,0 +1,26 @@
+package test
+
+import io.bkbn.lerasium.api.Api
+import io.bkbn.lerasium.core.Domain
+
+@Api
+@Domain("User")
+interface User {
+  val name: String
+  val address: Address
+
+  interface Address {
+    val street: String
+    val city: String
+    val state: State
+
+    interface State {
+      val name: String
+      val country: Country
+
+      interface Country {
+        val name: String
+      }
+    }
+  }
+}

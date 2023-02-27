@@ -1,0 +1,128 @@
+package io.bkbn.lerasium.generated.persistence.repository
+
+import io.bkbn.lerasium.core.auth.CrudAction
+import io.bkbn.lerasium.core.exception.UnauthorizedException
+import io.bkbn.lerasium.core.request.ActorRequestContext
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
+import io.bkbn.lerasium.core.request.RequestContext
+import io.bkbn.lerasium.generated.api.models.RepositoryModels.Create
+import io.bkbn.lerasium.generated.api.models.RepositoryModels.Update
+import io.bkbn.lerasium.generated.domain.RepositoryDomain
+import io.bkbn.lerasium.generated.persistence.config.PostgresConfig
+import io.bkbn.lerasium.generated.persistence.table.RepositoryTable
+import io.bkbn.lerasium.generated.persistence.table._RepositoryTable
+import io.bkbn.lerasium.generated.persistence.table.organizationRole
+import io.bkbn.lerasium.generated.persistence.table.repository
+import io.bkbn.lerasium.generated.persistence.table.user
+import io.bkbn.lerasium.generated.policy.Actor
+import java.util.UUID
+import kotlin.Unit
+import org.komapper.core.dsl.Meta
+import org.komapper.core.dsl.QueryDsl
+import org.komapper.core.dsl.query.andThen
+import org.komapper.core.dsl.query.single
+import org.komapper.r2dbc.R2dbcDatabase
+import test.Repository
+
+public object RepositoryRepository {
+  private val db: R2dbcDatabase = PostgresConfig.database
+
+  private val resource: _RepositoryTable = Meta.repository
+
+  public suspend fun create(context: RequestContext, request: Create): RepositoryDomain =
+      db.withTransaction {
+    val result = db.runQuery {
+      QueryDsl.insert(resource).single(
+        RepositoryTable(
+          name = request.name,
+          organization = request.organization,
+        )
+      )
+    }
+    policyEnforcement(context, result.id, CrudAction.READ)
+    result.to()
+  }
+
+  public suspend fun read(context: RequestContext, id: UUID): RepositoryDomain =
+      db.withTransaction {
+    policyEnforcement(context, id, CrudAction.READ)
+    val result = db.runQuery {
+      val query = QueryDsl.from(resource).where {
+        resource.id eq id
+      }
+      query.single()
+    }
+    result.to()
+  }
+
+  public suspend fun update(
+    context: RequestContext,
+    id: UUID,
+    request: Update,
+  ): RepositoryDomain = db.withTransaction {
+    policyEnforcement(context, id, CrudAction.UPDATE)
+    val result = db.runQuery {
+      QueryDsl.update(resource)
+        .set {
+          request.name?.let { v -> it.name to v }
+          request.organization?.let { v -> it.organization to v }
+        }
+        .where {
+          resource.id eq id
+        }
+        .andThen(QueryDsl.from(resource).where { resource.id eq id }.single())
+    }
+    result.to()
+  }
+
+  public suspend fun delete(context: RequestContext, id: UUID) = db.withTransaction {
+    policyEnforcement(context, id, CrudAction.DELETE)
+    db.runQuery {
+      QueryDsl.delete(resource).where { resource.id eq id }
+    }
+  }
+
+  private suspend fun policyEnforcement(
+    context: RequestContext,
+    resource: UUID,
+    action: CrudAction,
+  ): Unit {
+    when (context) {
+      is AnonymousRequestContext -> {}
+      is ActorRequestContext<*> -> when (context.actor) {
+        Actor.USER -> userOrgRbacEnforcement(context, resource, action)
+      }
+    }
+  }
+
+  private suspend fun userOrgRbacEnforcement(
+    context: ActorRequestContext<*>,
+    resourceId: UUID,
+    action: CrudAction,
+  ): Unit {
+    val actorMeta = Meta.user
+    val roleMeta = Meta.organizationRole
+    val authorization = db.runQuery {
+      QueryDsl.from(actorMeta)
+      .where {
+        actorMeta.id eq context.actorId
+      }
+      .innerJoin(roleMeta) {
+        roleMeta.user eq actorMeta.id
+      }
+      .innerJoin(resource) {
+        resource.organization eq roleMeta.organization
+      }
+      .where {
+        resource.id eq resourceId
+      }
+      .include(resource, actorMeta, roleMeta)
+    }
+    val actor = authorization[actorMeta].single().to()
+    val role = authorization[roleMeta].single().to()
+    val entity = authorization[resource].single().to()
+    if(!Repository.userOrgRbac.policy.enforce(actor, action, role.role, entity)) {
+      throw UnauthorizedException("Actor is not authorized to perform this action")
+    }
+  }
+}

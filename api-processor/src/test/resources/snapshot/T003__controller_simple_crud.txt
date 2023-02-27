@@ -1,0 +1,67 @@
+package io.bkbn.lerasium.generated.api.controller
+
+import io.bkbn.lerasium.api.util.RequestContextUtils.toContext
+import io.bkbn.lerasium.core.request.AnonymousRequestContext
+import io.bkbn.lerasium.generated.api.docs.UserDocumentation.idDocumentation
+import io.bkbn.lerasium.generated.api.docs.UserDocumentation.rootDocumentation
+import io.bkbn.lerasium.generated.api.models.UserModels.Create
+import io.bkbn.lerasium.generated.api.models.UserModels.Update
+import io.bkbn.lerasium.generated.api.service.UserService
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.`get`
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.route
+import java.util.UUID
+import kotlin.Unit
+
+public object UserController {
+  public fun Route.userHandler(): Unit {
+    route("/user") {
+      rootRoute()
+      idRoute()
+    }
+  }
+
+  private fun Route.rootRoute(): Unit {
+    rootDocumentation()
+    post {
+      val context = call.principal<JWTPrincipal>()?.toContext() ?: AnonymousRequestContext
+      val request = call.receive<Create>()
+      val result = UserService.create(context, request)
+      call.respond(result)
+    }
+  }
+
+  private fun Route.idRoute(): Unit {
+    route("/{id}") {
+      idDocumentation()
+      `get` {
+        val context = call.principal<JWTPrincipal>()?.toContext() ?: AnonymousRequestContext
+        val id = UUID.fromString(call.parameters["id"])
+        val result = UserService.read(context, id)
+        call.respond(result)
+      }
+      put {
+        val context = call.principal<JWTPrincipal>()?.toContext() ?: AnonymousRequestContext
+        val id = UUID.fromString(call.parameters["id"])
+        val request = call.receive<Update>()
+        val result = UserService.update(context, id, request)
+        call.respond(result)
+      }
+      delete {
+        val context = call.principal<JWTPrincipal>()?.toContext() ?: AnonymousRequestContext
+        val id = UUID.fromString(call.parameters["id"])
+        UserService.delete(context, id)
+        call.respond(HttpStatusCode.NoContent)
+      }
+    }
+  }
+}

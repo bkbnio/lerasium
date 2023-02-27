@@ -1,0 +1,21 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.core.Sensitive
+import io.bkbn.lerasium.core.Relation
+import io.bkbn.lerasium.core.model.DomainProvider
+import java.util.UUID
+
+@Domain("Country")
+interface Country {
+  val name: String
+}
+
+@Domain("User")
+interface User {
+  val firstName: String
+  val lastName: String
+  val email: String
+  @Relation
+  val country: DomainProvider<UUID, Country>
+}

@@ -10,6 +10,8 @@ complexity:
   LargeClass:
     excludes: ['**/test/**/*']
 style:
+  DestructuringDeclarationWithTooManyEntries:
+    active: false
   MaxLineLength:
     excludes: ['**/test/**/*']
     active: true

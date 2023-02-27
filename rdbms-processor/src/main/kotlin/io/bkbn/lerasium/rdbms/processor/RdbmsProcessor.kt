@@ -14,14 +14,17 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.bkbn.lerasium.rdbms.Table
-import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
 import io.bkbn.lerasium.rdbms.processor.visitor.RepositoryVisitor
+import io.bkbn.lerasium.rdbms.processor.visitor.TableVisitor
 import io.bkbn.lerasium.utils.KotlinPoetUtils.PERSISTENCE_CONFIG_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.REPOSITORY_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.TABLE_PACKAGE_NAME
 import io.bkbn.lerasium.utils.KotlinPoetUtils.addControlFlow
 import io.bkbn.lerasium.utils.LerasiumUtils.getDomain
+import io.r2dbc.spi.ConnectionFactories
+import io.r2dbc.spi.ConnectionFactoryOptions
 import org.flywaydb.core.Flyway
+import org.komapper.dialect.postgresql.r2dbc.PostgreSqlR2dbcDialect
 import org.komapper.r2dbc.R2dbcDatabase
 
 class RdbmsProcessor(
@@ -29,6 +32,10 @@ class RdbmsProcessor(
   private val logger: KSPLogger,
   options: Map<String, String>
 ) : SymbolProcessor {
+
+  companion object {
+    private const val POSTGRES_PORT = 5432
+  }
 
   init {
     logger.info(options.toString())
@@ -105,7 +112,22 @@ class RdbmsProcessor(
       addProperty(PropertySpec.builder("database", R2dbcDatabase::class).apply {
         delegate(CodeBlock.builder().apply {
           addControlFlow("lazy") {
-            addStatement("%T(%L)", R2dbcDatabase::class, "ASYNC_CONNECTION_URI")
+            addControlFlow("val connectionFactoryOptionBuilder = %T.builder().apply", ConnectionFactoryOptions::class) {
+              addStatement("option(%T.DRIVER, %S)", ConnectionFactoryOptions::class, "pool")
+              addStatement("option(%T.PROTOCOL, %S)", ConnectionFactoryOptions::class, "postgresql")
+              addStatement("option(%T.HOST, %S)", ConnectionFactoryOptions::class, "localhost")
+              addStatement("option(%T.PORT, %L)", ConnectionFactoryOptions::class, POSTGRES_PORT)
+              addStatement("option(%T.USER, %S)", ConnectionFactoryOptions::class, "test_user")
+              addStatement("option(%T.PASSWORD, %S)", ConnectionFactoryOptions::class, "test_password")
+              addStatement("option(%T.DATABASE, %S)", ConnectionFactoryOptions::class, "test_db")
+            }
+            addStatement("val connectionFactoryOptions = connectionFactoryOptionBuilder.build()")
+            addStatement("val pooledConnectionFactory = %T.get(connectionFactoryOptions)", ConnectionFactories::class)
+            addStatement(
+              "%T(connectionFactory = pooledConnectionFactory, dialect = %T())",
+              R2dbcDatabase::class,
+              PostgreSqlR2dbcDialect::class
+            )
           }
         }.build())
       }.build())

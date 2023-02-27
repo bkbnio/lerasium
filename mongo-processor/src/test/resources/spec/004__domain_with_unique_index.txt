@@ -1,0 +1,12 @@
+package test
+
+import io.bkbn.lerasium.core.Domain
+import io.bkbn.lerasium.mongo.Document
+import io.bkbn.lerasium.persistence.Index
+
+@Document
+@Domain("User")
+interface User {
+  @Index(unique = true)
+  val name: String
+}

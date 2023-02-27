@@ -7,47 +7,47 @@ class RepositoryVisitorTest : DescribeSpec({
   describe("KMongo Repository Visitor Tests") {
     it("Can generate a simple repository") {
       verifyGeneratedCode(
-        source = Specs.domainWithDocument,
+        source = "spec/001__domain_with_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserRepository.kt",
-        fileSnapshot = "T004__repository_simple.txt",
+        fileSnapshot = "snapshot/001__repository_simple.txt",
       )
     }
     it("Can generate a repository for a nested document") {
       verifyGeneratedCode(
-        source = Specs.domainWithNestedDocument,
+        source = "spec/002__domain_with_nested_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserRepository.kt",
-        fileSnapshot = "T005__repository_nested.txt",
+        fileSnapshot = "snapshot/002__repository_nested.txt",
       )
     }
     it("Can generate a repository for a deeply nested document") {
       verifyGeneratedCode(
-        source = Specs.domainWithDeeplyNestedDocument,
+        source = "spec/003__domain_with_deeply_nested_document.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserRepository.kt",
-        fileSnapshot = "T006__repository_deeply_nested.txt",
+        fileSnapshot = "snapshot/003__repository_deeply_nested.txt",
       )
     }
     it("Can generate a repository with a unique index") {
       verifyGeneratedCode(
-        source = Specs.domainWithUniqueIndex,
+        source = "spec/004__domain_with_unique_index.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserRepository.kt",
-        fileSnapshot = "T007__repository_unique_index.txt",
+        fileSnapshot = "snapshot/004__repository_unique_index.txt",
       )
     }
     it("Can generate a repository with a composite index") {
       verifyGeneratedCode(
-        source = Specs.domainWithCompositeIndex,
+        source = "spec/005__domain_with_composite_index.txt",
         provider = KMongoProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "UserRepository.kt",
-        fileSnapshot = "T008__repository_composite_index.txt",
+        fileSnapshot = "snapshot/005__repository_composite_index.txt",
       )
     }
   }

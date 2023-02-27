@@ -19,6 +19,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
+import io.bkbn.lerasium.core.request.RequestContext
 import io.bkbn.lerasium.persistence.CompositeIndex
 import io.bkbn.lerasium.persistence.Index
 import io.bkbn.lerasium.utils.KotlinPoetUtils.PERSISTENCE_CONFIG_PACKAGE_NAME
@@ -123,6 +124,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("create").apply {
       returns(charter.domainClass)
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("request", charter.apiCreateRequestClass)
       addCodeBlock {
         addStatement("val now = %T.now().%M(%T.UTC)", Clock.System::class, toLDT, TimeZone::class)
@@ -177,6 +179,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("read").apply {
       addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addStatement("val document = collection.findOneById(id) ?: error(%P)", "Unable to get entity with id: \$id")
       addStatement("return document.to()")
@@ -193,6 +196,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
     addFunction(FunSpec.builder("update").apply {
       addModifiers(KModifier.SUSPEND)
       returns(charter.domainClass)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addParameter("request", charter.apiUpdateRequestClass)
       addCodeBlock {
@@ -245,6 +249,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun TypeSpec.Builder.addDeleteFunction() {
     addFunction(FunSpec.builder("delete").apply {
       addModifiers(KModifier.SUSPEND)
+      addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addStatement("collection.deleteOneById(id)")
     }.build())

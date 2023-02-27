@@ -7,11 +7,11 @@ class ConfigFileTest : DescribeSpec({
   describe("Config File") {
     it("Can create a config file") {
       verifyGeneratedCode(
-        source = Specs.domainWithBasicTypes,
+        source = "spec/001__spec_simple_types.txt",
         provider = RdbmsProcessorProvider(),
         expectedFileCount = 3,
         fileUnderTest = "PostgresConfig.kt",
-        fileSnapshot = "T020__config_file.txt",
+        fileSnapshot = "snapshot/T020__config_file.txt",
       )
     }
   }
