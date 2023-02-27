@@ -33,6 +33,10 @@ class RdbmsProcessor(
   options: Map<String, String>
 ) : SymbolProcessor {
 
+  companion object {
+    private const val POSTGRES_PORT = 5432
+  }
+
   init {
     logger.info(options.toString())
   }
@@ -112,7 +116,7 @@ class RdbmsProcessor(
               addStatement("option(%T.DRIVER, %S)", ConnectionFactoryOptions::class, "pool")
               addStatement("option(%T.PROTOCOL, %S)", ConnectionFactoryOptions::class, "postgresql")
               addStatement("option(%T.HOST, %S)", ConnectionFactoryOptions::class, "localhost")
-              addStatement("option(%T.PORT, %L)", ConnectionFactoryOptions::class, 5432)
+              addStatement("option(%T.PORT, %L)", ConnectionFactoryOptions::class, POSTGRES_PORT)
               addStatement("option(%T.USER, %S)", ConnectionFactoryOptions::class, "test_user")
               addStatement("option(%T.PASSWORD, %S)", ConnectionFactoryOptions::class, "test_password")
               addStatement("option(%T.DATABASE, %S)", ConnectionFactoryOptions::class, "test_db")

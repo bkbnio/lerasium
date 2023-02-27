@@ -364,8 +364,9 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
   private fun KSTypeArgument.findMatchingProperty(typeArg: KSTypeArgument) = findMatchingPropertyOrNull(typeArg)
     ?: error("Could not find matching property for type argument ${typeArg.type}")
 
-  private fun KSTypeArgument.findMatchingDomainProperty(typeArg: KSTypeArgument) = findMatchingDomainPropertyOrNull(typeArg)
-    ?: error("Could not find matching property for type argument ${typeArg.type}")
+  private fun KSTypeArgument.findMatchingDomainProperty(typeArg: KSTypeArgument) =
+    findMatchingDomainPropertyOrNull(typeArg)
+      ?: error("Could not find matching property for type argument ${typeArg.type}")
 
   private fun KSTypeArgument.findMatchingPropertyOrNull(typeArg: KSTypeArgument) = this.toClassDeclaration()
     .getAllProperties()

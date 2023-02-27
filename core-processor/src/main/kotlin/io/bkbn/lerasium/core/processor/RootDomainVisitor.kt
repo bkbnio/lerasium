@@ -114,16 +114,4 @@ class RootDomainVisitor(private val fileBuilder: FileSpec.Builder, private val l
       }.build()
     }.forEach { addProperty(it) }
   }
-
-  private fun KSPropertyDeclaration.getDomainOrNull() = if (type.isCollection()) {
-    type.getCollectionType().getDomainOrNull()
-  } else {
-    type.getDomainOrNull()
-  }
-
-  private fun KSPropertyDeclaration.getDomainType() = if (type.isCollection()) {
-    List::class.asTypeName().parameterizedBy(type.getCollectionType().toTypeName())
-  } else {
-    type.toTypeName()
-  }
 }
