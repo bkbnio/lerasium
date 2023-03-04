@@ -31,16 +31,16 @@ Then add the lerasium dependencies to your dependencies block
 dependencies {
   // ...
   // Core Annotations + Processor
-  ksp("io.bkbn:lerasium-core-processor:0.5.0")
-  implementation("io.bkbn:lerasium-core:0.5.0")
+  ksp("io.bkbn:lerasium-core-processor:latest.release")
+  implementation("io.bkbn:lerasium-core:latest.release")
 
   // Relational Database Annotations + Processor
-  ksp("io.bkbn:lerasium-rdbms-processor:0.5.0")
-  implementation("io.bkbn:lerasium-rdbms:0.5.0")
+  ksp("io.bkbn:lerasium-rdbms-processor:latest.release")
+  implementation("io.bkbn:lerasium-rdbms:latest.release")
 
   // REST API Annotations + Processor
-  ksp("io.bkbn:lerasium-api-processor:0.5.0")
-  implementation("io.bkbn:lerasium-api:0.5.0")
+  ksp("io.bkbn:lerasium-api-processor:latest.release")
+  implementation("io.bkbn:lerasium-api:latest.release")
 }
 ```
 
