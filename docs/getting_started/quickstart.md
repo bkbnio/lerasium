@@ -43,3 +43,12 @@ dependencies {
   implementation("io.bkbn:lerasium-api:0.5.0")
 }
 ```
+
+# Creating your first domain
+
+Inside your source package, create a new file called `User.kt` and add the following code:
+
+```kotlin
+@Domain
+interface User {
+  val 
