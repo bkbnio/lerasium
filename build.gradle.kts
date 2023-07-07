@@ -6,7 +6,7 @@ plugins {
   kotlin("plugin.serialization") version "1.8.22" apply false
   id("io.bkbn.sourdough.library.jvm") version "0.12.0" apply false
   id("io.bkbn.sourdough.application.jvm") version "0.12.0" apply false
-  id("com.google.devtools.ksp") version "1.8.22-1.0.11" apply false
+  id("com.google.devtools.ksp") version "1.9.0-1.0.11" apply false
   id("io.bkbn.sourdough.root") version "0.12.0"
   id("com.github.jakemarsden.git-hooks") version "0.0.2"
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
