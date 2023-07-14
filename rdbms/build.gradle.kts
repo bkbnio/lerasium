@@ -39,5 +39,5 @@ dependencies {
   // Database
   api("org.flywaydb:flyway-core:$flywayVersion")
   api("org.postgresql:postgresql:$postgresVersion")
-  api("io.r2dbc:r2dbc-pool:1.0.0.RELEASE")
+  api("io.r2dbc:r2dbc-pool:1.0.1.RELEASE")
 }
