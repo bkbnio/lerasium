@@ -10,6 +10,10 @@
     {
       "matchPackagePatterns": ["ktor"],
       "groupName": "ktor"
+    },
+    {
+      "matchPackagePatters": ["sourdough"],
+      "groupName": "sourdough"
     }
   ]
 }
