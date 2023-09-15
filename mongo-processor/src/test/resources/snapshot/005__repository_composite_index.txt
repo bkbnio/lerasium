@@ -7,7 +7,6 @@ import io.bkbn.lerasium.generated.domain.UserDomain
 import io.bkbn.lerasium.generated.persistence.config.MongoConfig
 import io.bkbn.lerasium.generated.persistence.document.UserDocument
 import java.util.UUID
-import kotlin.Unit
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -60,7 +59,7 @@ public object UserRepository {
     return document.to()
   }
 
-  public suspend fun delete(context: RequestContext, id: UUID): Unit {
+  public suspend fun delete(context: RequestContext, id: UUID) {
     collection.deleteOneById(id)
   }
 }

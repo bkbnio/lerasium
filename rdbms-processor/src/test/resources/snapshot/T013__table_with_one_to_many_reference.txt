@@ -17,18 +17,18 @@ import org.komapper.`annotation`.KomapperVersion
 @KomapperEntity(aliases = ["user"])
 @KomapperTable(name = "user")
 public data class UserTable(
-  public val name: String,
-  public val country: UUID,
+  val name: String,
+  val country: UUID,
   @KomapperId
-  public val id: UUID = UUID.randomUUID(),
+  val id: UUID = UUID.randomUUID(),
   @KomapperVersion
-  public val version: Int = 0,
+  val version: Int = 0,
   @KomapperCreatedAt
-  public val createdAt: LocalDateTime? = null,
+  val createdAt: LocalDateTime? = null,
   @KomapperUpdatedAt
-  public val updatedAt: LocalDateTime? = null,
+  val updatedAt: LocalDateTime? = null,
 ) : ConvertTo<UserDomain> {
-  public override suspend fun to(): UserDomain = UserDomain(
+  override suspend fun to(): UserDomain = UserDomain(
     name = name,
     country = CountryRepository.read(country),
   )

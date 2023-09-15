@@ -12,7 +12,6 @@ import io.bkbn.lerasium.generated.persistence.table.CountryTable
 import io.bkbn.lerasium.generated.persistence.table._CountryTable
 import io.bkbn.lerasium.generated.persistence.table.country
 import java.util.UUID
-import kotlin.Unit
 import org.komapper.core.dsl.Meta
 import org.komapper.core.dsl.QueryDsl
 import org.komapper.core.dsl.query.andThen
@@ -67,10 +66,12 @@ public object CountryRepository {
     result.to()
   }
 
-  public suspend fun delete(context: RequestContext, id: UUID) = db.withTransaction {
-    policyEnforcement(context, id, CrudAction.DELETE)
-    db.runQuery {
-      QueryDsl.delete(resource).where { resource.id eq id }
+  public suspend fun delete(context: RequestContext, id: UUID) {
+    db.withTransaction {
+      policyEnforcement(context, id, CrudAction.DELETE)
+      db.runQuery {
+        QueryDsl.delete(resource).where { resource.id eq id }
+      }
     }
   }
 
@@ -78,7 +79,7 @@ public object CountryRepository {
     context: RequestContext,
     resource: UUID,
     action: CrudAction,
-  ): Unit {
+  ) {
     // No policies were identified for resource, block will be empty
     when (context) {
       is AnonymousRequestContext -> {}

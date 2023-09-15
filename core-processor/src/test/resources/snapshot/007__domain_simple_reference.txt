@@ -7,8 +7,8 @@ import test.Country
 import test.User
 
 public data class UserDomain(
-  public override val firstName: String,
-  public override val lastName: String,
-  public override val email: String,
-  public override val country: DomainProvider<UUID, Country>,
+  override val firstName: String,
+  override val lastName: String,
+  override val email: String,
+  override val country: DomainProvider<UUID, Country>,
 ) : User

@@ -13,10 +13,9 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respond
-import kotlin.Unit
 import kotlinx.serialization.json.Json
 
-public fun Application.lerasiumConfig(): Unit {
+public fun Application.lerasiumConfig() {
   val json = Json {
     serializersModule = KompendiumSerializersModule.module
     prettyPrint = true
@@ -31,7 +30,7 @@ public fun Application.lerasiumConfig(): Unit {
   }
 }
 
-private fun AuthenticationConfig.userAuthConfig(): Unit {
+private fun AuthenticationConfig.userAuthConfig() {
   val verifierBuilder = JWT.require(HMAC256("secret")).apply {
     withAudience("http://0.0.0.0:8080/hello")
     withIssuer("http://0.0.0.0:8080/")

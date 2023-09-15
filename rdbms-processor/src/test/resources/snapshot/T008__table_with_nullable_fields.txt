@@ -35,7 +35,7 @@ public data class LettersTable(
   @KomapperUpdatedAt
   public val updatedAt: Instant? = null,
 ) : ConvertTo<LettersDomain> {
-  public override suspend fun to(): LettersDomain = LettersDomain(
+  override suspend fun to(): LettersDomain = LettersDomain(
     s = s,
     i = i,
     l = l,

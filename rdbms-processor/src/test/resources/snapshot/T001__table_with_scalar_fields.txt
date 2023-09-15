@@ -33,7 +33,7 @@ public data class UserTable(
   @KomapperUpdatedAt
   public val updatedAt: Instant? = null,
 ) : ConvertTo<UserDomain> {
-  public override suspend fun to(): UserDomain = UserDomain(
+  override suspend fun to(): UserDomain = UserDomain(
     name = name,
     count = count,
     isFact = isFact,

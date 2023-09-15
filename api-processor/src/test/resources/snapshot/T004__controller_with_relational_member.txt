@@ -17,11 +17,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import java.util.UUID
-import kotlin.Unit
 import kotlin.collections.List
 
 public object CountryController {
-  public fun Route.countryHandler(dao: CountryDao): Unit {
+  fun Route.countryHandler(dao: CountryDao): Unit {
     route("/country") {
       rootRoute(dao)
       idRoute(dao)

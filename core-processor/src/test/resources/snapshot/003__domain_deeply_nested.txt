@@ -4,16 +4,16 @@ import kotlin.String
 import test.User
 
 public data class UserDomain(
-  public override val email: String,
-  public override val metadata: User.UserMetadata,
+  override val email: String,
+  override val metadata: User.UserMetadata,
 ) : User {
   public data class UserMetadata(
-    public override val firstName: String,
-    public override val lastName: String,
-    public override val otherStuffs: test.User.UserMetadata.OhBoiWeDeepInItNow,
+    override val firstName: String,
+    override val lastName: String,
+    override val otherStuffs: test.User.UserMetadata.OhBoiWeDeepInItNow,
   ) : User.UserMetadata {
     public data class OhBoiWeDeepInItNow(
-      public override val otherInfo: String,
+      override val otherInfo: String,
     ) : User.UserMetadata.OhBoiWeDeepInItNow
   }
 }

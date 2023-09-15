@@ -18,7 +18,7 @@ public data class UserDocument(
   public val createdAt: LocalDateTime,
   public var updatedAt: LocalDateTime,
 ) : ConvertTo<UserDomain> {
-  public override suspend fun to(): UserDomain = UserDomain(
+  override suspend fun to(): UserDomain = UserDomain(
     id = id,
     name = name,
   )

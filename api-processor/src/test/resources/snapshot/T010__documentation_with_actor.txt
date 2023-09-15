@@ -16,7 +16,7 @@ import io.ktor.server.routing.Route
 import kotlin.Unit
 
 public object UserDocumentation {
-  internal fun Route.rootDocumentation(): Unit {
+  internal fun Route.rootDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       post = PostInfo.builder {
@@ -35,7 +35,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.idDocumentation(): Unit {
+  internal fun Route.idDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       parameters = idParameter()
@@ -73,7 +73,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.loginDocumentation(): Unit {
+  internal fun Route.loginDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       post = PostInfo.builder {
@@ -92,7 +92,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.authValidationDocumentation(): Unit {
+  internal fun Route.authValidationDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       get = GetInfo.builder {

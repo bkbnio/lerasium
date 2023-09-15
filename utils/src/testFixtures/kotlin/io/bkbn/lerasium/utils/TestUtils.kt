@@ -12,7 +12,8 @@ import org.intellij.lang.annotations.Language
 import java.io.File
 
 object TestUtils {
-  const val errorMessage = "\"\"Unable to get entity with id: \$id\"\""
+  // ⚠️ This should only be flipped on if you are trying to update the snapshots
+  private const val OVERWRITE_SNAPSHOTS = false
 
   private val KotlinCompilation.Result.workingDir: File
     get() =
@@ -76,6 +77,7 @@ object TestUtils {
 
     // act
     val result = compilation.compile()
+    if (OVERWRITE_SNAPSHOTS) overwriteSnapshot(result.getFileContents(fileUnderTest), fileSnapshot)
 
     // assert
     result shouldNotBe null
@@ -113,6 +115,7 @@ object TestUtils {
 
     // act
     val result = compilation.compile()
+    if (OVERWRITE_SNAPSHOTS) filesUnderTest.forEach { (fut, fs) -> overwriteSnapshot(result.getFileContents(fut), fs) }
 
     // assert
     result shouldNotBe null
@@ -122,5 +125,11 @@ object TestUtils {
         result.getFileContents(fileUnderTest) shouldBe getFileSnapshot(fileSnapshot)
       }
     }
+  }
+
+  private fun overwriteSnapshot(fileUnderTest: String, fileSnapshot: String) {
+    val snapshotPath = "src/test/resources"
+    val file = File("$snapshotPath/$fileSnapshot")
+    file.writeText(fileUnderTest)
   }
 }

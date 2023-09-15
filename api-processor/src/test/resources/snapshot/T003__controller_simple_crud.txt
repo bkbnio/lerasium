@@ -20,17 +20,16 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import java.util.UUID
-import kotlin.Unit
 
 public object UserController {
-  public fun Route.userHandler(): Unit {
+  public fun Route.userHandler() {
     route("/user") {
       rootRoute()
       idRoute()
     }
   }
 
-  private fun Route.rootRoute(): Unit {
+  private fun Route.rootRoute() {
     rootDocumentation()
     post {
       val context = call.principal<JWTPrincipal>()?.toContext() ?: AnonymousRequestContext
@@ -40,7 +39,7 @@ public object UserController {
     }
   }
 
-  private fun Route.idRoute(): Unit {
+  private fun Route.idRoute() {
     route("/{id}") {
       idDocumentation()
       `get` {

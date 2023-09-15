@@ -4,8 +4,8 @@ import kotlin.String
 import test.User
 
 public data class UserDomain(
-  public override val firstName: String,
-  public override val lastName: String,
-  public override val email: String,
-  public override val password: String,
+  override val firstName: String,
+  override val lastName: String,
+  override val email: String,
+  override val password: String,
 ) : User

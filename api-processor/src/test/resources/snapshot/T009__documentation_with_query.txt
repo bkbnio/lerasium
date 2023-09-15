@@ -17,7 +17,7 @@ import kotlin.Unit
 import kotlin.collections.List
 
 public object UserDocumentation {
-  internal fun Route.rootDocumentation(): Unit {
+  internal fun Route.rootDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       post = PostInfo.builder {
@@ -36,7 +36,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.idDocumentation(): Unit {
+  internal fun Route.idDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       parameters = idParameter()
@@ -74,7 +74,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.emailQueryDocumentation(): Unit {
+  internal fun Route.emailQueryDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       get = GetInfo.builder {
@@ -93,7 +93,7 @@ public object UserDocumentation {
     }
   }
 
-  internal fun Route.firstNameQueryDocumentation(): Unit {
+  internal fun Route.firstNameQueryDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("User")
       get = GetInfo.builder {

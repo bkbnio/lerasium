@@ -17,7 +17,7 @@ import kotlin.Unit
 import kotlin.collections.List
 
 public object CountryDocumentation {
-  internal fun Route.rootDocumentation(): Unit {
+  internal fun Route.rootDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("Country")
       post = PostInfo.builder {
@@ -36,7 +36,7 @@ public object CountryDocumentation {
     }
   }
 
-  internal fun Route.idDocumentation(): Unit {
+  internal fun Route.idDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("Country")
       parameters = idParameter()
@@ -74,7 +74,7 @@ public object CountryDocumentation {
     }
   }
 
-  internal fun Route.usersRelationDocumentation(): Unit {
+  internal fun Route.usersRelationDocumentation() {
     install(NotarizedRoute()) {
       tags = setOf("Country")
       get = GetInfo.builder {

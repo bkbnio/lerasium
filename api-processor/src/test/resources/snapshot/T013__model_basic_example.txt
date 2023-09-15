@@ -22,8 +22,10 @@ public object UserModels {
   public data class Response(
     public val name: String,
   ) : IOResponse {
-    public companion object : ConvertFrom<User, Response> {
-      public override fun from(input: User): Response = Response(
+    public companion object :
+        ConvertFrom<User, io.bkbn.lerasium.generated.api.models.UserModels.Response> {
+      override fun from(input: User): io.bkbn.lerasium.generated.api.models.UserModels.Response =
+          io.bkbn.lerasium.generated.api.models.UserModels.Response(
         name = input.name,
       )
     }
