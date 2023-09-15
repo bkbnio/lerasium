@@ -5,6 +5,7 @@ import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDefNonNullReference
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -253,6 +254,10 @@ class NestedModelVisitor(private val typeBuilder: TypeSpec.Builder, private val 
         }
       }
     }
+  }
+
+  override fun visitDefNonNullReference(reference: KSDefNonNullReference, data: Data) {
+    TODO("Not yet implemented")
   }
 
 }

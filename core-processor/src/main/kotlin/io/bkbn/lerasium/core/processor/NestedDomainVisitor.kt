@@ -4,6 +4,7 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDefNonNullReference
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
@@ -92,5 +93,9 @@ class NestedDomainVisitor(
         .filterNot { data.visitedModels.contains(it.type) }
         .forEach { childDomainVisitor.visitTypeReference(it.type, data) }
     }.build())
+  }
+
+  override fun visitDefNonNullReference(reference: KSDefNonNullReference, data: Data) {
+    TODO("Not yet implemented")
   }
 }
