@@ -6,7 +6,6 @@ import io.bkbn.lerasium.generated.api.models.UserModels.Response
 import io.bkbn.lerasium.generated.api.models.UserModels.Update
 import io.bkbn.lerasium.generated.persistence.repository.UserRepository
 import java.util.UUID
-import kotlin.Unit
 
 public object UserService {
   public suspend fun create(context: RequestContext, request: Create): Response {
@@ -28,7 +27,7 @@ public object UserService {
     return Response.from(result)
   }
 
-  public suspend fun delete(context: RequestContext, id: UUID): Unit {
+  public suspend fun delete(context: RequestContext, id: UUID) {
     UserRepository.delete(context, id)
   }
 }

@@ -8,47 +8,50 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import test.UserInfo
 import test.UserPreferences
-import test.UserStuff
+import io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff.UserInfo as UserStuffUserInfo
+import io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff as UserPreferencesUserStuff
+import test.UserInfo as TestUserInfo
+import test.UserStuff as TestUserStuff
 
 @Serializable
 public data class UserDocument(
   @Contextual
   @SerialName("_id")
   public val id: UUID,
-  public var preferences: UserPreferencesDocument,
+  public var preferences:
+      io.bkbn.lerasium.generated.persistence.document.UserDocument.UserPreferencesDocument,
   public val createdAt: LocalDateTime,
   public var updatedAt: LocalDateTime,
 ) : ConvertTo<UserDomain> {
-  public override suspend fun to(): UserDomain = UserDomain(
+  override suspend fun to(): UserDomain = UserDomain(
     id = id,
     preferences = preferences.to(),
   )
 
   @Serializable
   public data class UserPreferencesDocument(
-    public var stuff: UserStuffDocument,
+    public var stuff:
+        io.bkbn.lerasium.generated.persistence.document.UserDocument.UserPreferencesDocument.UserStuffDocument,
   ) : ConvertTo<UserPreferences> {
-    public override suspend fun to(): UserPreferences = UserDomain.UserPreferences(
+    override suspend fun to(): UserPreferences = UserDomain.UserPreferences(
       stuff = stuff.to(),
     )
 
     @Serializable
     public data class UserStuffDocument(
-      public var info: UserInfoDocument,
-    ) : ConvertTo<UserStuff> {
-      public override suspend fun to(): UserStuff =
-          io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff(
+      public var info:
+          io.bkbn.lerasium.generated.persistence.document.UserDocument.UserPreferencesDocument.UserStuffDocument.UserInfoDocument,
+    ) : ConvertTo<TestUserStuff> {
+      override suspend fun to(): TestUserStuff = UserPreferencesUserStuff(
         info = info.to(),
       )
 
       @Serializable
       public data class UserInfoDocument(
         public var isCool: Boolean,
-      ) : ConvertTo<UserInfo> {
-        public override suspend fun to(): UserInfo =
-            io.bkbn.lerasium.generated.domain.UserDomain.UserPreferences.UserStuff.UserInfo(
+      ) : ConvertTo<TestUserInfo> {
+        override suspend fun to(): TestUserInfo = UserStuffUserInfo(
           isCool = isCool,
         )
       }

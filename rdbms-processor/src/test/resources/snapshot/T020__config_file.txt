@@ -33,7 +33,7 @@ public object PostgresConfig {
       option(ConnectionFactoryOptions.DRIVER, "pool")
       option(ConnectionFactoryOptions.PROTOCOL, "postgresql")
       option(ConnectionFactoryOptions.HOST, "localhost")
-      option(ConnectionFactoryOptions.PORT, 5432)
+      option(ConnectionFactoryOptions.PORT, 5_432)
       option(ConnectionFactoryOptions.USER, "test_user")
       option(ConnectionFactoryOptions.PASSWORD, "test_password")
       option(ConnectionFactoryOptions.DATABASE, "test_db")

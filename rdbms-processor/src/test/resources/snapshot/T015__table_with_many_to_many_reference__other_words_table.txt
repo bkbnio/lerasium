@@ -26,7 +26,7 @@ public data class OtherWordsTable(
   @KomapperUpdatedAt
   public val updatedAt: Instant? = null,
 ) : ConvertTo<OtherWordsDomain> {
-  public override suspend fun to(): OtherWordsDomain = OtherWordsDomain(
+  override suspend fun to(): OtherWordsDomain = OtherWordsDomain(
     wordy = wordy,
   )
 }

@@ -12,7 +12,6 @@ import java.lang.System
 import java.util.Date
 import java.util.UUID
 import kotlin.String
-import kotlin.Unit
 
 public object UserService {
   public suspend fun create(context: RequestContext, request: Create): Response {
@@ -34,7 +33,7 @@ public object UserService {
     return Response.from(result)
   }
 
-  public suspend fun delete(context: RequestContext, id: UUID): Unit {
+  public suspend fun delete(context: RequestContext, id: UUID) {
     UserRepository.delete(context, id)
   }
 

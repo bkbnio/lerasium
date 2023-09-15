@@ -18,11 +18,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import java.util.UUID
-import kotlin.Unit
 import kotlin.collections.List
 
 public object UserController {
-  public fun Route.userHandler(dao: UserDao): Unit {
+  fun Route.userHandler(dao: UserDao): Unit {
     route("/user") {
       rootRoute(dao)
       idRoute(dao)

@@ -12,7 +12,6 @@ import io.bkbn.lerasium.generated.persistence.table.UserTable
 import io.bkbn.lerasium.generated.persistence.table._UserTable
 import io.bkbn.lerasium.generated.persistence.table.user
 import java.util.UUID
-import kotlin.Unit
 import org.komapper.core.dsl.Meta
 import org.komapper.core.dsl.QueryDsl
 import org.komapper.core.dsl.query.andThen
@@ -69,10 +68,12 @@ public object UserRepository {
     result.to()
   }
 
-  public suspend fun delete(context: RequestContext, id: UUID) = db.withTransaction {
-    policyEnforcement(context, id, CrudAction.DELETE)
-    db.runQuery {
-      QueryDsl.delete(resource).where { resource.id eq id }
+  public suspend fun delete(context: RequestContext, id: UUID) {
+    db.withTransaction {
+      policyEnforcement(context, id, CrudAction.DELETE)
+      db.runQuery {
+        QueryDsl.delete(resource).where { resource.id eq id }
+      }
     }
   }
 
@@ -80,7 +81,7 @@ public object UserRepository {
     context: RequestContext,
     resource: UUID,
     action: CrudAction,
-  ): Unit {
+  ) {
     // No policies were identified for resource, block will be empty
     when (context) {
       is AnonymousRequestContext -> {}

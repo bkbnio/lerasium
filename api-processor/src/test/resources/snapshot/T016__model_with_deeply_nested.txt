@@ -25,8 +25,10 @@ public object UserModels {
     public val name: String,
     public val address: Address.Response,
   ) : IOResponse {
-    public companion object : ConvertFrom<User, Response> {
-      public override fun from(input: User): Response = Response(
+    public companion object :
+        ConvertFrom<User, io.bkbn.lerasium.generated.api.models.UserModels.Response> {
+      override fun from(input: User): io.bkbn.lerasium.generated.api.models.UserModels.Response =
+          io.bkbn.lerasium.generated.api.models.UserModels.Response(
         name = input.name,
         address = Address.Response.from(input.address),
       )
@@ -54,8 +56,12 @@ public object UserModels {
       public val city: String,
       public val state: State.Response,
     ) : IOResponse {
-      public companion object : ConvertFrom<User.Address, Response> {
-        public override fun from(input: User.Address): Response = Response(
+      public companion object :
+          ConvertFrom<User.Address, io.bkbn.lerasium.generated.api.models.UserModels.Address.Response>
+          {
+        override fun from(input: User.Address):
+            io.bkbn.lerasium.generated.api.models.UserModels.Address.Response =
+            io.bkbn.lerasium.generated.api.models.UserModels.Address.Response(
           street = input.street,
           city = input.city,
           state = State.Response.from(input.state),
@@ -81,8 +87,12 @@ public object UserModels {
         public val name: String,
         public val country: Country.Response,
       ) : IOResponse {
-        public companion object : ConvertFrom<User.Address.State, Response> {
-          public override fun from(input: User.Address.State): Response = Response(
+        public companion object :
+            ConvertFrom<User.Address.State, io.bkbn.lerasium.generated.api.models.UserModels.Address.State.Response>
+            {
+          override fun from(input: User.Address.State):
+              io.bkbn.lerasium.generated.api.models.UserModels.Address.State.Response =
+              io.bkbn.lerasium.generated.api.models.UserModels.Address.State.Response(
             name = input.name,
             country = Country.Response.from(input.country),
           )
@@ -107,7 +117,7 @@ public object UserModels {
           public companion object :
               ConvertFrom<User.Address.State.Country, io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response>
               {
-            public override fun from(input: User.Address.State.Country):
+            override fun from(input: User.Address.State.Country):
                 io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response =
                 io.bkbn.lerasium.generated.api.models.UserModels.State.Country.Response(
               name = input.name,
