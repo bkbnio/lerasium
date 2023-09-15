@@ -5,7 +5,7 @@ complexity:
     active: true
     functionThreshold: 10
     constructorThreshold: 15
-  ComplexMethod:
+  CyclomaticComplexMethod:
     threshold: 20
   LargeClass:
     excludes: ['**/test/**/*']
