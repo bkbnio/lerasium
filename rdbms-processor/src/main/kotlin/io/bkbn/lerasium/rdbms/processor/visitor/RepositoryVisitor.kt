@@ -198,7 +198,7 @@ class RepositoryVisitor(private val fileBuilder: FileSpec.Builder, private val l
       addParameter("context", RequestContext::class)
       addParameter("id", UUID::class)
       addCodeBlock {
-        addControlFlow("return db.withTransaction") {
+        addControlFlow("db.withTransaction") {
           addStatement("policyEnforcement(context, id, %T.DELETE)", CrudAction::class)
           addControlFlow("db.runQuery") {
             addStatement("%T.delete(resource).where { resource.id eq id }", QueryDsl::class)
