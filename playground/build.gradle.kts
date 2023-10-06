@@ -43,7 +43,7 @@ dependencies {
   implementation("io.bkbn:bouncer-core:0.1.1")
 
   // Logging (TODO Replace w/ Kermit!)
-  implementation("org.apache.logging.log4j:log4j-api-kotlin:1.2.0")
+  implementation("org.apache.logging.log4j:log4j-api-kotlin:1.3.0")
   implementation("org.apache.logging.log4j:log4j-api:2.20.0")
   implementation("org.apache.logging.log4j:log4j-core:2.20.0")
   implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
