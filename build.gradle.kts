@@ -9,7 +9,7 @@ plugins {
   id("com.google.devtools.ksp") version "1.9.21-1.0.15" apply false
   id("io.bkbn.sourdough.root") version "0.12.1"
   id("com.github.jakemarsden.git-hooks") version "0.0.2"
-  id("org.jetbrains.kotlinx.kover") version "0.7.4"
+  id("org.jetbrains.kotlinx.kover") version "0.7.5"
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
