@@ -44,9 +44,9 @@ dependencies {
 
   // Logging (TODO Replace w/ Kermit!)
   implementation("org.apache.logging.log4j:log4j-api-kotlin:1.4.0")
-  implementation("org.apache.logging.log4j:log4j-api:2.23.0")
-  implementation("org.apache.logging.log4j:log4j-core:2.23.0")
-  implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.23.0")
+  implementation("org.apache.logging.log4j:log4j-api:2.23.1")
+  implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+  implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.23.1")
 }
 
 kotlin {
